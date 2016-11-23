@@ -1,0 +1,21 @@
+import os
+import sys
+
+environment = Environment(ENV = os.environ)
+
+conf = environment.Configure()
+
+if os.name != "nt" and conf.CheckCHeader("sys/mman.h"):
+    src = "bufferfile_mmap.c"
+elif os.name != "nt" and conf.CheckCHeader("unistd.h") and conf.CheckCHeader("sys/stat.h"):
+    src = "bufferfile_unix.c"
+elif os.name == "nt" or sys.platform == "msys" or sys.platform == "cygwin":
+    src = "bufferfile_win32.c"
+else:
+    src = "bufferfile_c.c"
+
+environment = conf.Finish()
+
+libbufferfile = environment.StaticLibrary("bufferfile", [src])
+
+Return("libbufferfile")

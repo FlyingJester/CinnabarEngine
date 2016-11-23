@@ -1,0 +1,37 @@
+import os
+import sys
+
+environment = Environment(ENV = os.environ)
+
+environment.Replace(AS="yasm")
+
+is_be = sys.platform.startswith("haiku") or ("be" in sys.platform)
+is_win = sys.platform.startswith("win") or sys.platform.startswith("cyg") or sys.platform=="msys"
+
+conf = environment.Configure()
+
+src = []
+defs = []
+
+if not is_win:
+    environment.Append(ASFLAGS = " -f elf64 ")
+
+if is_win and conf.CheckCHeader("Windows.h"):
+    all_src = ["win32_time.c"]
+else:
+    all_src = ["unix_ticks.c"]
+    if is_be and conf.CheckCHeader("kernel/OS.h"):
+        all_src.append("haiku_snooze.cpp")
+    elif conf.CheckCHeader("unistd.h") and conf.CheckFunc("usleep"):
+        if "linux" in sys.platform:
+            defs = ["_DEFAULT_SOURCE", "_BSD_SOURCE"]
+        all_src.append("usleep.asm")
+    elif conf.CheckCHeader("time.h") and conf.CheckFunc("nanosleep"):
+        all_src.append("nanosleep.c")
+
+environment = conf.Finish()
+
+libchrono = environment.StaticLibrary("chrono", all_src, CPPDEFINES = defs)
+
+Return("libchrono")
+

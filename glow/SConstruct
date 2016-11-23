@@ -1,0 +1,14 @@
+import os
+import sys
+
+environment = Environment(ENV = os.environ)
+
+if os.name == "nt" or sys.platform == "msys":
+	src = ["glow_win32.c"]
+	libglow = environment.SharedLibrary("glow", ["glow_win32.c"], LIBS = ["OpenGL32", "gdi32"])
+elif "be" in sys.platform or sys.platform.startswith("haiku"):
+	libglow = environment.SharedLibrary("glow", ["glow_haiku.cpp"], LIBS = ["be", "gl"])
+else:
+	libglow = environment.SharedLibrary("glow", ["glow_x11.c"], LIBS = ["X11", "Xext", "GL"])
+
+Return("libglow")

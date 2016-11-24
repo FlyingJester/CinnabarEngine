@@ -1,6 +1,7 @@
 all: cinnabar test
 
 MMCIN=mmc -E -j4 --grade=asm_fast.gc.debug.stseg --make
+# MMCIN=mmc -E -j4 --grade=hlc.gc --cflag "-g" --make
 
 
 LIBTARGETS=libglow libchrono libspherefonts libbufferfile libaimg libopenglextra

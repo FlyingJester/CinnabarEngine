@@ -40,13 +40,15 @@
 
 :- use_module string.
 :- use_module opengl.
+:- use_module exception.
 :- import_module int.
 :- import_module list.
 
 :- type shader == opengl.shader.
 :- type gl2renderer ---> gl2renderer(shader_list::list(shader), current_shader::renderer.shader).
 
-init(gl2renderer([], 0), !Window).
+init(gl2renderer([], 0), !Window) :-
+    opengl.clear_color(0.9, 0.5, 0.1, 1.0, !Window).
 
 :- instance renderer.renderer(gl2renderer) where [
     (matrix(M, _, _, !Window) :- matrix(M, !Window)),
@@ -137,7 +139,7 @@ fragment_shader(In) = Out :-
 
 :- pred get_element(list(T)::in, int::in, T::out) is semidet.
 get_element([Elem|List], N, Out) :-
-    N > 0,
+    N >= 0,
     ( N = 0 ->
         Out = Elem
     ;
@@ -157,18 +159,27 @@ render_model(wavefront.shape(Vert, Tex, N, I), !Window) :-
     V1 = wavefront.vertex(VertexIndex1, TexCoordIndex1),
     V2 = wavefront.vertex(VertexIndex2, TexCoordIndex2),
     (
-            V(VertexIndex0, Vertex0),
-            V(VertexIndex1, Vertex1),
-            V(VertexIndex2, Vertex2),
-            T(TexCoordIndex0, TexCoord0),
-            T(TexCoordIndex1, TexCoord1),
-            T(TexCoordIndex2, TexCoord2) -> 
+      V(VertexIndex0, Vertex0),
+      V(VertexIndex1, Vertex1),
+      V(VertexIndex2, Vertex2) -> 
         opengl.begin(opengl.triangle_strip, !Window),
-        point(Vertex0, TexCoord0, !Window),
-        point(Vertex1, TexCoord1, !Window),
-        point(Vertex2, TexCoord2, !Window),
+        (
+          T(TexCoordIndex0, TexCoord0),
+          T(TexCoordIndex1, TexCoord1),
+          T(TexCoordIndex2, TexCoord2) ->
+            point(Vertex0, TexCoord0, !Window),
+            point(Vertex1, TexCoord1, !Window),
+            point(Vertex2, TexCoord2, !Window)
+        ;
+            T0 = wavefront.tex(0.0, 0.0),
+            point(Vertex0, T0, !Window),
+            point(Vertex1, T0, !Window),
+            point(Vertex2, T0, !Window)
+        ),
         opengl.end(!Window)
     ;
+        string.append("Invalid indices: ", string.from_int(list.length(Vert)), Err),
+        exception.throw(exception.software_error(Err)),
         true % Pass
     ),
     render_model(wavefront.shape(Vert, Tex, N, List), !Window).

@@ -26,6 +26,16 @@
 :- func wavefront_node = scene.node(wavefront.shape).
 wavefront_node = scene.empty.
 
+% TEST ONLY
+:- func test_shape = string.
+test_shape = " # Test shape.
+vt 0.0 0.0
+v 0.0 0.0 0.0
+v 0.0 1.0 0.0
+v 1.0 0.0 0.0
+f 0/0 1/0 2/0
+".
+
 :- pred frame(Renderer::in, scene.node(Model)::in,
     scene.matrixtree::in,
     io.io::di, io.io::uo,
@@ -35,7 +45,8 @@ wavefront_node = scene.empty.
 main(!IO) :-
     mglow.create_window(!IO, mglow.size(480, 320), mglow.gl_version(4, 1), "Cinnabar", Window),
     gl2renderer.init(Renderer, Window, WindowRender),
-    frame(Renderer, wavefront_node, scene.init_matrixtree, !IO, WindowRender, WindowEnd),
+    wavefront.load(test_shape, wavefront.init_shape, Shape),
+    frame(Renderer, scene.shape(Shape), scene.init_matrixtree, !IO, WindowRender, WindowEnd),
     mglow.destroy_window(!IO, WindowEnd).
 
 frame(Renderer, Scene, MatrixTree, !IO, !Window) :-

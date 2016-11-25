@@ -33,8 +33,14 @@
 :- pred tex_coord(float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
 
+:- pred color(float::in, float::in, float::in, float::in,
+     mglow.window::di, mglow.window::uo) is det.
+
 :- pred begin(shape_type::in, mglow.window::di, mglow.window::uo) is det.
 :- pred end(mglow.window::di, mglow.window::uo) is det.
+
+:- pred frustum(float, float, float, float, float, float, mglow.window, mglow.window).
+:- mode frustum(in, in, in, in, in, in, di, uo) is det.
 
 %==============================================================================%
 :- implementation.
@@ -169,6 +175,10 @@
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
     " Win1 = Win0; glTexCoord2f(U, V); ").
 
+:- pragma foreign_proc("C", color(R::in, G::in, B::in, A::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
+    " Win1 = Win0; glColor4f(R, G, B, A); ").
+
 :- pragma foreign_proc("C", begin(Type::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
     " Win1 = Win0; glBegin(Type); ").
@@ -176,3 +186,11 @@
 :- pragma foreign_proc("C", end(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
     " Win1 = Win0; glEnd(); ").
+
+
+:- pragma foreign_proc("C",
+    frustum(NearZ::in, FarZ::in, Left::in, Right::in, Top::in, Bottom::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
+    " Win1 = Win0; glFrustum(Left, Right, Bottom, Top, NearZ, FarZ); ").
+
+

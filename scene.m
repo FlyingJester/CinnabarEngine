@@ -42,8 +42,7 @@ draw(matrix(ID, Node), Matrix, Tree, Renderer, !Window) :-
     draw(Node, matrix.multiply(Matrix, NewMatrix), Tree, Renderer, !Window).
 
 draw(shape(Model), Matrix, _, Renderer, !Window) :-
-    renderer.get_shader(Renderer, Shader, !Window),
-    renderer.matrix(Matrix, Renderer, Shader, !Window),
+%    renderer.matrix(Matrix, Renderer, Shader, !Window),
     renderer.draw(Model, Renderer, !Window). 
 
 draw(shader(Shader, Node), Matrix, Tree, Renderer, !Window) :-

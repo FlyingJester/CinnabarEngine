@@ -49,10 +49,10 @@ test1ver(Shape) :-
         [wavefront.point(1.0, 0.0, 0.0) | []]]],
         [],
         [],
-        [wavefront.face(
-            wavefront.vertex(0, 0),
-            wavefront.vertex(1, 0),
-            wavefront.vertex(2, 0))|[]]).
+        [wavefront.face([
+            wavefront.vertex(0, 0) | [
+            wavefront.vertex(1, 0) | [
+            wavefront.vertex(2, 0) | []]]])|[]]).
 
 %------------------------------------------------------------------------------%
 :- pred test(io.io::di, io.io::uo, int::di, int::uo, int::di, int::uo) is det.
@@ -67,7 +67,7 @@ test(!IO, !N, !Sum) :-
     io.write_string("Num faces: ", !IO),
     io.write_int(list.length(Out ^ wavefront.faces), !IO),
     io.nl(!IO),
-    ( Out ^ wavefront.faces = [wavefront.face(P0, P1, P2) | []] ->
+    ( Out ^ wavefront.faces = [wavefront.face([P0|[P1|[P2|[]]]]) | []] ->
         io.write_string("Face 1: ", !IO), io.nl(!IO),
         wavefront.write_vertex(P0, !IO), io.nl(!IO),
         wavefront.write_vertex(P1, !IO), io.nl(!IO),

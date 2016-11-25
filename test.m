@@ -29,8 +29,8 @@
 
 :- import_module int.
 
-:- include_module test.wavefront, test.gl2renderer.
-:- use_module test.wavefront, test.gl2renderer.
+:- include_module test.wavefront.
+:- use_module test.wavefront.
 
 %------------------------------------------------------------------------------%
 :- pred write_fail(io.io::di, io.io::uo, string::in, string::in, int::uo) is det.
@@ -73,5 +73,4 @@ sum_suite(!IO, SuiteName, OK, Total) :-
 
 %------------------------------------------------------------------------------%
 main(!IO) :-
-    test.wavefront.test(!IO),
-    test.gl2renderer.test(!IO).
+    test.wavefront.test(!IO).

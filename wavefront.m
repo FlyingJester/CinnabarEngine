@@ -11,7 +11,7 @@
 :- type vector ---> vector(vx::float, vy::float, vz::float).
 :- type tex ---> tex(u::float, v::float).
 :- type vertex ---> vertex(vert_index::int, tex_index::int).
-:- type face ---> face(vertex, vertex, vertex).
+:- type face ---> face(list(vertex)).
 %------------------------------------------------------------------------------%
 
 :- typeclass model(Model) where [
@@ -104,7 +104,7 @@ is_numeric('9').
 
 :- pred skip_number(cinparser::in, cinparser::out) is det.
 skip_number(!Parser) :-
-    ( get(!Parser, Char), ( is_numeric(Char) ; Char = ('.')) ->
+    ( get(!Parser, Char), ( is_numeric(Char) ; Char = ('.') ; Char = ('-')) ->
         skip_number(!Parser)
     ;
         true % Pass
@@ -193,12 +193,10 @@ line(!Parser, !Model) :-
             )
         ; Char = 'f' ->
             accumulate_face(!Parser, [], Face),
-            ( ( Face = [] ; Face = [_|[]] ; Face = [_|[_|[]]] )->
+            ( Face = [] ->
                 true % Pass
-            ; Face = [A|[B|[C|[]]]] ->
-                putface(face(A, B, C), !Model)
             ;
-                true % Pass
+                putface(face(Face), !Model)
             )
         ;
             % On unknown char, just skip the line.

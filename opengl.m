@@ -21,6 +21,10 @@
 :- pred new_shader_program(shader::in, shader::in, int::out, string::out,
     mglow.window::di, mglow.window::uo) is det.
 
+:- pred upload_texture(texture::uo, c_pointer::in, int::in, int::in,
+    mglow.window::di, mglow.window::uo) is det.
+:- pred bind_texture(texture::in, mglow.window::di, mglow.window::uo) is det. 
+
 % Raw GL wrappers
 :- pred clear_color(float::in, float::in, float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
@@ -34,7 +38,6 @@
 :- type shader == int.
 :- type frag_shader == int.
 :- type vert_shader == int.
-:- type texture == int.
 
 :- pragma foreign_decl("C", "#include ""glow/glow.h"" ").
 :- pragma foreign_decl("C", "#include <GL/gl.h>").
@@ -42,6 +45,17 @@
 %#define GL_GLEXT_PROTOTYPES 1
 %#include <GL/glext.h>
 %").
+
+:- pragma foreign_decl("C", "
+    void OpenGL_TextureFinalizer(void *in, void *unused);
+").
+
+:- pragma foreign_code("C", "
+    void OpenGL_TextureFinalizer(void *in, void *win){
+        Glow_MakeCurrent((struct Glow_Window*)win);
+        glDeleteTextures(1, (GLuint*)in);
+    }
+").
 
 :- pragma foreign_enum("C", shader_type/0,
     [
@@ -56,6 +70,8 @@
         line_loop - "GL_LINE_LOOP",
         point - "GL_POINTS"
     ]).
+
+:- pragma foreign_type("C", texture, "GLuint*").
 
 :- pragma foreign_proc("C", use_shader(Shader::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
@@ -142,6 +158,27 @@
         glDeleteShader(Vert);
     ").
 
+:- pragma foreign_proc("C",
+    upload_texture(Tex::uo, Data::in, W::in, H::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
+    "
+        GLuint tex;
+        Glow_MakeCurrent((Win1 = Win0));
+        glGenTextures(1, &tex);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, W, H, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)Data);
+        Tex = MR_GC_malloc_atomic(8);
+        Tex[0] = tex;
+        MR_GC_register_finalizer(Tex, OpenGL_TextureFinalizer, Win1);
+    ").
+
+:- pragma foreign_proc("C",
+    bind_texture(Tex::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
+    "
+        Glow_MakeCurrent((Win1 = Win0));
+        glBindTexture(GL_TEXTURE_2D, *((GLuint*)Tex));
+    ").
 
 :- pragma foreign_proc("C", clear_color(R::in, G::in, B::in, A::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],

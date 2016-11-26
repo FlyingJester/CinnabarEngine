@@ -11,7 +11,6 @@
 :- import_module list.
 
 :- type gl2.
-:- type shape_type ---> triangle_strip ; triangle_fan ; line_loop ; point.
 
 % Raw OpenGL 2 wrapping
 
@@ -30,7 +29,7 @@
 :- pred color(float::in, float::in, float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
 
-:- pred begin(shape_type::in, mglow.window::di, mglow.window::uo) is det.
+:- pred begin(opengl.shape_type::in, mglow.window::di, mglow.window::uo) is det.
 :- pred end(mglow.window::di, mglow.window::uo) is det.
 
 :- pred frustum(float, float, float, float, float, float, mglow.window, mglow.window).
@@ -53,10 +52,18 @@
     list(wavefront.tex)::in, list(wavefront.tex)::out,
     mglow.window::di, mglow.window::uo) is det.
 
-:- type vertex ---> vertex(x::float, y::float, z::float, u::float, v::float).
-:- type shape2d ---> shape2d(list(vertex), opengl.texture).
+:- type vertex2d ---> vertex(x2::float, y2::float, u2::float, v2::float).
+:- type vertex3d ---> vertex(x::float, y::float, z::float, u::float, v::float).
+:- type shape2d ---> shape2d(list(vertex2d), opengl.texture) ; shape2d(list(vertex2d)).
+
+:- func rectangle(float, float, float, float) = shape2d.
+:- func add_texture(shape2d, opengl.texture) = shape2d.
+
+% Used with list.foldl to draw shape2d's.
+:- pred draw_vertex(vertex2d::in, mglow.window::di, mglow.window::uo) is det.
 
 :- instance render.model(gl2, wavefront.shape).
+:- instance render.model(gl2, shape2d).
 :- instance render.render(gl2).
 
 %==============================================================================%
@@ -65,6 +72,7 @@
 
 :- use_module opengl.
 :- import_module int.
+:- import_module float.
 
 :- type gl2 ---> q. % dummy.
 
@@ -72,14 +80,6 @@ init(!Window, q).
 
 :- pragma foreign_decl("C", "#include ""glow/glow.h"" ").
 :- pragma foreign_decl("C", "#include <GL/gl.h>").
-
-:- pragma foreign_enum("C", shape_type/0,
-    [
-        triangle_strip - "GL_TRIANGLE_STRIP",
-        triangle_fan - "GL_TRIANGLE_FAN",
-        line_loop - "GL_LINE_LOOP",
-        point - "GL_POINTS"
-    ]).
 
 :- pragma foreign_proc("C", vertex2(X::in, Y::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
@@ -130,38 +130,57 @@ draw(wavefront.shape(Vertices, TexCoords, N, [Face|List]), !Window) :-
     draw(Face, Vertices, TexCoords, !Window),
     draw(wavefront.shape(Vertices, TexCoords, N, List), !Window).
 
-% Nothing
-draw(wavefront.face([]), _, _, !Window).
-%Point
-draw(wavefront.face([V0|[]]), Vertices, TexCoords, !Window) :-
-    begin(point, !Window),
-    draw(V0, Vertices, _, TexCoords, _, !Window),
-    end(!Window).
-%Line
-draw(wavefront.face([V0|[V1|[]]]), Vertices, TexCoords, !Window) :-
-    begin(line_loop, !Window),
-    draw(V0, Vertices, _, TexCoords, _, !Window),
-    draw(V1, Vertices, _, TexCoords, _, !Window),
-    end(!Window).
-% Triangle or Poly
+:- pred mode(list(T)::in, opengl.shape_type::uo) is semidet.
+
+mode([_|[]], opengl.point).
+mode([_|[_|[]]], opengl.line_loop).
+mode([_|[_|[_|[]]]], opengl.triangle_strip).
+mode([_|[_|[_|[_|[]]]]], opengl.triangle_fan).
+mode([_|[_|[_|[_|[_|_]]]]], opengl.triangle_strip).
+
 draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
-    (
-        F = [_|[_|[_|[]]]]
+    ( mode(F, Mode) ->
+        begin(Mode, !Window),
+        list.foldl3(draw, F, Vertices, _, TexCoords, _, !Window),
+        end(!Window)
     ;
-        F = [_|[_|[_|[_|[_|_]]]]]
-    ),
-    begin(triangle_strip, !Window),
-    list.foldl3(draw, F, Vertices, _, TexCoords, _, !Window),
-    end(!Window).
-% Quad
-draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
-    F = [_|[_|[_|[_|[]]]]],
-    begin(triangle_fan, !Window),
-    list.foldl3(draw, F, Vertices, _, TexCoords, _, !Window),
-    end(!Window).
+        true % Pass.
+    ).
 
 :- instance render.model(gl2, wavefront.shape) where [
     (render.draw(q, Model, !Window) :- draw(Model, !Window))
+].
+
+rectangle(X, Y, W, H) = shape2d([vertex(X, Y, 0.0, 0.0)
+    |[vertex(X+W, Y,   1.0, 0.0)
+    |[vertex(X+W, Y+H, 1.0, 1.0)
+    |[vertex(X,   Y+H, 0.0, 1.0)
+    |[]]]]]).
+
+
+add_texture(shape2d(V), T) = shape2d(V, T).
+add_texture(shape2d(V, _), T) = shape2d(V, T).
+
+draw_vertex(vertex(X, Y, U, V), !Window) :-
+    tex_coord(U, V, !Window),
+    vertex(X, Y, 0.0, !Window). 
+
+:- instance render.model(gl2, shape2d) where [
+    (render.draw(q, Shape, !Window) :- 
+        (
+            opengl.bind_texture(Tex, !Window),
+            Shape = shape2d(Vertices, Tex)
+        ;
+            Shape = shape2d(Vertices)
+        ),
+        ( mode(Vertices, Mode) ->
+            begin(Mode, !Window),
+            list.foldl(draw_vertex, Vertices, !Window),
+            end(!Window)
+        ;
+            true % Pass
+        )
+    )
 ].
 
 :- pred use_element(pred(T, mglow.window, mglow.window), list(T), int, mglow.window, mglow.window).

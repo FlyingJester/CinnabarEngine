@@ -10,6 +10,7 @@
 :- func width(texture) = int.
 :- func height(texture) = int.
 
+:- func pixels(texture) = c_pointer.
 :- type result ---> ok(texture) ; nofile ; badfile.
 
 :- pred load(io.io::di, io.io::uo, string::in, result::out) is det.
@@ -30,8 +31,17 @@ create_ok(I) = ok(I).
 :- pragma foreign_export("C", create_badfile = (out), "Aimg_Mercury_CreateBadFile").
 :- pragma foreign_export("C", create_ok(in) = (out), "Aimg_Mercury_CreateOK").
 
-:- pragma foreign_decl("C", "#include ""aimage/image.h"" ").
+:- pragma foreign_decl("C", "#include ""aimage/image.h""
+void AImg_Finalizer(void *image, void *unused);
+").
 :- pragma foreign_type("C", texture, "struct AImg_Image*").
+
+:- pragma foreign_code("C", "
+void AImg_Finalizer(void *image, void *unused){
+    Aimg_DestroyImage(image);
+    (void)image;
+}
+").
 
 :- pragma foreign_proc("C", width(Image::in) = (W::out), 
     [promise_pure, thread_safe, will_not_call_mercury, will_not_throw_exception],
@@ -50,6 +60,7 @@ create_ok(I) = ok(I).
         const unsigned err = AImg_LoadAuto(&im, Path);
         if(err == AIMG_LOADPNG_SUCCESS){
             struct AImg_Image *const image = MR_GC_malloc_atomic(sizeof(struct AImg_Image));
+            AImg_Finalizer(image, AImg_Finalizer, NULL);
             image->pixels = im.pixels;
             image->w = im.w;
             image->h = im.h;

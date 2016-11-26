@@ -4,14 +4,16 @@
 %==============================================================================%
 
 :- use_module mglow.
+:- use_module opengl.
 :- use_module render.
 :- use_module wavefront.
 
 :- import_module list.
 
-% Raw OpenGL 2 wrapping
-
+:- type gl2.
 :- type shape_type ---> triangle_strip ; triangle_fan ; line_loop ; point.
+
+% Raw OpenGL 2 wrapping
 
 :- pred ortho(float::in, float::in, mglow.window::di, mglow.window::uo) is det.
 
@@ -28,15 +30,13 @@
 :- pred color(float::in, float::in, float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
 
-:- pred clear_color(float::in, float::in, float::in, float::in,
-    mglow.window::di, mglow.window::uo) is det.
-
-:- pred clear(mglow.window::di, mglow.window::uo) is det.
-
 :- pred begin(shape_type::in, mglow.window::di, mglow.window::uo) is det.
 :- pred end(mglow.window::di, mglow.window::uo) is det.
 
-:- type gl2.
+:- pred frustum(float, float, float, float, float, float, mglow.window, mglow.window).
+:- mode frustum(in, in, in, in, in, in, di, uo) is det.
+
+% Actual renderer stuff
 
 :- pred init(mglow.window::di, mglow.window::uo, gl2::uo) is det.
 
@@ -52,6 +52,9 @@
     list(wavefront.point)::in, list(wavefront.point)::out,
     list(wavefront.tex)::in, list(wavefront.tex)::out,
     mglow.window::di, mglow.window::uo) is det.
+
+:- type vertex ---> vertex(x::float, y::float, z::float, u::float, v::float).
+:- type shape2d ---> shape2d(list(vertex), opengl.texture).
 
 :- instance render.model(gl2, wavefront.shape).
 :- instance render.render(gl2).
@@ -106,14 +109,6 @@ init(!Window, q).
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
     " Win1 = Win0; glEnd(); ").
 
-:- pragma foreign_proc("C", clear_color(R::in, G::in, B::in, A::in, Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glClearColor(R, G, B, A); ").
-
-:- pragma foreign_proc("C", clear(Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); ").
-
 :- pragma foreign_proc("C", ortho(W::in, H::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
     "
@@ -125,6 +120,11 @@ init(!Window, q).
         glOrtho(0, W, H, 0, -1.0, 1.0);
     ").
 
+:- pragma foreign_proc("C",
+    frustum(NearZ::in, FarZ::in, Left::in, Right::in, Top::in, Bottom::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
+    " Win1 = Win0; glFrustum(Left, Right, Bottom, Top, NearZ, FarZ); ").
+
 draw(Shape, !Window) :- Shape ^ wavefront.faces = [].
 draw(wavefront.shape(Vertices, TexCoords, N, [Face|List]), !Window) :-
     draw(Face, Vertices, TexCoords, !Window),
@@ -134,15 +134,15 @@ draw(wavefront.shape(Vertices, TexCoords, N, [Face|List]), !Window) :-
 draw(wavefront.face([]), _, _, !Window).
 %Point
 draw(wavefront.face([V0|[]]), Vertices, TexCoords, !Window) :-
-    opengl.begin(opengl.point, !Window),
+    begin(point, !Window),
     draw(V0, Vertices, _, TexCoords, _, !Window),
-    opengl.end(!Window).
+    end(!Window).
 %Line
 draw(wavefront.face([V0|[V1|[]]]), Vertices, TexCoords, !Window) :-
-    opengl.begin(opengl.line_loop, !Window),
+    begin(line_loop, !Window),
     draw(V0, Vertices, _, TexCoords, _, !Window),
     draw(V1, Vertices, _, TexCoords, _, !Window),
-    opengl.end(!Window).
+    end(!Window).
 % Triangle or Poly
 draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
     (
@@ -150,15 +150,15 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
     ;
         F = [_|[_|[_|[_|[_|_]]]]]
     ),
-    opengl.begin(opengl.triangle_strip, !Window),
+    begin(triangle_strip, !Window),
     list.foldl3(draw, F, Vertices, _, TexCoords, _, !Window),
-    opengl.end(!Window).
+    end(!Window).
 % Quad
 draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
     F = [_|[_|[_|[_|[]]]]],
-    opengl.begin(opengl.triangle_fan, !Window),
+    begin(triangle_fan, !Window),
     list.foldl3(draw, F, Vertices, _, TexCoords, _, !Window),
-    opengl.end(!Window).
+    end(!Window).
 
 :- instance render.model(gl2, wavefront.shape) where [
     (render.draw(q, Model, !Window) :- draw(Model, !Window))
@@ -176,10 +176,10 @@ use_element(Pred, [E|List], N, !Window) :-
     ).
 
 :- pred use_point(wavefront.point::in, mglow.window::di, mglow.window::uo) is det.
-use_point(wavefront.point(X, Y, Z), !Window) :- opengl.vertex(X, Y, Z, !Window).
+use_point(wavefront.point(X, Y, Z), !Window) :- vertex(X, Y, Z, !Window).
 
 :- pred use_tex_coord(wavefront.tex::in, mglow.window::di, mglow.window::uo) is det.
-use_tex_coord(wavefront.tex(U, V), !Window) :- opengl.tex_coord(U, V, !Window).
+use_tex_coord(wavefront.tex(U, V), !Window) :- tex_coord(U, V, !Window).
 
 draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
     use_element(use_tex_coord, !.TexCoords, T, !Window),
@@ -187,5 +187,5 @@ draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
 
 :- instance render.render(gl2) where [
     (frustum(_, NearZ, FarZ, Left, Right, Top, Bottom, !Window) :-
-        opengl.frustum(NearZ, FarZ, Left, Right, Top, Bottom, !Window))
+        frustum(NearZ, FarZ, Left, Right, Top, Bottom, !Window))
 ].

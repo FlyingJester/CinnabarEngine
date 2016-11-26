@@ -5,9 +5,10 @@
 
 :- use_module mglow.
 
-:- type shader == int.
-:- type frag_shader == int.
-:- type vert_shader == int.
+:- type shader.
+:- type frag_shader.
+:- type vert_shader.
+:- type texture.
 
 :- type shader_type ---> vert ; frag.
 :- type shape_type ---> triangle_strip ; triangle_fan ; line_loop ; point.
@@ -26,25 +27,14 @@
 
 :- pred clear(mglow.window::di, mglow.window::uo) is det.
 
-% Old GL2 stuff.
-:- pred vertex(float::in, float::in, float::in,
-    mglow.window::di, mglow.window::uo) is det.
-
-:- pred tex_coord(float::in, float::in,
-    mglow.window::di, mglow.window::uo) is det.
-
-:- pred color(float::in, float::in, float::in, float::in,
-     mglow.window::di, mglow.window::uo) is det.
-
-:- pred begin(shape_type::in, mglow.window::di, mglow.window::uo) is det.
-:- pred end(mglow.window::di, mglow.window::uo) is det.
-
-:- pred frustum(float, float, float, float, float, float, mglow.window, mglow.window).
-:- mode frustum(in, in, in, in, in, in, di, uo) is det.
-
 %==============================================================================%
 :- implementation.
 %==============================================================================%
+
+:- type shader == int.
+:- type frag_shader == int.
+:- type vert_shader == int.
+:- type texture == int.
 
 :- pragma foreign_decl("C", "#include ""glow/glow.h"" ").
 :- pragma foreign_decl("C", "#include <GL/gl.h>").
@@ -166,31 +156,3 @@
         Glow_MakeCurrent((Win1 = Win0));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     ").
-
-:- pragma foreign_proc("C", vertex(X::in, Y::in, Z::in, Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glVertex3f(X, Y, Z); ").
-
-:- pragma foreign_proc("C", tex_coord(U::in, V::in, Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glTexCoord2f(U, V); ").
-
-:- pragma foreign_proc("C", color(R::in, G::in, B::in, A::in, Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glColor4f(R, G, B, A); ").
-
-:- pragma foreign_proc("C", begin(Type::in, Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glBegin(Type); ").
-
-:- pragma foreign_proc("C", end(Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glEnd(); ").
-
-
-:- pragma foreign_proc("C",
-    frustum(NearZ::in, FarZ::in, Left::in, Right::in, Top::in, Bottom::in, Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception, thread_safe, promise_pure],
-    " Win1 = Win0; glFrustum(Left, Right, Bottom, Top, NearZ, FarZ); ").
-
-

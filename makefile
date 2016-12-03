@@ -1,7 +1,8 @@
 all: cinnabar test
 
 # MMCIN=mmc -E -j4 --grade=asm_fast.gc.debug.stseg --make
-MMCIN=mmc -E -j4 --grade=hlc.gc --cflag "-g" --make
+MMCCALL=mmc --grade=hlc.gc --cflag "-g" --opt-level --intermodule-optimization
+MMCIN=$(MMCCALL) -E -j4 --make
 
 
 LIBTARGETS=libglow libchrono libspherefonts libbufferfile libaimg libopenglextra
@@ -33,10 +34,10 @@ libopenglextra: openglextra
 LIBS=-l glow -l openal -l opus -l ogg -l chrono -l spherefonts -l aimg -l bufferfile -l GL -l png -l openglextra
 	
 cinnabar: $(LIBTARGETS)
-	$(MMCIN) cinnabar -L ${PWD}/lib $(LIBS)
+	$(MMCIN) cinnabar -L lib $(LIBS)
 
 test: $(LIBTARGETS)
-	$(MMCIN) test -L ${PWD}/lib $(LIBS)
+	$(MMCIN) test -L lib $(LIBS)
 
 clean:
 	scons -C glow -c

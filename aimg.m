@@ -43,12 +43,19 @@ void AImg_Finalizer(void *image, void *unused){
 }
 ").
 
+:- pragma foreign_proc("C", pixels(Image::in) = (Pix::out), 
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Pix = (MR_Word)Image->pixels; ").
+
 :- pragma foreign_proc("C", width(Image::in) = (W::out), 
-    [promise_pure, thread_safe, will_not_call_mercury, will_not_throw_exception],
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
     " W = Image->w; ").
 
 :- pragma foreign_proc("C", height(Image::in) = (H::out), 
-    [promise_pure, thread_safe, will_not_call_mercury, will_not_throw_exception],
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
     " H = Image->h; ").
 
 :- pragma foreign_proc("C", load(IO0::di, IO1::uo, Path::in, Result::out), 

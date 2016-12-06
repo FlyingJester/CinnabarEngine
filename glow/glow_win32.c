@@ -14,7 +14,7 @@ struct Glow_Window{
 	HDC dc;
 	HWND win;
 	HGLRC ctx;
-	unsigned gl_mag, gl_min;
+	unsigned gl_mag, gl_min, w, h;
 };
 
 #ifdef __GNUC__
@@ -134,7 +134,12 @@ struct Glow_Window *Glow_CreateWindow(unsigned w, unsigned h, const char *title,
         window->win = CreateWindow(GLOW_CLASS_NAME, title, style, 64, 64, w, h, NULL, NULL, glow_app, window);
 	}
     
-	return window;
+    SetActiveWindow(window->win);
+	
+    window->w = w;
+    window->h = h;
+    
+    return window;
 }
 
 void Glow_DestroyWindow(struct Glow_Window *w){
@@ -160,32 +165,6 @@ void Glow_FlipScreen(struct Glow_Window *w){
 	wglSwapLayerBuffers(w->dc, WGL_SWAP_MAIN_PLANE);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
-
-/*
-enum Glow_EventType {
-	eGlowUnknown,
-	eGlowKeyboard,
-	eGlowMouseClick,
-	eGlowQuit
-};
-
-enum Glow_MouseButton{
-	eGlowLeft,
-	eGlowRight,
-	eGlowMiddle
-};
-
-struct Glow_Event{
-	enum Glow_EventType type;
-	union {
-		char key[16];
-		struct {
-			unsigned x, y;
-			enum Glow_MouseButton button;
-		} mouse;
-	} value;
-};
-*/
 
 static void glow_translate_local_mouse_pos(POINT *pnt,
 	struct Glow_Window *w, glow_pixel_coords_t out_pos){
@@ -315,3 +294,6 @@ void Glow_GetMousePosition(struct Glow_Window *w, glow_pixel_coords_t out_pos){
 	GetCursorPos(&pnt);
 	glow_translate_local_mouse_pos(&pnt, w, out_pos);
 }
+
+unsigned Glow_GetWindowWidth(const struct Glow_Window *w) { return w->w; }
+unsigned Glow_GetWindowHeight(const struct Glow_Window *w) { return w->h; }

@@ -17,6 +17,9 @@ void Glow_MakeCurrent(struct Glow_Window *);
 
 void Glow_FlipScreen(struct Glow_Window *);
 
+unsigned Glow_WindowWidth(const struct Glow_Window *);
+unsigned Glow_WindowHeight(const struct Glow_Window *);
+
 /* Input interface */
 enum Glow_EventType {
 	eGlowUnknown,

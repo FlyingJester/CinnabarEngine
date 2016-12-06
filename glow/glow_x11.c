@@ -28,6 +28,8 @@ struct Glow_Window {
     Colormap cmap;
     GLXContext ctx;
     XVisualInfo *vis;
+    
+    unsigned w, h;
 };
 
 
@@ -85,6 +87,10 @@ struct Glow_Window *Glow_CreateWindow(unsigned aW, unsigned aH,
     context_attribs[1] = gl_maj;
     context_attribs[3] = gl_min;
 */
+
+    out->w = aW;
+    out->h = aH;
+
     fputs("Initializing OpenGL ", stdout);
     printf("%i.%i", gl_maj, gl_min);
     puts(" context");
@@ -235,6 +241,9 @@ unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
     }
     return 0;
 }
+
+unsigned Glow_GetWindowWidth(const struct Glow_Window *w) { return w->w; }
+unsigned Glow_GetWindowHeight(const struct Glow_Window *w) { return w->h; }
 
 /* int main(int argc, char **argv){ return glow_main(argc, argv); } */
 

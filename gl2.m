@@ -7,6 +7,7 @@
 :- use_module opengl.
 :- use_module render.
 :- use_module wavefront.
+:- use_module softshape.
 
 :- import_module list.
 
@@ -53,12 +54,17 @@
 :- pred color(float::in, float::in, float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
 
+:- pred unbind_texture(mglow.window::di, mglow.window::uo) is det.
+
 % Translates to glBegin()
 % begin(Type, !Window)
 :- pred begin(opengl.shape_type::in, mglow.window::di, mglow.window::uo) is det.
 
-
 :- pred end(mglow.window::di, mglow.window::uo) is det.
+
+:- pred draw_pixels(int::in, int::in, c_pointer::in,
+    mglow.window::di, mglow.window::uo) is det.
+:- pred raster_pos(float::in, float::in, mglow.window::di, mglow.window::uo) is det.
 
 :- pred frustum(float, float, float, float, float, float, mglow.window, mglow.window).
 :- mode frustum(in, in, in, in, in, in, di, uo) is det.
@@ -83,30 +89,16 @@
     list(wavefront.tex)::in, list(wavefront.tex)::out,
     mglow.window::di, mglow.window::uo) is det.
 
-:- type vertex2d ---> vertex(x2::float, y2::float, u2::float, v2::float).
-:- type vertex3d ---> vertex(x3::float, y3::float, z3::float, u3::float, v3::float).
-:- type shape2d ---> shape2d(list(vertex2d), opengl.texture) ;
-    shape2d(list(vertex2d)) ;
-    shape2d(list(vertex2d), float, float, float).
+:- type shape2d ---> shape2d(softshape.shape2d) ; shape2d(softshape.shape2d, opengl.texture).
+:- type shape3d ---> shape3d(softshape.shape3d) ; shape3d(softshape.shape3d, opengl.texture).
 
-:- type shape3d ---> shape3d(list(vertex3d), opengl.texture).
-
-% Abstraction for vertex2 and vertex3.
 :- typeclass vertex(T) where [
-    func x(T) = float,
-    func y(T) = float,
-    func z(T) = float,
-    func u(T) = float,
-    func v(T) = float,
     % Used with list.foldl to draw shapes.
     pred draw_vertex(T::in, mglow.window::di, mglow.window::uo) is det
 ].
 
-:- instance vertex(vertex2d).
-:- instance vertex(vertex3d).
-
-:- func rectangle(float, float, float, float) = shape2d.
-:- func add_texture(shape2d, opengl.texture) = shape2d.
+:- instance vertex(softshape.vertex2d).
+:- instance vertex(softshape.vertex3d).
 
 :- instance render.model(gl2, wavefront.shape).
 :- instance render.model(gl2, shape2d).
@@ -121,9 +113,9 @@
 :- import_module int.
 :- import_module float.
 
-:- type gl2 ---> q. % dummy.
+:- type gl2 ---> gl2(w::int, h::int).
 
-init(!Window, q).
+init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H).
 
 :- pragma foreign_decl("C", "#include ""glow/glow.h"" ").
 :- pragma foreign_decl("C", "
@@ -173,6 +165,11 @@ init(!Window, q).
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glColor4f(R, G, B, A); ").
+    
+:- pragma foreign_proc("C", unbind_texture(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glBindTexture(GL_TEXTURE_2D, 0); ").
 
 :- pragma foreign_proc("C", begin(Type::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -183,6 +180,23 @@ init(!Window, q).
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glEnd(); ").
+
+
+:- pragma foreign_proc("C", draw_pixels(W::in, H::in, Pix::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glDrawPixels(W, H, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)Pix);
+    ").
+
+:- pragma foreign_proc("C", raster_pos(X::in, Y::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glRasterPos2f(X, Y);
+    ").
 
 :- pragma foreign_proc("C", ortho(W::in, H::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -231,51 +245,24 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
     ).
 
 :- instance render.model(gl2, wavefront.shape) where [
-    (render.draw(q, Model, !Window) :- draw(Model, !Window))
+    (render.draw(_, Model, !Window) :- draw(Model, !Window))
 ].
 
-rectangle(X, Y, W, H) = shape2d([vertex(X, Y, 0.0, 0.0)
-    |[vertex(X+W, Y,   1.0, 0.0)
-    |[vertex(X+W, Y+H, 1.0, 1.0)
-    |[vertex(X,   Y+H, 0.0, 1.0)
-    |[]]]]]).
-
-
-add_texture(shape2d(V), T) = shape2d(V, T).
-add_texture(shape2d(V, _), T) = shape2d(V, T).
-add_texture(shape2d(V, _, _, _), T) = shape2d(V, T).
-
-:- instance vertex(vertex2d) where [
-    x(V) = V ^ x2,
-    y(V) = V ^ y2,
-    z(_) = 0.0,
-    u(V) = V ^ u2,
-    v(V) = V ^ v2,
-    (draw_vertex(vertex(X, Y, U, V), !Window) :-
-        tex_coord(U, V, !Window), vertex2(X, Y, !Window))
-].
-
-:- instance vertex(vertex3d) where [
-    x(V) = V ^ x3,
-    y(V) = V ^ y3,
-    z(V) = V ^ z3,
-    u(V) = V ^ u3,
-    v(V) = V ^ v3,
-    (draw_vertex(vertex(X, Y, Z, U, V), !Window) :-
-        tex_coord(U, V, !Window), vertex3(X, Y, Z, !Window))
-].
 
 :- instance render.model(gl2, shape2d) where [
-    (render.draw(q, Shape, !Window) :-
+    (render.draw(_, Shape, !Window) :-
         (
-            Shape = shape2d(Vertices, R, G, B)
+            Shape = shape2d(SoftShape, Tex),
+            opengl.bind_texture(Tex, !Window)
+        ;
+            Shape = shape2d(SoftShape),
+            unbind_texture(!Window)
+        ),
+        (
+            SoftShape = softshape.shape2d(Vertices, R, G, B)
         ;
             R = 1.0, G = 1.0, B = 1.0,
-            opengl.bind_texture(Tex, !Window),
-            Shape = shape2d(Vertices, Tex)
-        ;
-            R = 1.0, G = 1.0, B = 1.0,
-            Shape = shape2d(Vertices)
+            SoftShape = softshape.shape2d(Vertices)
         ),
         ( mode(Vertices, Mode) ->
             begin(Mode, !Window),
@@ -290,10 +277,23 @@ add_texture(shape2d(V, _, _, _), T) = shape2d(V, T).
 ].
 
 :- instance render.model(gl2, shape3d) where [
-    (render.draw(q, Shape, !Window) :- 
-        Shape = shape3d(Vertices, Tex),
+    (render.draw(_, Shape, !Window) :- 
+        (
+            Shape = shape3d(SoftShape, Tex),
+            Binder = opengl.bind_texture(Tex)
+        ;
+            Shape = shape3d(SoftShape),
+            Binder = unbind_texture
+        ),
+        (
+            R = 1.0, G = 1.0, B = 1.0,
+            SoftShape = softshape.shape3d(Vertices)
+        ;
+            SoftShape = softshape.shape3d(Vertices, R, G, B)
+        ),
         ( mode(Vertices, Mode) ->
-            opengl.bind_texture(Tex, !Window),
+            color(R, G, B, 1.0, !Window),
+            Binder(!Window),
             begin(Mode, !Window),
             list.foldl(draw_vertex, Vertices, !Window),
             end(!Window)
@@ -301,6 +301,16 @@ add_texture(shape2d(V, _, _, _), T) = shape2d(V, T).
             true % Pass
         )
     )
+].
+
+:- instance vertex(softshape.vertex2d) where [
+    (draw_vertex(softshape.vertex(X, Y, U, V), !Window) :-
+        tex_coord(U, V, !Window), vertex2(X, Y, !Window))
+].
+
+:- instance vertex(softshape.vertex3d) where [
+    (draw_vertex(softshape.vertex(X, Y, Z, U, V), !Window) :-
+        tex_coord(U, V, !Window), vertex3(X, Y, Z, !Window))
 ].
 
 :- pred use_element(pred(T, mglow.window, mglow.window), list(T), int, mglow.window, mglow.window).
@@ -326,5 +336,10 @@ draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
 
 :- instance render.render(gl2) where [
     (frustum(_, NearZ, FarZ, Left, Right, Top, Bottom, !Window) :-
-        frustum(NearZ, FarZ, Left, Right, Top, Bottom, !Window))
+        frustum(NearZ, FarZ, Left, Right, Top, Bottom, !Window)),
+    (render.draw_image(gl2(WinW, WinH), X, Y, W, H, Pix, !Window) :-
+        raster_pos(float(X) / float(WinW), float(Y) / float(WinH), !Window),
+        draw_pixels(W, H, Pix, !Window),
+        raster_pos(0.0, 0.0, !Window)
+    )
 ].

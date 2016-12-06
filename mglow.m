@@ -23,6 +23,10 @@
 :- pred create_window(io::di, io::uo,
     int::in, int::in, int::in, int::in, string::in, window::uo) is det.
 
+:- pred width(window::di, window::uo, int::uo) is det.
+:- pred height(window::di, window::uo, int::uo) is det.
+:- pred size(window::di, window::uo, int::uo, int::uo) is det.
+
 :- pred destroy_window(io::di, io::uo, window::di) is det.
 
 :- pred make_window_current(io::di, io::uo, window::di, window::uo) is det.
@@ -64,6 +68,28 @@ create_window(!IO, size(W, H), gl_version(Maj, Min), Title, Window) :-
     ").
 
 destroy_window(!IO, _).
+
+:- pragma foreign_proc("C",
+    width(Window::di, WindowOut::uo, W::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    "
+        W = Glow_GetWindowWidth((WindowOut = Window));
+    ").
+
+:- pragma foreign_proc("C",
+    height(Window::di, WindowOut::uo, H::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    "
+        H = Glow_GetWindowHeight((WindowOut = Window));
+    ").
+
+:- pragma foreign_proc("C",
+    size(Window::di, WindowOut::uo, W::uo, H::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    "
+        W = Glow_GetWindowWidth((WindowOut = Window));
+        H = Glow_GetWindowHeight((WindowOut = Window));
+    ").
 
 :- pragma foreign_proc("C",
     flip_screen(Window::di, WindowOut::uo),

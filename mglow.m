@@ -73,22 +73,22 @@ destroy_window(!IO, _).
     width(Window::di, WindowOut::uo, W::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
-        W = Glow_GetWindowWidth((WindowOut = Window));
+        W = Glow_WindowWidth((WindowOut = Window));
     ").
 
 :- pragma foreign_proc("C",
     height(Window::di, WindowOut::uo, H::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
-        H = Glow_GetWindowHeight((WindowOut = Window));
+        H = Glow_WindowHeight((WindowOut = Window));
     ").
 
 :- pragma foreign_proc("C",
     size(Window::di, WindowOut::uo, W::uo, H::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
-        W = Glow_GetWindowWidth((WindowOut = Window));
-        H = Glow_GetWindowHeight((WindowOut = Window));
+        W = Glow_WindowWidth((WindowOut = Window));
+        H = Glow_WindowHeight((WindowOut = Window));
     ").
 
 :- pragma foreign_proc("C",

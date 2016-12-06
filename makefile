@@ -1,7 +1,7 @@
 all: cinnabar test
 
 # MMCIN=mmc -E -j4 --grade=asm_fast.gc.debug.stseg --make
-MMCCALL=mmc --grade=hlc.gc --cflag "-g" --opt-level --intermodule-optimization
+MMCCALL=mmc --grade=hlc.gc --cflag "-g" --opt-level 7 --intermodule-optimization
 MMCIN=$(MMCCALL) -E -j4 --make
 
 

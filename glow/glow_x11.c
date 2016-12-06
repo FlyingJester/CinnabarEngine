@@ -242,8 +242,8 @@ unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
     return 0;
 }
 
-unsigned Glow_GetWindowWidth(const struct Glow_Window *w) { return w->w; }
-unsigned Glow_GetWindowHeight(const struct Glow_Window *w) { return w->h; }
+unsigned Glow_WindowWidth(const struct Glow_Window *w) { return w->w; }
+unsigned Glow_WindowHeight(const struct Glow_Window *w) { return w->h; }
 
 /* int main(int argc, char **argv){ return glow_main(argc, argv); } */
 

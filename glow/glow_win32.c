@@ -295,5 +295,5 @@ void Glow_GetMousePosition(struct Glow_Window *w, glow_pixel_coords_t out_pos){
 	glow_translate_local_mouse_pos(&pnt, w, out_pos);
 }
 
-unsigned Glow_GetWindowWidth(const struct Glow_Window *w) { return w->w; }
-unsigned Glow_GetWindowHeight(const struct Glow_Window *w) { return w->h; }
+unsigned Glow_WindowWidth(const struct Glow_Window *w) { return w->w; }
+unsigned Glow_WindowHeight(const struct Glow_Window *w) { return w->h; }

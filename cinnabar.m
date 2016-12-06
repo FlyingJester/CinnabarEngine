@@ -17,6 +17,7 @@
 :- use_module render.
 :- use_module gl2.
 :- use_module opengl.
+:- use_module softshape.
 
 :- use_module maybe.
 
@@ -41,9 +42,9 @@ frame(!IO, !Window) :-
     ;
         MaybeEvent = maybe.no,
 
-        Rect = gl2.rectangle(0.1, 0.1, 0.8, 0.8),
+        Rect = softshape.rectangle(0.1, 0.1, 0.8, 0.8),
         gl2.init(!Window, GL2),
-        render.draw(GL2, Rect, !Window),
+        render.draw(GL2, gl2.shape2d(Rect), !Window),
 
 %        gl2.begin(opengl.triangle_strip, !Window),
 %        gl2.color(1.0, 1.0, 1.0, 1.0, !Window),

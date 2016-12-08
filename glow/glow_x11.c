@@ -73,20 +73,15 @@ struct Glow_Window *Glow_CreateWindow(unsigned aW, unsigned aH,
     int context_attribs[] = {
         GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
         GLX_CONTEXT_MINOR_VERSION_ARB, 2,
-        GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-    #ifndef NDEBUG
-        GLX_CONTEXT_DEBUG_BIT_ARB,
-    #endif
-        None
+        None, None
     };
    
     struct Glow_Window *const out =
         (struct Glow_Window *)malloc(sizeof(struct Glow_Window));
     GLXFBConfig fbconfig;
-/*
+
     context_attribs[1] = gl_maj;
     context_attribs[3] = gl_min;
-*/
 
     out->w = aW;
     out->h = aH;
@@ -170,13 +165,14 @@ struct Glow_Window *Glow_CreateWindow(unsigned aW, unsigned aH,
             
             /* TODO: Intern a close atom? */
 
-            if(strstr(glXQueryExtensionsString(out->dpy, out->scr_id), "") != NULL &&
-                glXCreateContextAttribsARB == NULL){
-                out->ctx = glXCreateContextAttribsARB(out->dpy, fbconfig, 0, True, context_attribs);
-            }
-            else{
+            if(glXCreateContextAttribsARB == NULL){
+                fputs("Could not use glXCreateContextAttribsARB, expect the wrong version of OpenGL", stderr);
                 out->ctx = glXCreateNewContext(out->dpy, fbconfig, GLX_RGBA_TYPE, 0, True);
             }
+            else{
+                out->ctx = glXCreateContextAttribsARB(out->dpy, fbconfig, 0, True, context_attribs);
+            }
+            
             XStoreName(out->dpy, out->wnd, title);
 
             XSync(out->dpy, False);

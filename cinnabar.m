@@ -25,7 +25,7 @@
     mglow.window::di, mglow.window::uo) is det.
 
 main(!IO) :-
-    mglow.create_window(!IO, mglow.size(480, 320), mglow.gl_version(4, 1), "Cinnabar", Window),
+    mglow.create_window(!IO, mglow.size(480, 320), mglow.gl_version(2, 0), "Cinnabar", Window),
     gl2.ortho(1.0, 1.0, Window, WindowRender),
     frame(!IO, WindowRender, WindowEnd),
     mglow.destroy_window(!IO, WindowEnd).

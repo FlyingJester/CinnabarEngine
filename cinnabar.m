@@ -19,18 +19,28 @@
 :- use_module opengl.
 :- use_module softshape.
 
+:- import_module list.
 :- use_module maybe.
 
-:- pred frame(io.io::di, io.io::uo,
-    mglow.window::di, mglow.window::uo) is det.
+%------------------------------------------------------------------------------%
+:- pred frame(list(Model)::in, Renderer::in,
+    mglow.window::di, mglow.window::uo, io.io::di, io.io::uo) is det
+    <= (render.render(Renderer), render.model(Renderer, Model)).
 
+%------------------------------------------------------------------------------%
 main(!IO) :-
     mglow.create_window(!IO, mglow.size(480, 320), mglow.gl_version(2, 0), "Cinnabar", Window),
-    gl2.ortho(1.0, 1.0, Window, WindowRender),
-    frame(!IO, WindowRender, WindowEnd),
+    
+    gl2.ortho(1.0, 1.0, Window, WindowOrtho),
+    gl2.init(WindowOrtho, WindowRender, GL2),
+    
+    Rect = softshape.rectangle(0.1, 0.1, 0.8, 0.8),
+    frame([gl2.shape2d(Rect)|[]], GL2, WindowRender, WindowEnd, !IO),
+    
     mglow.destroy_window(!IO, WindowEnd).
 
-frame(!IO, !Window) :-
+%------------------------------------------------------------------------------%
+frame(Models, Renderer, !Window, !IO) :-
     mchrono.micro_ticks(!IO, FrameStart),
     
     mglow.get_event(!Window, MaybeEvent),
@@ -42,22 +52,11 @@ frame(!IO, !Window) :-
     ;
         MaybeEvent = maybe.no,
 
-        Rect = softshape.rectangle(0.1, 0.1, 0.8, 0.8),
-        gl2.init(!Window, GL2),
-        render.draw(GL2, gl2.shape2d(Rect), !Window),
-
-%        gl2.begin(opengl.triangle_strip, !Window),
-%        gl2.color(1.0, 1.0, 1.0, 1.0, !Window),
-%        gl2.vertex(0.0, 0.0, 0.0,!Window),
-%        gl2.vertex(0.0, 1.0, 0.0,!Window),
-%        gl2.vertex(1.0, 0.0, 0.0, !Window),
-%        gl2.end(!Window),
-
+        list.foldl(render.draw(Renderer), Models, !Window),
         mglow.flip_screen(!Window),
-%        renderer.end_frame(Renderer, !Window),
 
         mchrono.subtract(!IO, FrameStart, FrameEnd),
         mchrono.micro_sleep(!IO, FrameEnd),
 
-        frame(!IO, !Window)
+        frame(Models, Renderer, !Window, !IO)
     ).

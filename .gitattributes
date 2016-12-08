@@ -1,0 +1,4 @@
+*.m linguist-language=Mercury
+*.mh linguist-language=Mercury
+*.c linguist-language=C
+*.h linguist-language=C

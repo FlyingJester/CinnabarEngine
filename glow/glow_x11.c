@@ -241,6 +241,26 @@ unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
 unsigned Glow_WindowWidth(const struct Glow_Window *w) { return w->w; }
 unsigned Glow_WindowHeight(const struct Glow_Window *w) { return w->h; }
 
+void Glow_GetMousePosition(struct Glow_Window *win,
+    glow_pixel_coords_t out_pos){
+
+    Window root_win;
+    Window child_win;
+    int root_x, root_y,
+        win_x, win_y;
+    unsigned mask;
+    XQueryPointer(win->dpy, win->wnd, &root_win, &child_win,
+        &root_x, &root_y, &win_x, &win_y, &mask);
+
+    if(win_x < 0)
+        win_x = 0;
+    if(win_y < 0)
+        win_y = 0;
+
+    out_pos[0] = win_x;
+    out_pos[1] = win_y;
+}
+
 /* int main(int argc, char **argv){ return glow_main(argc, argv); } */
 
 

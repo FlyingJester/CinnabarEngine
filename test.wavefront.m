@@ -13,11 +13,12 @@
 %==============================================================================%
 
 :- use_module wavefront.
+:- use_module model.
 :- import_module list.
 %------------------------------------------------------------------------------%
 
 :- type vt == wavefront.vertex.
-:- type tx == wavefront.tex.
+:- type tx == model.tex.
 %------------------------------------------------------------------------------%
 
 :- func test1src = string.
@@ -44,9 +45,9 @@ f 0 1 2
 
 test1ver(Shape) :-
     Shape = wavefront.shape(
-        [wavefront.point(0.0, 0.0, 0.0) |
-        [wavefront.point(0.0, 1.0, 0.0) |
-        [wavefront.point(1.0, 0.0, 0.0) | []]]],
+        [model.point(0.0, 0.0, 0.0) |
+        [model.point(0.0, 1.0, 0.0) |
+        [model.point(1.0, 0.0, 0.0) | []]]],
         [],
         [],
         [wavefront.face([

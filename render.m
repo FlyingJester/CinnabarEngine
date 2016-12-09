@@ -12,6 +12,18 @@
         mglow.window, mglow.window),
     mode frustum(in, in, in, in, in, in, in, di, uo) is det,
     
+    % Purely experimental, we probably don't want to have a matrix stack like
+    % OpenGL does in the end. Depending on how the scene graph works out, it may
+    % just become clear which matrix to use where without keeping track of
+    % previous states.
+    pred push_matrix(T::in, mglow.window::di, mglow.window::uo) is det,
+    pred pop_matrix(T::in, mglow.window::di, mglow.window::uo) is det,
+
+    % Translates by the specified amount.
+    % translate(Renderer, X, Y, Z, !Window)
+    pred translate(T, float, float, float, mglow.window, mglow.window),
+    mode translate(in, in, in, in, di, uo) is det,
+
     % Draws a given 32-bit RGBA image at X, Y. This may be somewhat slow, so it
     % is recommended only for bridging some software rendering with the
     % hardware renderer.

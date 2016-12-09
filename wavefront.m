@@ -5,19 +5,20 @@
 
 :- use_module io.
 :- import_module list.
-%------------------------------------------------------------------------------%
+:- use_module model.
 
-:- type point ---> point(x::float, y::float, z::float).
-:- type vector ---> vector(vx::float, vy::float, vz::float).
-:- type tex ---> tex(u::float, v::float).
+%------------------------------------------------------------------------------%
+:- type point == model.point.
+:- type normal == model.normal.
+:- type tex == model.tex.
 :- type vertex ---> vertex(vert_index::int, tex_index::int).
 :- type face ---> face(list(vertex)).
-%------------------------------------------------------------------------------%
 
+%------------------------------------------------------------------------------%
 :- typeclass model(Model) where [
-    pred putpoint(point::in, Model::in, Model::out) is det,
-    pred puttex(tex::in, Model::in, Model::out) is det,
-    pred putnormal(vector::in, Model::in, Model::out) is det,
+    pred putpoint(model.point::in, Model::in, Model::out) is det,
+    pred puttex(model.tex::in, Model::in, Model::out) is det,
+    pred putnormal(model.normal::in, Model::in, Model::out) is det,
     % Specifies a model with an added face.
     % face(Vert, Tex, In, Out)
     pred putface(face::in, Model::in, Model::out) is det
@@ -27,13 +28,13 @@
 % A generic shape type used either as an intermediate form or for testing.
 % Can also be used when full-software processing is appropriate.
 :- type shape --->
-    shape(vertices::list(point),
-        tex_coords::list(tex),
-        normals::list(vector),
+    shape(vertices::list(model.point),
+        tex_coords::list(model.tex),
+        normals::list(model.normal),
         faces::list.list(face)).
 
 :- pred write_vertex(vertex::in, io.io::di, io.io::uo) is det.
-:- pred write_point(point::in, io.io::di, io.io::uo) is det.
+:- pred write_point(model.point::in, io.io::di, io.io::uo) is det.
 
 %------------------------------------------------------------------------------%
 :- instance model(shape).
@@ -164,7 +165,7 @@ line(!Parser, !Model) :-
                     GetFloat(!Parser, U),
                     skip_whitespace(!Parser),
                     GetFloat(!Parser, V),
-                    puttex(tex(U, V), !Model)
+                    puttex(model.tex(U, V), !Model)
                 ; Char2 = 'n' ->
                     skip_whitespace(!Parser),
                     GetFloat(!Parser, X),
@@ -172,7 +173,7 @@ line(!Parser, !Model) :-
                     GetFloat(!Parser, Y),
                     skip_whitespace(!Parser),
                     GetFloat(!Parser, Z),
-                    putnormal(vector(X, Y, Z), !Model)
+                    putnormal(model.normal(X, Y, Z), !Model)
                 ;
                     skip_whitespace(!Parser),
                     GetFloat(!Parser, X),
@@ -180,7 +181,7 @@ line(!Parser, !Model) :-
                     GetFloat(!Parser, Y),
                     skip_whitespace(!Parser),
                     GetFloat(!Parser, Z),
-                    putpoint(point(X, Y, Z), !Model)
+                    putpoint(model.point(X, Y, Z), !Model)
                 )
             ;
                 skip_whitespace(!Parser),
@@ -189,7 +190,7 @@ line(!Parser, !Model) :-
                 GetFloat(!Parser, Y),
                 skip_whitespace(!Parser),
                 GetFloat(!Parser, Z),
-                putpoint(point(X, Y, Z), !Model)
+                putpoint(model.point(X, Y, Z), !Model)
             )
         ; Char = 'f' ->
             accumulate_face(!Parser, [], Face),
@@ -232,7 +233,7 @@ write_vertex(vertex(V, T), !IO) :-
     io.write_string(" TexCoord Index: ", !IO),
     io.write_int(T, !IO).
 
-write_point(point(X, Y, Z), !IO) :-
+write_point(model.point(X, Y, Z), !IO) :-
     io.write_string("X ", !IO),
     io.write_float(X, !IO),
     io.write_string("Y ", !IO),

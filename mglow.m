@@ -33,7 +33,9 @@
 
 :- pred flip_screen(window::di, window::uo) is det.
 
-:- pred get_event(window::di, window::uo, maybe(glow_event)::uo) is det.
+:- pred get_event(maybe(glow_event)::uo, window::di, window::uo) is det.
+
+:- pred get_mouse_location(int::uo, int::uo, window::di, window::uo) is det.
 
 %==============================================================================%
 :- implementation.
@@ -116,7 +118,7 @@ create_quit_event = yes(quit).
 :- pragma foreign_export("C", create_quit_event=(uo), "create_quit_event").
 
 :- pragma foreign_proc("C",
-    get_event(Window::di, WindowOut::uo, EventOut::uo),
+    get_event(EventOut::uo, Window::di, WindowOut::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception],
     "
         struct Glow_Event event;
@@ -130,4 +132,16 @@ create_quit_event = yes(quit).
             }
         else
             EventOut = create_no_event();
+    ").
+
+:- pragma foreign_proc("C",
+    get_mouse_location(X::uo, Y::uo, Win0::di, Win1::uo),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception],
+    "
+        {
+            glow_pixel_coords_t coords;
+            Glow_GetMousePosition((Win1 = Win0), coords);
+            X = coords[0];
+            Y = coords[1];
+        }
     ").

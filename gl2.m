@@ -4,8 +4,10 @@
 %==============================================================================%
 
 :- use_module mglow.
+:- use_module matrix.
 :- use_module opengl.
 :- use_module render.
+:- use_module model.
 :- use_module wavefront.
 :- use_module softshape.
 
@@ -56,6 +58,15 @@
 
 :- pred unbind_texture(mglow.window::di, mglow.window::uo) is det.
 
+:- pred load_matrix(matrix.matrix::in, mglow.window::di, mglow.window::uo) is det.
+:- pred store_matrix(matrix.matrix::out, matrix_mode::in,
+    mglow.window::di, mglow.window::uo) is det.
+
+:- pred push_matrix(mglow.window::di, mglow.window::uo) is det.
+:- pred pop_matrix(mglow.window::di, mglow.window::uo) is det.
+:- pred translate(float::in, float::in, float::in, mglow.window::di, mglow.window::uo) is det.
+
+
 % Translates to glBegin()
 % begin(Type, !Window)
 :- pred begin(opengl.shape_type::in, mglow.window::di, mglow.window::uo) is det.
@@ -79,14 +90,14 @@
 
 % Draws a single wavefront face. Used to implement draw/3
 :- pred draw(wavefront.face::in,
-    list(wavefront.point)::in,
-    list(wavefront.tex)::in,
+    list(model.point)::in,
+    list(model.tex)::in,
     mglow.window::di, mglow.window::uo) is det.
 
 % Used for folding over the list of faces in a wavefront shape.
 :- pred draw(wavefront.vertex::in,
-    list(wavefront.point)::in, list(wavefront.point)::out,
-    list(wavefront.tex)::in, list(wavefront.tex)::out,
+    list(model.point)::in, list(model.point)::out,
+    list(model.tex)::in, list(model.tex)::out,
     mglow.window::di, mglow.window::uo) is det.
 
 :- type shape2d ---> shape2d(softshape.shape2d) ; shape2d(softshape.shape2d, opengl.texture).
@@ -117,6 +128,8 @@
 
 init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H).
 
+:- pragma foreign_decl("C", "#include <assert.h>").
+:- pragma foreign_decl("C", "#include ""matrix.mh"" ").
 :- pragma foreign_decl("C", "#include ""glow/glow.h"" ").
 :- pragma foreign_decl("C", "
 #ifdef _WIN32
@@ -222,6 +235,61 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H).
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glFrustum(Left, Right, Bottom, Top, NearZ, FarZ); ").
 
+:- pragma foreign_proc("C", load_matrix(Mat::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+    Win1 = Win0;
+    {
+        float mat[16];
+        LoadMatrix(Mat, mat);
+        glLoadMatrixf(mat);
+    }
+    ").
+
+:- pragma foreign_proc("C", store_matrix(Out::out, Which::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+    Win1 = Win0;
+    {
+        float mat[16];
+        GLenum which_enum;
+        if(Which == GL_MODELVIEW)
+            which_enum = GL_MODELVIEW_MATRIX;
+        else if(Which == GL_PROJECTION)
+            which_enum = GL_PROJECTION_MATRIX;
+        else
+            assert(0 && ""Invalid matrix."");
+        glGetFloatv(which_enum, mat);
+        Out = StoreMatrix(mat);
+    }
+    ").
+
+:- pragma foreign_proc("C", push_matrix(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glPushMatrix();
+    ").
+
+:- pragma foreign_proc("C", pop_matrix(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glPopMatrix();
+    ").
+
+:- pragma foreign_proc("C", translate(X::in, Y::in, Z::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glTranslatef(X, Y, Z);
+    ").
+
 draw(Shape, !Window) :- Shape ^ wavefront.faces = [].
 draw(wavefront.shape(Vertices, TexCoords, N, [Face|List]), !Window) :-
     draw(Face, Vertices, TexCoords, !Window),
@@ -324,11 +392,11 @@ use_element(Pred, [E|List], N, !Window) :-
         use_element(Pred, List, N-1, !Window)
     ).
 
-:- pred use_point(wavefront.point::in, mglow.window::di, mglow.window::uo) is det.
-use_point(wavefront.point(X, Y, Z), !Window) :- vertex3(X, Y, Z, !Window).
+:- pred use_point(model.point::in, mglow.window::di, mglow.window::uo) is det.
+use_point(model.point(X, Y, Z), !Window) :- vertex3(X, Y, Z, !Window).
 
-:- pred use_tex_coord(wavefront.tex::in, mglow.window::di, mglow.window::uo) is det.
-use_tex_coord(wavefront.tex(U, V), !Window) :- tex_coord(U, V, !Window).
+:- pred use_tex_coord(model.tex::in, mglow.window::di, mglow.window::uo) is det.
+use_tex_coord(model.tex(U, V), !Window) :- tex_coord(U, V, !Window).
 
 draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
     use_element(use_tex_coord, !.TexCoords, T, !Window),
@@ -341,5 +409,8 @@ draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
         raster_pos(float(X) / float(WinW), float(Y) / float(WinH), !Window),
         draw_pixels(W, H, Pix, !Window),
         raster_pos(0.0, 0.0, !Window)
-    )
+    ),
+    (render.push_matrix(_, !Win) :- push_matrix(!Win)),
+    (render.pop_matrix(_, !Win) :- pop_matrix(!Win)),
+    (render.translate(_, X, Y, Z, !Win) :- translate(X, Y, Z, !Win))
 ].

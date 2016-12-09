@@ -5,3 +5,4 @@
 *.asm linguist-language=Assembly
 *.s linguist-language=Assembly
 *.S linguist-language=Assembly
+aimgage/* linguist-vendored

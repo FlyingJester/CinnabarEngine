@@ -38,7 +38,7 @@ void AImg_Finalizer(void *image, void *unused);
 
 :- pragma foreign_code("C", "
 void AImg_Finalizer(void *image, void *unused){
-    Aimg_DestroyImage(image);
+    AImg_DestroyImage(image);
     (void)image;
 }
 ").
@@ -67,7 +67,7 @@ void AImg_Finalizer(void *image, void *unused){
         const unsigned err = AImg_LoadAuto(&im, Path);
         if(err == AIMG_LOADPNG_SUCCESS){
             struct AImg_Image *const image = MR_GC_malloc_atomic(sizeof(struct AImg_Image));
-            AImg_Finalizer(image, AImg_Finalizer, NULL);
+            MR_GC_register_finalizer(image, AImg_Finalizer, NULL);
             image->pixels = im.pixels;
             image->w = im.w;
             image->h = im.h;

@@ -12,9 +12,14 @@
 
 :- type result ---> ok(opengl.texture) ; nofile ; badfile.
 
-:- pred load(io.io::di, io.io::uo, string::in, result::uo, mglow.window::di, mglow.window::uo) is det.
-:- pred upload(aimg.texture::in, opengl.texture::uo, mglow.window::di, mglow.window::uo) is det.
-:- pred load(aimg.result::in, result::uo, mglow.window::di, mglow.window::uo) is det.
+:- pred load(io.io::di, io.io::uo, string::in, result::out,
+    mglow.window::di, mglow.window::uo) is det.
+
+:- pred upload(aimg.texture::in, opengl.texture::out,
+    mglow.window::di, mglow.window::uo) is det.
+
+:- pred load(aimg.result::in, result::out,
+    mglow.window::di, mglow.window::uo) is det.
 
 %==============================================================================%
 :- implementation.
@@ -32,4 +37,7 @@ upload(AImgTex, Tex, !Window) :-
     Pix = aimg.pixels(AImgTex),
     W = aimg.width(AImgTex),
     H = aimg.height(AImgTex),
-    opengl.upload_texture(Tex, Pix, W, H, !Window).
+    opengl.upload_texture(Tex, Pix, W, H, !Window),
+    opengl.bind_texture(Tex, !Window),
+    opengl.texture_filter(opengl.min_filter, opengl.linear, !Window),
+    opengl.texture_filter(opengl.mag_filter, opengl.linear, !Window).

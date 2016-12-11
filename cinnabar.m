@@ -16,11 +16,13 @@
 :- use_module mchrono.
 :- use_module render.
 :- use_module gl2.
+:- use_module upload_aimg.
 :- use_module opengl.
 :- use_module softshape.
 
 :- import_module list.
 :- import_module float.
+:- use_module string.
 :- use_module maybe.
 
 %------------------------------------------------------------------------------%
@@ -32,18 +34,36 @@
 w = 480.
 :- func h = int.
 h = 320.
+:- func tex_path = string.
+tex_path = "moldy.tga".
 
 %------------------------------------------------------------------------------%
 main(!IO) :-
-    mglow.create_window(!IO, mglow.size(w, h), mglow.gl_version(2, 0), "Cinnabar", Window),
+    mglow.create_window(!IO, mglow.size(w, h), mglow.gl_version(2, 0), "Cinnabar", Win0),
     
-    gl2.ortho(1.0, 1.0, Window, WindowOrtho),
-    gl2.init(WindowOrtho, WindowRender, GL2),
+    gl2.ortho(1.0, 1.0, Win0, Win1),
+    gl2.init(Win1, Win2, GL2),
     
     Rect = softshape.rectangle(0.1, 0.1, 0.8, 0.8),
-    frame([gl2.shape2d(Rect)|[]], GL2, WindowRender, WindowEnd, !IO),
     
-    mglow.destroy_window(!IO, WindowEnd).
+    upload_aimg.load(!IO, string.append("res/", tex_path), Result, Win2, Win3),
+    (
+        Result = upload_aimg.ok(Tex),
+        frame([gl2.shape2d(Rect, Tex)|[]], GL2, Win3, Win4, !IO)
+    ;
+        Result = upload_aimg.badfile,
+        Win3 = Win4,
+        io.write_string("Could not load texture file: ", !IO),
+        io.write_string(tex_path, !IO),
+        io.nl(!IO)
+    ;
+        Result = upload_aimg.nofile,
+        Win3 = Win4,
+        io.write_string("Missing texture file: ", !IO),
+        io.write_string(tex_path, !IO),
+        io.nl(!IO)
+    ),
+    mglow.destroy_window(!IO, Win4).
 
 %------------------------------------------------------------------------------%
 frame(Models, Renderer, !Window, !IO) :-

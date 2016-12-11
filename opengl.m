@@ -17,12 +17,16 @@
 
 :- type shader_type ---> vert ; frag.
 :- type shape_type ---> triangle_strip ; triangle_fan ;  triangles ; line_loop ; point ; lines.
+:- type filter_set ---> mag_filter ; min_filter.
+:- type filter_type ---> linear ; nearest.
 
 % upload_texture(Output, Pixels, W, H, !Window)
 :- pred upload_texture(texture::uo, c_pointer::in, int::in, int::in,
     mglow.window::di, mglow.window::uo) is det.
 
 :- pred bind_texture(texture::in, mglow.window::di, mglow.window::uo) is det. 
+
+:- pred texture_filter(filter_set::in, filter_type::in, mglow.window::di, mglow.window::uo) is det.
 
 % draw_arrays(Type, FirstIndex, Count, !Window)
 :- pred draw_arrays(shape_type::in, int::in, int::in,
@@ -70,6 +74,18 @@
         point - "GL_POINTS"
     ]).
 
+:- pragma foreign_enum("C", filter_set/0,
+    [
+        min_filter - "GL_TEXTURE_MAG_FILTER",
+        mag_filter - "GL_TEXTURE_MIN_FILTER"
+    ]).
+
+:- pragma foreign_enum("C", filter_type/0,
+    [
+        linear - "GL_LINEAR",
+        nearest - "GL_NEAREST"
+    ]).
+
 :- pragma foreign_type("C", texture, "GLuint*").
 
 :- pragma foreign_proc("C",
@@ -93,6 +109,15 @@
     "
         Win1 = Win0;
         glBindTexture(GL_TEXTURE_2D, *((GLuint*)Tex));
+    ").
+
+:- pragma foreign_proc("C",
+    texture_filter(Set::in, Type::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glTexParameterf(GL_TEXTURE_2D, Set, Type);
     ").
 
 :- pragma foreign_proc("C", clear_color(R::in, G::in, B::in, A::in, Win0::di, Win1::uo),

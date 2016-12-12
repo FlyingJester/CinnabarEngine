@@ -22,6 +22,7 @@
 
 :- import_module list.
 :- import_module float.
+:- import_module int.
 :- use_module string.
 :- use_module maybe.
 
@@ -43,7 +44,8 @@ setup_gl2(_, !Window) :-
     gl2.load_identity(!Window),
     gl2.matrix_mode(gl2.projection, !Window),
 % orth(NearZ, FarZ, Left, Right, Top, Bottom, !Window)
-    gl2.frustum(0.5, 2.0, 0.0, 1.0, 0.0, 1.0, !Window),
+    AspectRatio = float(w) / float(h),
+    gl2.frustum(0.5, 2.0, 0.0, 1.0 * AspectRatio, 0.0, 1.0, !Window),
     opengl.viewport(0, 0, w, h, !Window).
 
 %------------------------------------------------------------------------------%
@@ -93,6 +95,12 @@ frame(Models, Renderer, !Window, !IO) :-
         X = float(MouseX) / float(w),
         Y = float(MouseY) / float(h),
         render.translate(Renderer, X, Y, -1.0, !Window),
+        
+        mchrono.micro_ticks(!IO, mchrono.microseconds(Ticks)),
+        RotateAmount = float(int.div(Ticks, 1000)) / 10.0,
+        render.translate(Renderer, 0.5, 0.5, 0.0, !Window),
+        render.rotate_z(Renderer, RotateAmount, !Window),
+        render.translate(Renderer, -0.5, -0.5, 0.0, !Window),
         
         list.foldl(render.draw(Renderer), Models, !Window),
         mglow.flip_screen(!Window),

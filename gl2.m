@@ -68,6 +68,8 @@
 :- pred push_matrix(mglow.window::di, mglow.window::uo) is det.
 :- pred pop_matrix(mglow.window::di, mglow.window::uo) is det.
 :- pred translate(float::in, float::in, float::in, mglow.window::di, mglow.window::uo) is det.
+:- pred rotate(float::in, float::in, float::in, float::in,
+    mglow.window::di, mglow.window::uo) is det.
 
 
 % Translates to glBegin()
@@ -303,6 +305,15 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window).
         glTranslatef(X, Y, Z);
     ").
 
+:- pragma foreign_proc("C",
+    rotate(A::in, X::in, Y::in, Z::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glRotatef(A, X, Y, Z);
+    ").
+
 draw(Shape, !Window) :- Shape ^ wavefront.faces = [].
 draw(wavefront.shape(Vertices, TexCoords, N, [Face|List]), !Window) :-
     draw(Face, Vertices, TexCoords, !Window),
@@ -425,5 +436,8 @@ draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
     ),
     (render.push_matrix(_, !Win) :- push_matrix(!Win)),
     (render.pop_matrix(_, !Win) :- pop_matrix(!Win)),
-    (render.translate(_, X, Y, Z, !Win) :- translate(X, Y, Z, !Win))
+    (render.translate(_, X, Y, Z, !Win) :- translate(X, Y, Z, !Win)),
+    (render.rotate_x(_, X, !Win) :- rotate(X, 1.0, 0.0, 0.0, !Win)),
+    (render.rotate_y(_, Y, !Win) :- rotate(Y, 0.0, 1.0, 0.0, !Win)),
+    (render.rotate_z(_, Z, !Win) :- rotate(Z, 0.0, 0.0, 1.0, !Win))
 ].

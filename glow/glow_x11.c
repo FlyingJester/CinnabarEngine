@@ -19,6 +19,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#define GLOW_X_EVENT_MASK\
+    (StructureNotifyMask\
+    |KeyPressMask\
+    |KeyReleaseMask\
+    |ButtonPress\
+    |ExposureMask\
+    |PointerMotionMask)
+
+
 struct Glow_Window {
     Display *dpy;
     Screen *scr;
@@ -30,8 +39,97 @@ struct Glow_Window {
     XVisualInfo *vis;
     
     unsigned w, h;
+
+    unsigned char keys[100];
 };
 
+static unsigned short glow_keystr_number(const char *str);
+static unsigned short glow_key_number(char key){
+    if(key >= '0' && key <= '9')
+        return 16 + key - '0';
+    if(key >= 'a' && key <= 'z')
+        return 26 + key - 'a';
+    if(key >= 'A' && key <= 'Z')
+        return 26 + key - 'A';
+    if(key == '!')
+        return glow_key_number('1');
+    if(key == '@')
+        return glow_key_number('2');
+    if(key == '#')
+        return glow_key_number('3');
+    if(key == '$')
+        return glow_key_number('4');
+    if(key == '%')
+        return glow_key_number('5');
+    if(key == '^')
+        return glow_key_number('6');
+    if(key == '&')
+        return glow_key_number('7');
+    if(key == '*')
+        return glow_key_number('8');
+    if(key == '(')
+        return glow_key_number('9');
+    if(key == ')')
+        return glow_key_number('0');
+    if(key == '[' || key == '{')
+        return 13;
+    if(key == ']' || key == '}')
+        return 14;
+    if(key == '|' || key == '\\')
+        return 15;
+
+    if(key == '`' || key == '~')
+        return 90;
+    if(key == '-' || key == '_')
+        return 91;
+    if(key == '=' || key == '+')
+        return 92;
+    if(key == '<' || key == ',')
+        return 93;
+    if(key == '>' || key == '.')
+        return 94;
+    if(key == '/' || key == '?')
+        return 95;
+
+    if(key == '\t')
+        return glow_keystr_number(GLOW_TAB);
+
+    if(key == ' ')
+        return 98;
+
+    return 99;
+}
+
+static unsigned short glow_keystr_number(const char *str){
+    if(str == NULL)
+        return 0;
+
+    if(str[0] == '\0')
+        return 0;
+    if(str[1] == '\0')
+        return glow_key_number(*str);
+    {
+        unsigned n = 0;
+    #define KEY(WHAT)\
+        if(str == GLOW_ ## WHAT || strcmp(GLOW_ ## WHAT, str) == 0)\
+            return n;\
+        n++
+        
+        KEY(ESCAPE);
+        KEY(CONTROL);
+        KEY(BACKSPACE);
+        KEY(DELETE);
+        KEY(UP_ARROW);
+        KEY(DOWN_ARROW);
+        KEY(LEFT_ARROW);
+        KEY(RIGHT_ARROW);
+        KEY(ENTER);
+        KEY(TAB);
+        
+    #undef KEY
+    }
+    return 99;
+}
 
 /* Gets a display, first using the DISPLAY environment variable, then using the
  * X default (which may be different than the env variable depending on the DE),
@@ -175,6 +273,8 @@ struct Glow_Window *Glow_CreateWindow(unsigned aW, unsigned aH,
             
             XStoreName(out->dpy, out->wnd, title);
 
+            XSelectInput(out->dpy, out->wnd, GLOW_X_EVENT_MASK);
+
             XSync(out->dpy, False);
 
             Glow_MakeCurrent(out);
@@ -224,9 +324,42 @@ void Glow_ShowWindow(struct Glow_Window *that){
 unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
     if(XPending(that->dpy) > 0){
         XEvent event;
+
+        unsigned char press = 0u;
+
         XNextEvent(that->dpy, &event);
         switch(event.type){
             
+            case KeyPress:
+                press = 1u;
+            case KeyRelease:
+                {
+                    KeySym sym;
+                    XComposeStatus compose;
+                    XLookupString(&event.xkey, out->value.key,
+                        GLOW_MAX_KEY_NAME_SIZE, &sym, &compose);
+                }
+                {
+                    const unsigned n = glow_keystr_number(out->value.key);
+
+                    if(press)
+                        out->type = eGlowKeyboardPressed;
+                    else
+                        out->type = eGlowKeyboardReleased;
+
+                    that->keys[n] = press;
+
+#ifndef NDEBUG
+                    if(press)
+                        fputs("[Glow]Pressed key", stdout);
+                    else
+                        fputs("[Glow]Released key", stdout);
+
+                    puts(out->value.key);
+                    printf("[Glow]Using Glow key number %u\n", n);
+#endif
+                }
+                return 1;
             case UnmapNotify:
             case DestroyNotify:
                 out->type = eGlowQuit;
@@ -259,6 +392,14 @@ void Glow_GetMousePosition(struct Glow_Window *win,
 
     out_pos[0] = win_x;
     out_pos[1] = win_y;
+}
+
+unsigned Glow_IsKeyPressed(struct Glow_Window *win, const char *key){
+
+}
+
+unsigned Glow_IsKeyCharPressed(struct Glow_Window *win, char key){
+    return win->keys[glow_key_number(key)];
 }
 
 /* int main(int argc, char **argv){ return glow_main(argc, argv); } */

@@ -38,11 +38,13 @@ enum Glow_MouseButton{
 
 typedef unsigned short glow_pixel_coords_t[2];
 
+#define GLOW_MAX_KEY_NAME_SIZE 16
 struct Glow_Event{
 	enum Glow_EventType type;
 	union {
-		char key[16]; /* Always null-terminated */
-		struct {
+                /* String representing a key. Always null-terminated */
+		char key[GLOW_MAX_KEY_NAME_SIZE];
+                struct {
 			glow_pixel_coords_t xy;
 			enum Glow_MouseButton button;
 		} mouse;
@@ -56,20 +58,26 @@ struct Glow_Event{
 #define GLOW_SHIFT       "shift"
 #define GLOW_CONTROL     "control"
 #define GLOW_BACKSPACE   "backspace"
-#define GLOW_DELETE   "backspace"
+#define GLOW_DELETE      "backspace"
 #define GLOW_UP_ARROW    "up"
 #define GLOW_DOWN_ARROW  "down"
 #define GLOW_LEFT_ARROW  "left"
 #define GLOW_RIGHT_ARROW "right"
-#define GLOW_ENTER "enter"
-#define GLOW_RETURN GLOW_ENTER
-#define GLOW_TAB "tab"
+#define GLOW_ENTER       "enter"
+#define GLOW_RETURN      GLOW_ENTER
+#define GLOW_TAB         "tab"
 
 /* Returns 1 if there is an even, 0 otherwise */
 unsigned Glow_GetEvent(struct Glow_Window *w, struct Glow_Event *out_event);
 
 unsigned Glow_GetKeyPressed(struct Glow_Window *w, char out_key[16]);
 void Glow_GetMousePosition(struct Glow_Window *w, glow_pixel_coords_t out_pos);
+
+/* Returns 1 if the key is pressed, 0 otherwise.
+ * Key must be null-terminated. */
+unsigned Glow_IsKeyPressed(struct Glow_Window *w, const char *key);
+/* Returns 1 if the key is pressed, 0 otherwise. Key must be lowercase. */
+unsigned Glow_IsKeyCharPressed(struct Glow_Window *w, char key);
 
 /* Define your main as this. */
 int glow_main(int argc, char *argv[]);

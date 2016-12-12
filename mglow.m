@@ -15,6 +15,8 @@
 % TODO: Needs the other wrappers
 :- type glow_event ---> quit.
 
+:- type keypress ---> press ; release.
+
 %------------------------------------------------------------------------------%
 
 :- pred create_window(io::di, io::uo,
@@ -34,7 +36,7 @@
 :- pred flip_screen(window::di, window::uo) is det.
 
 :- pred get_event(maybe(glow_event)::uo, window::di, window::uo) is det.
-
+:- pred key_pressed(string::in, keypress::uo, window::di, window::uo) is det.
 :- pred get_mouse_location(int::uo, int::uo, window::di, window::uo) is det.
 
 %==============================================================================%
@@ -53,6 +55,13 @@
         (void)_;
     }
     ").
+
+:- pragma foreign_enum("C", keypress/0,
+    [
+        press - "1",
+        release - "0"
+    ]).
+
 create_window(!IO, size(W, H), gl_version(Maj, Min), Title, Window) :-
     create_window(!IO, W, H, Maj, Min, Title, Window).
 
@@ -132,6 +141,15 @@ create_quit_event = yes(quit).
             }
         else
             EventOut = create_no_event();
+    ").
+
+:- pragma foreign_proc("C",
+    key_pressed(Str::in, Press::uo, Win0::di, Win1::uo),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception],
+    "
+        Press = 0;
+        if(Glow_IsKeyPressed((Win1 = Win0), Str))
+            Press = 1;
     ").
 
 :- pragma foreign_proc("C",

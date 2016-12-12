@@ -37,13 +37,21 @@ h = 320.
 :- func tex_path = string.
 tex_path = "moldy.tga".
 
+:- pred setup_gl2(gl2.gl2::in, mglow.window::di, mglow.window::uo) is det.
+setup_gl2(GL2, !Window) :-
+    gl2.matrix_mode(gl2.modelview, !Window),
+    gl2.load_identity(!Window),
+    gl2.matrix_mode(gl2.projection, !Window),
+% orth(NearZ, FarZ, Left, Right, Top, Bottom, !Window)
+    gl2.ortho(-1.0, 1.0, 0.0, 1.0, 0.0, 1.0, !Window).
+
 %------------------------------------------------------------------------------%
 main(!IO) :-
     mglow.create_window(!IO, mglow.size(w, h), mglow.gl_version(2, 0), "Cinnabar", Win0),
     
-    gl2.ortho(1.0, 1.0, Win0, Win1),
-    gl2.init(Win1, Win2, GL2),
-    
+    gl2.init(Win0, Win1, GL2),
+    setup_gl2(GL2, Win1, Win2),
+
     Rect = softshape.rectangle(0.1, 0.1, 0.8, 0.8),
     
     upload_aimg.load(!IO, string.append("res/", tex_path), Result, Win2, Win3),

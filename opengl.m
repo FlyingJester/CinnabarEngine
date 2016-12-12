@@ -37,6 +37,10 @@
 
 :- pred clear(mglow.window::di, mglow.window::uo) is det.
 
+% viewport(X, Y, W, H)
+:- pred viewport(int::in, int::in, int::in, int::in,
+    mglow.window::di, mglow.window::uo) is det.
+
 %==============================================================================%
 :- implementation.
 %==============================================================================%
@@ -142,4 +146,13 @@
     "
         Win1 = Win0;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    ").
+
+:- pragma foreign_proc("C",
+    viewport(X::in, Y::in, W::in, H::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glViewport(X, Y, W, H);
     ").

@@ -38,12 +38,13 @@ h = 320.
 tex_path = "moldy.tga".
 
 :- pred setup_gl2(gl2.gl2::in, mglow.window::di, mglow.window::uo) is det.
-setup_gl2(GL2, !Window) :-
+setup_gl2(_, !Window) :-
     gl2.matrix_mode(gl2.modelview, !Window),
     gl2.load_identity(!Window),
     gl2.matrix_mode(gl2.projection, !Window),
 % orth(NearZ, FarZ, Left, Right, Top, Bottom, !Window)
-    gl2.ortho(-1.0, 1.0, 0.0, 1.0, 0.0, 1.0, !Window).
+    gl2.frustum(0.5, 2.0, 0.0, 1.0, 0.0, 1.0, !Window),
+    opengl.viewport(0, 0, w, h, !Window).
 
 %------------------------------------------------------------------------------%
 main(!IO) :-
@@ -91,7 +92,7 @@ frame(Models, Renderer, !Window, !IO) :-
         
         X = float(MouseX) / float(w),
         Y = float(MouseY) / float(h),
-        render.translate(Renderer, X, Y, 0.0, !Window),
+        render.translate(Renderer, X, Y, -1.0, !Window),
         
         list.foldl(render.draw(Renderer), Models, !Window),
         mglow.flip_screen(!Window),

@@ -439,5 +439,6 @@ draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
     (render.translate(_, X, Y, Z, !Win) :- translate(X, Y, Z, !Win)),
     (render.rotate_x(_, X, !Win) :- rotate(X, 1.0, 0.0, 0.0, !Win)),
     (render.rotate_y(_, Y, !Win) :- rotate(Y, 0.0, 1.0, 0.0, !Win)),
-    (render.rotate_z(_, Z, !Win) :- rotate(Z, 0.0, 0.0, 1.0, !Win))
+    (render.rotate_z(_, Z, !Win) :- rotate(Z, 0.0, 0.0, 1.0, !Win)),
+    (render.rotate_about(_, A, X, Y, Z, !Win) :- rotate(A, X, Y, Z, !Win))
 ].

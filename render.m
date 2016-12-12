@@ -30,6 +30,9 @@
     mode rotate_y(in, in, di, uo) is det,
     pred rotate_z(T, float, mglow.window, mglow.window),
     mode rotate_z(in, in, di, uo) is det,
+    pred rotate_about(T, float, float, float, float,
+        mglow.window, mglow.window),
+    mode rotate_about(in, in, in, in, in, di, uo) is det,
 
     % Draws a given 32-bit RGBA image at X, Y. This may be somewhat slow, so it
     % is recommended only for bridging some software rendering with the

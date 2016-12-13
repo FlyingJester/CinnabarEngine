@@ -116,11 +116,15 @@ skip_number(!Parser) :-
 get_number(Parse, Default, Cin, cinparser(Src, End, Len), Num) :-
     Cin = cinparser(Src, At, Len),
     skip_number(Cin, cinparser(_, End, _)),
-    string.between(Src, At, End, Str),
-    ( Parse(Str, X) ->
-        Num = X
-    ;
+    ( At = End ->
         Num = Default
+    ;
+        string.between(Src, At, End, Str),
+        ( Parse(Str, X) ->
+            Num = X
+        ;
+            Num = Default
+        )
     ).
 
 :- pred skip_to_whitespace(cinparser::in, cinparser::out) is det.

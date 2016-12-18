@@ -16,7 +16,7 @@
 :- func y_sensitivity(mouse_settings) = float.
 :- func sensitivity(mouse_settings) = {float, float}.
 
-:- type update ---> update(x_change::float, y_change::float).
+:- type update ---> update(mouse_x_change::float, mouse_y_change::float).
 
 :- pred update(mouse_settings::in, update::in, camera::in, camera::out) is det.
 :- func update(mouse_settings, update, camera) = camera.

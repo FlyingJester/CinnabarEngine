@@ -72,6 +72,10 @@ unsigned Glow_GetEvent(struct Glow_Window *w, struct Glow_Event *out_event);
 
 unsigned Glow_GetKeyPressed(struct Glow_Window *w, char out_key[16]);
 void Glow_GetMousePosition(struct Glow_Window *w, glow_pixel_coords_t out_pos);
+/* TODO: We are currently using this to grab the pointer. In X11, there is better
+ * functionality to handle this which could easily be emulated using Win32. */
+void Glow_SetMousePosition(struct Glow_Window *w, const glow_pixel_coords_t pos);
+void Glow_CenterMouse(struct Glow_Window *w);
 
 /* Returns 1 if the key is pressed, 0 otherwise.
  * Key must be null-terminated. */

@@ -394,6 +394,18 @@ void Glow_GetMousePosition(struct Glow_Window *win,
     out_pos[1] = win_y;
 }
 
+void Glow_SetMousePosition(struct Glow_Window *win,
+    const glow_pixel_coords_t pos){
+    XWarpPointer(win->dpy, win->wnd, win->wnd, 0, 0, 0, 0, pos[0], pos[1]);
+    XFlush(win->dpy);
+}
+
+void Glow_CenterMouse(struct Glow_Window *win){
+    XWarpPointer(win->dpy, win->wnd, win->wnd, 0, 0, 0, 0,
+        win->w >> 1, win->h >> 1);
+    XFlush(win->dpy);
+}
+
 unsigned Glow_IsKeyPressed(struct Glow_Window *win, const char *key){
 
 }

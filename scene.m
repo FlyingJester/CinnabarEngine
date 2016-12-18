@@ -3,50 +3,101 @@
 :- interface.
 %==============================================================================%
 
-:- use_module matrix.
+:- use_module render.
+:- use_module camera.
 :- use_module mglow.
-:- use_module rbtree.
-:- use_module renderer.
-:- import_module list.
+%------------------------------------------------------------------------------%
 
-:- type matrixtree == rbtree.rbtree(int, matrix.matrix).
+:- include_module scene.matrix_tree.
+:- include_module scene.node_tree.
 
-:- type node(Model) --->
-    empty ;
-    group(list.list(node(Model))) ;
-    matrix(matrix_id::int, node(Model)) ;
-    shader(renderer.shader, node(Model)) ;
-    shape(Model).
+:- use_module scene.matrix_tree.
+:- use_module scene.node_tree.
+%------------------------------------------------------------------------------%
 
-:- func init_matrixtree = matrixtree.
+:- type scene(Model) --->
+    camera(scene.matrix_tree.matrix_tree,
+        scene.node_tree.node(Model),
+        camera.camera).
+%------------------------------------------------------------------------------%
 
-:- pred draw(node(Model), matrix.matrix, matrixtree, Renderer,
-    mglow.window, mglow.window) <= (renderer.model(Renderer, Model)).
-:- mode draw(in, in, in, in, di, uo) is det.
+% Recursively draws all nodes in the tree.
+:- pred draw(scene.matrix_tree.matrix_tree::in, scene.node_tree.node(Model)::in,
+     Render::in, mglow.window::di, mglow.window::uo) is det
+      <= render.model(Render, Model).
+
+:- pred draw(scene(Model)::in, Render::in,
+    mglow.window::di, mglow.window::uo) is det <= render.model(Render, Model).
+
+% Similar to draw. First applies the given transformation without pushing
+% matrices on the renderer, and will pass any further transfom nodes into 
+% another call to apply_transformation. This is an optimization to use a 
+% single matrix stack entry to handle multiple transformations in a row.
+:- pred apply_transformation_and_draw(scene.matrix_tree.matrix_tree::in,
+    Render::in, scene.matrix_tree.transformation::in,
+    scene.node_tree.node(Model)::in, mglow.window::di, mglow.window::uo) is det
+      <= render.model(Render, Model).
+
+% Translates scene.matrix_tree.transformation types into calls to render
+% typeclass predicates.
+:- pred apply_transformation(scene.matrix_tree.transformation::in, Render::in,
+    mglow.window::di, mglow.window::uo) is det <= render.render(Render).
 
 %==============================================================================%
 :- implementation.
 %==============================================================================%
 
-init_matrixtree = rbtree.init.
+apply_transformation_and_draw(Tree, Render, Transformation, Node, !Window) :-
+    apply_transformation(Transformation, Render, !Window),
+    ( Node = scene.node_tree.transform(NextTransformation, NextNode) ->
+        apply_transformation_and_draw(Tree,
+            Render, NextTransformation, NextNode, !Window)
+    ;
+        draw(Tree, Node, Render, !Window)
+    ).
 
-draw(empty, _, _, _, !Window).
+draw(Tree, scene.node_tree.transform(Transformation, Node), Render, !Window) :-
+    render.push_matrix(Render, !Window),
+    apply_transformation_and_draw(Tree, Render, Transformation, Node, !Window),
+    render.pop_matrix(Render, !Window).
 
-draw(group([]), _, _, _, !Window).
-draw(group([Node|List]), Matrix, Tree, Renderer, !Window) :-
-    draw(Node, Matrix, Tree, Renderer, !Window),
-    draw(group(List), Matrix, Tree, Renderer, !Window).
+draw(_, scene.node_tree.model(Model), Render, !Window) :-
+    render.draw(Render, Model, !Window).
 
-draw(matrix(ID, Node), Matrix, Tree, Renderer, !Window) :-
-    rbtree.lookup(Tree, ID, NewMatrix),
-    draw(Node, matrix.multiply(Matrix, NewMatrix), Tree, Renderer, !Window).
+draw(Tree, scene.node_tree.group(NodeA, NodeB), Render, !Window) :-
+    draw(Tree, NodeA, Render, !Window),
+    draw(Tree, NodeB, Render, !Window).
 
-draw(shape(Model), Matrix, _, Renderer, !Window) :-
-%    renderer.matrix(Matrix, Renderer, Shader, !Window),
-    renderer.draw(Model, Renderer, !Window). 
+draw(camera(MatrixTree, NodeTree, Camera), Render, !Window) :-
+    render.push_matrix(Render, !Window),
+    X = Camera ^ camera.x, Y = Camera ^ camera.y, Z = Camera ^ camera.z,
+    render.translate(Render, X, Y, Z, !Window),
+    render.rotate_x(Render, Camera ^ camera.pitch, !Window),
+    render.rotate_y(Render, Camera ^ camera.yaw, !Window),
+    
+    % If the first node is a transformation, we can avoid another matrix stack
+    % manipulation and just ride on the push and pop in this outer function.
+    ( NodeTree = scene.node_tree.transform(Transformation, Node) ->
+        apply_transformation(Transformation, Render, !Window),
+        draw(MatrixTree, Node, Render, !Window)
+    ;
+        draw(MatrixTree, NodeTree, Render, !Window)
+    ),
+    render.push_matrix(Render, !Window).
 
-draw(shader(Shader, Node), Matrix, Tree, Renderer, !Window) :-
-    renderer.get_shader(Renderer, OldShader, !Window),
-    renderer.set_shader(Renderer, RendererNew, Shader, !Window),
-    draw(Node, Matrix, Tree, RendererNew, !Window),
-    renderer.set_shader(RendererNew, _, OldShader, !Window).
+% TODO
+apply_transformation(scene.matrix_tree.scale(_, _, _), _, !Window).
+% TODO
+apply_transformation(scene.matrix_tree.matrix(_), _, !Window).
+
+apply_transformation(scene.matrix_tree.translate(X, Y, Z), Render, !Window) :-
+    render.translate(Render, X, Y, Z, !Window).
+
+apply_transformation(scene.matrix_tree.rotate_x(A), Render, !Window) :-
+    render.rotate_x(Render, A, !Window).
+
+apply_transformation(scene.matrix_tree.rotate_y(A), Render, !Window) :-
+    render.rotate_y(Render, A, !Window).
+
+apply_transformation(scene.matrix_tree.rotate_z(A), Render, !Window) :-
+render.rotate_z(Render, A, !Window).

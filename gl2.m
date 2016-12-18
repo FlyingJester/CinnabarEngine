@@ -143,7 +143,11 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
 #ifdef _WIN32
 #include <Windows.h>
 #endif
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 ").
 
 :- pragma foreign_enum("C", matrix_mode/0,

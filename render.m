@@ -5,6 +5,7 @@
 
 :- use_module matrix.
 :- use_module mglow.
+%------------------------------------------------------------------------------%
 
 :- typeclass render(T) where [
     pred frustum(T,

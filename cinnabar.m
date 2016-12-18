@@ -15,6 +15,7 @@
 :- use_module mglow.
 :- use_module mchrono.
 :- use_module render.
+:- use_module scene.
 :- use_module gl2.
 :- use_module upload_aimg.
 :- use_module opengl.

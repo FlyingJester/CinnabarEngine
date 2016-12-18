@@ -36,6 +36,7 @@
 :- pred flip_screen(window::di, window::uo) is det.
 
 :- pred get_event(maybe(glow_event)::uo, window::di, window::uo) is det.
+% AKA Glow_IsKeyPressed
 :- pred key_pressed(string::in, keypress::uo, window::di, window::uo) is det.
 :- pred get_mouse_location(int::uo, int::uo, window::di, window::uo) is det.
 

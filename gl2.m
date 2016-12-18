@@ -61,6 +61,9 @@
 :- pred enable_texture(mglow.window::di, mglow.window::uo) is det.
 :- pred disable_texture(mglow.window::di, mglow.window::uo) is det.
 
+:- pred enable_depth(mglow.window::di, mglow.window::uo) is det.
+:- pred disable_depth(mglow.window::di, mglow.window::uo) is det.
+
 :- pred load_matrix(matrix.matrix::in, mglow.window::di, mglow.window::uo) is det.
 :- pred store_matrix(matrix.matrix::out, matrix_mode::in,
     mglow.window::di, mglow.window::uo) is det.
@@ -131,7 +134,7 @@
 
 :- type gl2 ---> gl2(w::int, h::int).
 
-init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window).
+init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), enable_depth(!Window).
 
 :- pragma foreign_decl("C", "#include <assert.h>").
 :- pragma foreign_decl("C", "#include ""matrix.mh"" ").
@@ -198,6 +201,16 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window).
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glDisable(GL_TEXTURE_2D); ").
+    
+:- pragma foreign_proc("C", enable_depth(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glEnable(GL_DEPTH_TEST); ").
+    
+:- pragma foreign_proc("C", disable_depth(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glDisable(GL_DEPTH_TEST); ").
 
 :- pragma foreign_proc("C", begin(Type::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,

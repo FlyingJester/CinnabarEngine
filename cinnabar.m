@@ -56,7 +56,7 @@ main(!IO) :-
     setup_gl2(GL2, Win1, Win2),
 
 %    Rect = softshape.rectangle(0.1, 0.1, 0.8, 0.8),
-    io.see("res/sphere.obj", SeeResult, !IO),
+    io.see("res/texcube.obj", SeeResult, !IO),
     ( 
         SeeResult = io.ok,
         io.read_file_as_string(ShapeResult, !IO),

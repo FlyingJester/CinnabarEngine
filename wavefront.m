@@ -138,15 +138,15 @@ skip_to_whitespace(Cin, Out) :-
 
 :- pred accumulate_face(cinparser::in, cinparser::out, list(vertex)::in, list(vertex)::out) is det.
 accumulate_face(!Parser, FaceIn, FaceOut) :-
-    GetInt = get_number(string.to_int, 0), % Create a curried pred for shorthand
+    GetInt = get_number(string.to_int, 1), % Create a curried pred for shorthand
     skip_whitespace(!Parser),
     ( get(!Parser, Char), ( Char = '\n' ; Char = '\v' ; Char = '#') ->
         FaceOut = FaceIn
     ;
         list.append(FaceIn, [vertex(V, T) |[]], FaceMid),
-        GetInt(!Parser, V),
+        GetInt(!Parser, V+1),
         ( get(!Parser, '/') ->
-            GetInt(!Parser, T),
+            GetInt(!Parser, T+1),
             ( get(!Parser, '/') -> % Skip any normal specification.
                 GetInt(!Parser, _)
             ;
@@ -195,7 +195,8 @@ line(!Parser, !Model) :-
                 skip_whitespace(!Parser),
                 GetFloat(!Parser, Z),
                 putpoint(model.point(X, Y, Z), !Model)
-            )
+            ),
+            find_newline(!Parser)
         ; Char = 'f' ->
             accumulate_face(!Parser, [], Face),
             ( Face = [] ->
@@ -205,12 +206,11 @@ line(!Parser, !Model) :-
             )
         ;
             % On unknown char, just skip the line.
-            true
+            find_newline(!Parser)
         )
     ;
-        true
-    ),
-    find_newline(!Parser).
+        find_newline(!Parser)
+    ).
 
 :- pred load(cinparser::in, cinparser::out, T::in, T::out) is det <= model(T).
 load(Src, !Model) :-

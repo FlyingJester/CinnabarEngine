@@ -1,37 +1,45 @@
 all: cinnabar test
 
-# MMCIN=mmc -E -j4 --grade=asm_fast.gc.debug.stseg --make
-MMCCALL=mmc --grade=hlc.gc --cflag "-g" --opt-level 7 --intermodule-optimization
+LIBPX?=lib
+LIBSX?=so
+LIBSA?=a
+LIBPA?=$(LIBPX)
+INSTALL?=install
+
+MMC?=mmc
+
+# MMCIN=$(MMC) -E -j4 --grade=asm_fast.gc.debug.stseg --make
+MMCCALL=$(MMC) --grade=hlc.gc --cflag "-g" --opt-level 7 --intermodule-optimization
 MMCIN=$(MMCCALL) -E -j4 --make
 
 
-LIBTARGETS=libglow libchrono libspherefonts libbufferfile libaimg libopenglextra
+LIBTARGETS=libglow libchrono libspherefonts libbufferfile libaimg # libopenglextra
 
 libglow: glow
 	scons -j2 -C glow
-	install glow/libglow.so lib/libglow.so
+	$(INSTALL) glow/$(LIBPX)glow.$(LIBSX) lib/$(LIBPX)glow.$(LIBSX)
 
 libchrono: chrono
 	scons -j2 -C chrono
-	install chrono/libchrono.a lib/libchrono.a
+	$(INSTALL) chrono/$(LIBPA)chrono.$(LIBSA) lib/$(LIBPA)chrono.$(LIBSA)
 
 libspherefonts: spherefonts
 	$(MAKE) -C spherefonts
-	install spherefonts/libspherefonts.a lib/libspherefonts.a
+	$(INSTALL) spherefonts/$(LIBPA)spherefonts.$(LIBSA) lib/$(LIBPA)spherefonts.$(LIBSA)
 
 libbufferfile: bufferfile
 	scons -j2 -C bufferfile
-	install bufferfile/libbufferfile.a lib/libbufferfile.a
+	$(INSTALL) bufferfile/$(LIBPA)bufferfile.$(LIBSA) lib/$(LIBPA)bufferfile.$(LIBSA)
 
 libaimg: aimage bufferfile
 	$(MAKE) -C aimage
-	install aimage/libaimg.a lib/libaimg.a
+	$(INSTALL) aimage/$(LIBPA)aimg.$(LIBSA) lib/$(LIBPA)aimg.$(LIBSA)
 
-libopenglextra: openglextra
-	$(MAKE) -C openglextra
-	install openglextra/libopenglextra.a lib/libopenglextra.a
+#libopenglextra: openglextra
+#	$(MAKE) -C openglextra
+#	$(INSTALL) openglextra/$(LIBPA)openglextra.$(LIBSA) lib/$(LIBPA)openglextra.$(LIBSA)
 
-LIBS=-l glow -l openal -l opus -l ogg -l chrono -l spherefonts -l aimg -l bufferfile -l GL -l png -l openglextra
+LIBS=-l glow -l openal -l opus -l ogg -l chrono -l spherefonts -l aimg -l bufferfile -l GL -l png # -l openglextra
 	
 cinnabar: $(LIBTARGETS)
 	$(MMCIN) cinnabar -L lib $(LIBS)
@@ -42,10 +50,12 @@ test: $(LIBTARGETS)
 clean:
 	scons -C glow -c
 	scons -C chrono -c
+	scons -C bufferfile -c
 	$(MAKE) -C spherefonts clean
+	$(MAKE) -C aimage clean
 	$(MMCIN) cinnabar.clean
 	$(MMCIN) test.clean
-	rm -f lib/*.so lib/*.a *.mh *.err cinnabar test
+	rm -f lib/*.$(LIBSX) lib/*.$(LIBSA) *.mh *.err cinnabar test
 
 PHONY: all clean $(LIBTARGETS)
 IGNORE: clean

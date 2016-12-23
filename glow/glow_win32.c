@@ -78,54 +78,45 @@ static LRESULT WINAPI glow_window_proc(HWND wnd, UINT msg, WPARAM parm, LPARAM l
 	}
 }
 
-int WINAPI WinMain(HINSTANCE app, HINSTANCE prev, LPSTR cmdline, int showcmd){
+#define GLOW_DEFAULT_CLASS {\
+        CS_OWNDC,\
+        glow_window_proc,\
+        0,\
+        0,\
+        0,\
+        NULL,\
+        NULL,\
+        (HBRUSH)(COLOR_BACKGROUND),\
+        NULL,\
+        GLOW_CLASS_NAME\
+    }
 
-	WNDCLASS wc = {
-		CS_OWNDC,
-		glow_window_proc,
-		0,
-		0,
-		0,
-		NULL,
-		NULL,
-		(HBRUSH)(COLOR_BACKGROUND),
-		NULL,
-		GLOW_CLASS_NAME
-	};
-	wc.hInstance = glow_app = app;
-	
-	RegisterClass(&wc);
-	
-	if(prev || cmdline || showcmd){}
-	
+#ifdef GLOW_STANDALONE
+int WINAPI WinMain(HINSTANCE app, HINSTANCE prev, LPSTR cmdline, int showcmd){
+    WNDCLASS wc = GLOW_DEFAULT_CLASS;
+    wc.hInstance = glow_app = app;
+
+    RegisterClass(&wc);
+
+    if(prev || cmdline || showcmd){}
+
 #ifdef __GNUC__
-	__mingw_winmain_nShowCmd = showcmd;
+    __mingw_winmain_nShowCmd = showcmd;
+#endif
+    return glow_main(__argc, __argv);
+}
 #endif
 
-	return glow_main(__argc, __argv);
-}
-
 struct Glow_Window *Glow_CreateWindow(unsigned w, unsigned h, const char *title, unsigned gl_maj, unsigned gl_min){
-	struct Glow_Window *const window = malloc(sizeof(struct Glow_Window));
+    
+    struct Glow_Window *const window = malloc(sizeof(struct Glow_Window));
 	
 	window->gl_mag = gl_maj;
 	window->gl_min = gl_min;
 	
 	if(glow_app == NULL){
-		WNDCLASS wc = {
-			CS_OWNDC,
-			glow_window_proc,
-			0,
-			0,
-			0,
-			NULL,
-			NULL,
-			(HBRUSH)(COLOR_BACKGROUND),
-			NULL,
-			GLOW_CLASS_NAME
-		};
+		WNDCLASS wc = GLOW_DEFAULT_CLASS;
 		wc.hInstance = glow_app = GetModuleHandle(NULL);
-		
 		RegisterClass(&wc);
 	}
 

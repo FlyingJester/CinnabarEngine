@@ -40,6 +40,8 @@
 :- pred key_pressed(string::in, keypress::uo, window::di, window::uo) is det.
 :- pred get_mouse_location(int::uo, int::uo, window::di, window::uo) is det.
 
+:- pred center_mouse(window::di, window::uo) is det.
+
 %==============================================================================%
 :- implementation.
 %==============================================================================%
@@ -164,3 +166,8 @@ create_quit_event = yes(quit).
             Y = coords[1];
         }
     ").
+
+:- pragma foreign_proc("C",
+    center_mouse(Win0::di, Win1::uo),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception],
+    " Glow_CenterMouse((Win1 = Win0));").

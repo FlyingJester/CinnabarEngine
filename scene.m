@@ -16,7 +16,7 @@
 %------------------------------------------------------------------------------%
 
 :- type scene(Model) --->
-    camera(scene.matrix_tree.matrix_tree,
+    scene(scene.matrix_tree.matrix_tree,
         scene.node_tree.node(Model),
         camera.camera).
 %------------------------------------------------------------------------------%
@@ -68,7 +68,7 @@ draw(Tree, scene.node_tree.group(NodeA, NodeB), Render, !Window) :-
     draw(Tree, NodeA, Render, !Window),
     draw(Tree, NodeB, Render, !Window).
 
-draw(camera(MatrixTree, NodeTree, Camera), Render, !Window) :-
+draw(scene(MatrixTree, NodeTree, Camera), Render, !Window) :-
     render.push_matrix(Render, !Window),
     X = Camera ^ camera.x, Y = Camera ^ camera.y, Z = Camera ^ camera.z,
     render.translate(Render, X, Y, Z, !Window),
@@ -83,7 +83,7 @@ draw(camera(MatrixTree, NodeTree, Camera), Render, !Window) :-
     ;
         draw(MatrixTree, NodeTree, Render, !Window)
     ),
-    render.push_matrix(Render, !Window).
+    render.pop_matrix(Render, !Window).
 
 % TODO
 apply_transformation(scene.matrix_tree.scale(_, _, _), _, !Window).

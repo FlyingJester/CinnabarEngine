@@ -328,7 +328,8 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
      thread_safe, promise_pure, does_not_affect_liveness],
     "
         Win1 = Win0;
-        glRotatef(A, X, Y, Z);
+        const float ADegrees = A * 360.0 / 3.1415;
+        glRotatef(ADegrees, X, Y, Z);
     ").
 
 draw(Shape, !Window) :- Shape ^ wavefront.faces = [].

@@ -70,10 +70,10 @@ draw(Tree, scene.node_tree.group(NodeA, NodeB), Render, !Window) :-
 
 draw(scene(MatrixTree, NodeTree, Camera), Render, !Window) :-
     render.push_matrix(Render, !Window),
-    X = Camera ^ camera.x, Y = Camera ^ camera.y, Z = Camera ^ camera.z,
-    render.translate(Render, X, Y, Z, !Window),
     render.rotate_x(Render, Camera ^ camera.pitch, !Window),
     render.rotate_y(Render, Camera ^ camera.yaw, !Window),
+    X = Camera ^ camera.x, Y = Camera ^ camera.y, Z = Camera ^ camera.z,
+    render.translate(Render, X, Y, Z, !Window),
     
     % If the first node is a transformation, we can avoid another matrix stack
     % manipulation and just ride on the push and pop in this outer function.

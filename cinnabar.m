@@ -91,7 +91,7 @@ main(!IO) :-
         
         MatrixTree = scene.matrix_tree.init,
         NodeTree = scene.node_tree.model(Shape),
-        Camera = camera.camera(3.0, -2.0, -4.0, 0.0, 0.0),
+        Camera = camera.camera(3.0, -2.0, -10.0, 0.0, 0.0),
         
         frame(scene.scene(MatrixTree, NodeTree, Camera), GL2, Win3, Win4, !IO)
     ;
@@ -109,6 +109,27 @@ main(!IO) :-
     ),
     mglow.destroy_window(!IO, Win4).
 
+:- func pitch_control(float) = float.
+:- func yaw_control(float) = float.
+
+pitch_control(TryPitch) = Pitch :-
+    ( TryPitch > 3.0 ->
+        Pitch = 3.0
+    ; TryPitch < 0.0 ->
+        Pitch = 0.0
+    ;
+        Pitch = TryPitch
+    ).
+
+yaw_control(TryYaw) = Yaw :-
+    ( TryYaw > 2.0 * 3.1415 ->
+        Yaw = TryYaw - 2.0 * 3.1415
+    ; TryYaw < 0.0 ->
+        Yaw = TryYaw + 2.0 * 3.1415
+    ;
+        Yaw = TryYaw
+    ).
+
 %------------------------------------------------------------------------------%
 frame(scene.scene(MatrixTree, NodeTree, Cam), Renderer, !Window, !IO) :-
     mchrono.micro_ticks(!IO, FrameStart),
@@ -125,13 +146,18 @@ frame(scene.scene(MatrixTree, NodeTree, Cam), Renderer, !Window, !IO) :-
         
         mglow.get_mouse_location(MouseX + (w / 2), MouseY + (h / 2), !Window),
         
-        Scene = scene.scene(MatrixTree, NodeTree, 
-            camera.camera(Cam ^ camera.x, Cam ^ camera.y, Cam ^ camera.z,
-                Cam ^ camera.pitch + (float.float(MouseY) / 10.0),
-                Cam ^ camera.yaw + (float.float(MouseX) / 10.0))),
-        
-        mglow.center_mouse(!Window),
-        
+        ( ( MouseX > w / 2 ; MouseX < -w / 2 ; MouseY > h / 2 ; MouseY < -h / 2 ) ->
+            NewCam = Cam
+        ;
+            Yaw = yaw_control(Cam ^ camera.yaw - (float.float(MouseX) / 100.0)),
+            Pitch = pitch_control(Cam ^ camera.pitch - (float.float(MouseY) / 100.0)),        
+            CamX = Cam ^ camera.x, CamY = Cam ^ camera.y, CamZ = Cam ^ camera.z,
+            NewCam = camera.camera(CamX, CamY, CamZ, Pitch, Yaw),
+            mglow.center_mouse(!Window)
+         ),
+
+         Scene = scene.scene(MatrixTree, NodeTree, NewCam),
+
 %        X = float(MouseX) / float(w),
 %        Y = float(MouseY) / float(h),
 %        render.translate(Renderer, X * 2.0, Y * 2.0, -4.0, !Window),

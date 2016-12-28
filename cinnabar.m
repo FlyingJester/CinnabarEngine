@@ -146,17 +146,45 @@ frame(scene.scene(MatrixTree, NodeTree, Cam), Renderer, !Window, !IO) :-
         
         mglow.get_mouse_location(MouseX + (w / 2), MouseY + (h / 2), !Window),
         
-        ( ( MouseX > w / 2 ; MouseX < -w / 2 ; MouseY > h / 2 ; MouseY < -h / 2 ) ->
-            NewCam = Cam
+        mglow.key_pressed("w", Forward, !Window),
+        mglow.key_pressed("a", Left, !Window),
+        mglow.key_pressed("s", Backward, !Window),
+        mglow.key_pressed("d", Right, !Window),
+        ( not Forward = Backward ->
+            ( Forward = mglow.press ->
+                CamZ = Cam ^ camera.z + 0.1,
+                io.write_string("Forward!\n", !IO)
+            ; Backward = mglow.press ->
+                CamZ = Cam ^ camera.z - 0.1
+            ;
+                CamZ = Cam ^ camera.z
+            )
+        ;
+            io.write_string("Same?\n", !IO),
+            CamZ = Cam ^ camera.z
+        ),
+        ( not Left = Right ->
+            ( Left = mglow.press ->
+                CamX = Cam ^ camera.x - 0.1
+            ; Right = mglow.press ->
+                CamX = Cam ^ camera.x + 0.1
+            ;
+                CamX = Cam ^ camera.x
+            )
+        ;
+            CamX = Cam ^ camera.x
+        ),
+        CamY = Cam ^ camera.y,
+
+        ( ( MouseX > w / 2 ; MouseX < -w / 2 ; MouseY > h / 2 ; MouseY < -h / 2 ) -> 
+            Pitch = Cam ^ camera.pitch, Yaw = Cam ^ camera.yaw
         ;
             Yaw = yaw_control(Cam ^ camera.yaw - (float.float(MouseX) / 100.0)),
-            Pitch = pitch_control(Cam ^ camera.pitch - (float.float(MouseY) / 100.0)),        
-            CamX = Cam ^ camera.x, CamY = Cam ^ camera.y, CamZ = Cam ^ camera.z,
-            NewCam = camera.camera(CamX, CamY, CamZ, Pitch, Yaw),
+            Pitch = pitch_control(Cam ^ camera.pitch - (float.float(MouseY) / 100.0)),
             mglow.center_mouse(!Window)
-         ),
-
-         Scene = scene.scene(MatrixTree, NodeTree, NewCam),
+        ),
+        NewCam = camera.camera(CamX, CamY, CamZ, Pitch, Yaw),
+        Scene = scene.scene(MatrixTree, NodeTree, NewCam),
 
 %        X = float(MouseX) / float(w),
 %        Y = float(MouseY) / float(h),

@@ -24,8 +24,7 @@
     |KeyPressMask\
     |KeyReleaseMask\
     |ButtonPress\
-    |ExposureMask\
-    |PointerMotionMask)
+    |ExposureMask)
 
 
 struct Glow_Window {
@@ -224,6 +223,7 @@ struct Glow_Window *Glow_CreateWindow(unsigned aW, unsigned aH,
                     best = i;
                     best_samples = samples;
                 }
+                XFree(info);
             }
         }
         
@@ -307,10 +307,9 @@ void Glow_DestroyWindow(struct Glow_Window *that){
     XSync(that->dpy, False);
 
     glXDestroyContext(that->dpy, that->ctx);
-    XFree(that->vis);
     XFreeColormap(that->dpy, that->cmap);
     XDestroyWindow(that->dpy, that->wnd);
-    XFree(that->scr);
+    XFree(that->vis);
     XSync(that->dpy, False);
 
     XCloseDisplay(that->dpy);
@@ -319,20 +318,26 @@ void Glow_DestroyWindow(struct Glow_Window *that){
 void Glow_ShowWindow(struct Glow_Window *that){
     XClearWindow(that->dpy, that->wnd);
     XMapRaised(that->dpy, that->wnd);
+    {
+        XEvent event;
+        do{
+            XNextEvent(that->dpy, &event);
+        } while(event.type != MapNotify);
+    }
 }
 
 unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
     if(XPending(that->dpy) > 0){
         XEvent event;
-
         unsigned char press = 0u;
-
+        puts("EVENT!");
         XNextEvent(that->dpy, &event);
         switch(event.type){
             
             case KeyPress:
                 press = 1u;
             case KeyRelease:
+                puts("Event!");
                 {
                     KeySym sym;
                     XComposeStatus compose;
@@ -407,7 +412,8 @@ void Glow_CenterMouse(struct Glow_Window *win){
 }
 
 unsigned Glow_IsKeyPressed(struct Glow_Window *win, const char *key){
-
+    const unsigned n = glow_keystr_number(key);
+    return win->keys[n];
 }
 
 unsigned Glow_IsKeyCharPressed(struct Glow_Window *win, char key){

@@ -15,6 +15,7 @@
 :- type face ---> face(list(vertex)).
 
 %------------------------------------------------------------------------------%
+% TODO: Properly move this to the model module.
 :- typeclass model(Model) where [
     pred putpoint(model.point::in, Model::in, Model::out) is det,
     pred puttex(model.tex::in, Model::in, Model::out) is det,

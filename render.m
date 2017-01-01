@@ -13,6 +13,10 @@
         mglow.window, mglow.window),
     mode frustum(in, in, in, in, in, in, in, di, uo) is det,
     
+    % Disables or enables depth test.
+    pred disable_depth(T::in, mglow.window::di, mglow.window::uo) is det,
+    pred enable_depth(T::in, mglow.window::di, mglow.window::uo) is det,
+    
     % Purely experimental, we probably don't want to have a matrix stack like
     % OpenGL does in the end. Depending on how the scene graph works out, it may
     % just become clear which matrix to use where without keeping track of
@@ -49,6 +53,12 @@
 :- typeclass model(Renderer, Model) <= render(Renderer) where [
     pred draw(Renderer, Model, mglow.window, mglow.window),
     mode draw(in, in, di, uo) is det
+].
+
+:- typeclass skybox(Renderer, Texture) <= render(Renderer) where [
+    % draw(Renderer, Pitch, Yaw, Tex, !Window)
+    pred draw_skybox(Renderer, float, float, Texture, mglow.window, mglow.window),
+    mode draw_skybox(in, in, in, in, di, uo) is det
 ].
 
 %==============================================================================%

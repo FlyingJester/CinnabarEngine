@@ -18,6 +18,7 @@
 :- use_module upload_aimg.
 :- use_module opengl.
 :- use_module gl2.
+:- use_module gl2.skybox.
 :- use_module render.
 
 :- use_module softshape.
@@ -35,9 +36,9 @@
 :- use_module maybe.
 
 %------------------------------------------------------------------------------%
-:- pred frame(scene.scene(Model)::in, Renderer::in,
+:- pred frame(scene.scene(Model, Skybox)::in, Renderer::in,
     mglow.window::di, mglow.window::uo, io.io::di, io.io::uo) is det
-    <= (render.render(Renderer), render.model(Renderer, Model)).
+    <= (render.render(Renderer), render.model(Renderer, Model), render.skybox(Renderer, Skybox)).
 
 :- func w = int.
 w = 480.
@@ -45,6 +46,8 @@ w = 480.
 h = 320.
 :- func tex_path = string.
 tex_path = "moldy.tga".
+:- func skybox_path = string.
+skybox_path = "skybox.png".
 :- func shape_path = string.
 shape_path = "texcube.obj".
 
@@ -55,8 +58,30 @@ setup_gl2(_, !Window) :-
     gl2.load_identity(!Window),
     gl2.matrix_mode(gl2.projection, !Window),
     AspectRatio = float(w) / float(h),
-    gl2.frustum(0.5, 10.0, -1.0 * AspectRatio, 1.0 * AspectRatio, -1.0, 1.0, !Window),
+    gl2.frustum(1.0, 100.0, -0.5 * AspectRatio, 0.5 * AspectRatio, -0.5, 0.5, !Window),
     opengl.viewport(0, 0, w, h, !Window).
+
+:- pred load_texture(string::in, io.io::di, io.io::uo,
+    mglow.window::di, mglow.window::uo, maybe.maybe(opengl.texture)::out) is det.
+
+load_texture(Path, !IO, !Window, Output) :-
+    upload_aimg.load(!IO, string.append("res/", Path), UploadResult, !Window),
+    (
+        UploadResult = upload_aimg.ok(Tex),
+        Output = maybe.yes(Tex)
+    ;
+        UploadResult = upload_aimg.badfile,
+        Output = maybe.no,
+        io.write_string("Could not load texture file: ", !IO),
+        io.write_string(tex_path, !IO),
+        io.nl(!IO)
+    ;
+        UploadResult = upload_aimg.nofile,
+        Output = maybe.no,
+        io.write_string("Missing texture file: ", !IO),
+        io.write_string(tex_path, !IO),
+        io.nl(!IO)
+    ).
 
 %------------------------------------------------------------------------------%
 main(!IO) :-
@@ -85,29 +110,20 @@ main(!IO) :-
         Shape = wavefront.init_shape
     ),
     
-    upload_aimg.load(!IO, string.append("res/", tex_path), UploadResult, Win2, Win3),
-    (
-        UploadResult = upload_aimg.ok(Tex),
+    load_texture(tex_path, !IO, Win2, Win3, MaybeTexture),
+    load_texture(skybox_path, !IO, Win3, Win4, MaybeSkybox),
+    ( MaybeTexture = maybe.yes(Tex), MaybeSkybox = maybe.yes(Skybox) ->
         
         MatrixTree = scene.matrix_tree.init,
-        NodeTree = scene.node_tree.model(Shape),
+        NodeTree = scene.node_tree.model(gl2.wavefront_shape(Shape, Tex)),
         Camera = camera.camera(3.0, -2.0, -10.0, 0.0, 0.0),
         
-        frame(scene.scene(MatrixTree, NodeTree, Camera), GL2, Win3, Win4, !IO)
+        frame(scene.scene(MatrixTree, NodeTree, Camera, Skybox), GL2, Win4, Win5, !IO)
     ;
-        UploadResult = upload_aimg.badfile,
-        Win3 = Win4,
-        io.write_string("Could not load texture file: ", !IO),
-        io.write_string(tex_path, !IO),
-        io.nl(!IO)
-    ;
-        UploadResult = upload_aimg.nofile,
-        Win3 = Win4,
-        io.write_string("Missing texture file: ", !IO),
-        io.write_string(tex_path, !IO),
-        io.nl(!IO)
+        Win4 = Win5,
+        true % Pass, load_texture already reported errors.
     ),
-    mglow.destroy_window(!IO, Win4).
+    mglow.destroy_window(!IO, Win5).
 
 :- func pitch_control(float) = float.
 :- func yaw_control(float) = float.
@@ -130,15 +146,34 @@ yaw_control(TryYaw) = Yaw :-
         Yaw = TryYaw
     ).
 
+:- pred eat_others(maybe.maybe(mglow.glow_event)::out,
+    mglow.window::di, mglow.window::uo) is det.
+eat_others(Out, !Window) :-
+    mglow.get_event(MaybeEvent, !Window),
+    (
+        MaybeEvent = maybe.no, Out = maybe.no
+    ;
+        MaybeEvent = maybe.yes(Event),
+        ( Event = mglow.other ->
+            eat_others(Out, !Window)
+        ;
+            Out = MaybeEvent
+        )
+    ).
+
 %------------------------------------------------------------------------------%
-frame(scene.scene(MatrixTree, NodeTree, Cam), Renderer, !Window, !IO) :-
+frame(scene.scene(MatrixTree, NodeTree, Cam, Skybox), Renderer, !Window, !IO) :-
     mchrono.micro_ticks(!IO, FrameStart),
     
-    mglow.get_event(MaybeEvent, !Window),
+    eat_others(MaybeEvent, !Window),
+%    mglow.get_event(MaybeEvent, !Window),
     (
         MaybeEvent = maybe.yes(Event),
         (
             Event = mglow.quit
+        ;
+            Event = mglow.other,
+            frame(scene.scene(MatrixTree, NodeTree, Cam, Skybox), Renderer, !Window, !IO)
         )
     ;
         MaybeEvent = maybe.no,
@@ -152,15 +187,13 @@ frame(scene.scene(MatrixTree, NodeTree, Cam), Renderer, !Window, !IO) :-
         mglow.key_pressed("d", Right, !Window),
         ( not Forward = Backward ->
             ( Forward = mglow.press ->
-                CamZ = Cam ^ camera.z + 0.1,
-                io.write_string("Forward!\n", !IO)
+                CamZ = Cam ^ camera.z + 0.1
             ; Backward = mglow.press ->
                 CamZ = Cam ^ camera.z - 0.1
             ;
                 CamZ = Cam ^ camera.z
             )
         ;
-            io.write_string("Same?\n", !IO),
             CamZ = Cam ^ camera.z
         ),
         ( not Left = Right ->
@@ -179,24 +212,13 @@ frame(scene.scene(MatrixTree, NodeTree, Cam), Renderer, !Window, !IO) :-
         ( ( MouseX > w / 2 ; MouseX < -w / 2 ; MouseY > h / 2 ; MouseY < -h / 2 ) -> 
             Pitch = Cam ^ camera.pitch, Yaw = Cam ^ camera.yaw
         ;
-            Yaw = yaw_control(Cam ^ camera.yaw - (float.float(MouseX) / 100.0)),
-            Pitch = pitch_control(Cam ^ camera.pitch - (float.float(MouseY) / 100.0)),
+            Yaw = yaw_control(Cam ^ camera.yaw - (float.float(MouseX) / 200.0)),
+            Pitch = pitch_control(Cam ^ camera.pitch - (float.float(MouseY) / 200.0)),
             mglow.center_mouse(!Window)
         ),
         NewCam = camera.camera(CamX, CamY, CamZ, Pitch, Yaw),
-        Scene = scene.scene(MatrixTree, NodeTree, NewCam),
+        Scene = scene.scene(MatrixTree, NodeTree, NewCam, Skybox),
 
-%        X = float(MouseX) / float(w),
-%        Y = float(MouseY) / float(h),
-%        render.translate(Renderer, X * 2.0, Y * 2.0, -4.0, !Window),
-        
-%        mchrono.micro_ticks(!IO, mchrono.microseconds(Ticks)),
-%        RotateAmount = float(int.div(Ticks, 1000)) / 10.0,
-%        render.translate(Renderer, 0.5, 0.5, 0.0, !Window),
-%        render.rotate_y(Renderer, RotateAmount, !Window),
-%        render.translate(Renderer, -0.5, -0.5, 0.0, !Window),
-
-%        list.foldl(render.draw(Renderer), Models, !Window),
         scene.draw(Scene, Renderer, !Window),
         mglow.flip_screen(!Window),
 

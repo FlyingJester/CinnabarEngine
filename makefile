@@ -9,7 +9,7 @@ INSTALL?=install
 MMC?=mmc
 
 # MMCIN=$(MMC) -E -j4 --grade=asm_fast.gc.debug.stseg --make
-MMCCALL=$(MMC) --grade=hlc.gc --cflag "-g" --opt-level 7 --intermodule-optimization
+MMCCALL=$(MMC) --grade=hlc.gc --cflags "-g -O2 " --opt-level 7 --intermodule-optimization
 MMCIN=$(MMCCALL) -E -j4 --make
 
 

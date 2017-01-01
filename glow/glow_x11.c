@@ -309,7 +309,6 @@ void Glow_DestroyWindow(struct Glow_Window *that){
     glXDestroyContext(that->dpy, that->ctx);
     XFreeColormap(that->dpy, that->cmap);
     XDestroyWindow(that->dpy, that->wnd);
-    XFree(that->vis);
     XSync(that->dpy, False);
 
     XCloseDisplay(that->dpy);
@@ -330,14 +329,12 @@ unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
     if(XPending(that->dpy) > 0){
         XEvent event;
         unsigned char press = 0u;
-        puts("EVENT!");
         XNextEvent(that->dpy, &event);
         switch(event.type){
             
             case KeyPress:
                 press = 1u;
             case KeyRelease:
-                puts("Event!");
                 {
                     KeySym sym;
                     XComposeStatus compose;
@@ -353,16 +350,6 @@ unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
                         out->type = eGlowKeyboardReleased;
 
                     that->keys[n] = press;
-
-#ifndef NDEBUG
-                    if(press)
-                        fputs("[Glow]Pressed key", stdout);
-                    else
-                        fputs("[Glow]Released key", stdout);
-
-                    puts(out->value.key);
-                    printf("[Glow]Using Glow key number %u\n", n);
-#endif
                 }
                 return 1;
             case UnmapNotify:

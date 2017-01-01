@@ -41,6 +41,10 @@
 :- pred viewport(int::in, int::in, int::in, int::in,
     mglow.window::di, mglow.window::uo) is det.
 
+:- pred enable_depth(mglow.window::di, mglow.window::uo) is det.
+:- pred disable_depth(mglow.window::di, mglow.window::uo) is det.
+:- pred clear_depth(mglow.window::di, mglow.window::uo) is det.
+
 %==============================================================================%
 :- implementation.
 %==============================================================================%
@@ -156,3 +160,18 @@
         Win1 = Win0;
         glViewport(X, Y, W, H);
     ").
+
+:- pragma foreign_proc("C", enable_depth(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glEnable(GL_DEPTH_TEST); ").
+    
+:- pragma foreign_proc("C", disable_depth(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glDisable(GL_DEPTH_TEST); ").
+
+:- pragma foreign_proc("C", clear_depth(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glClear(GL_DEPTH_BUFFER_BIT); ").

@@ -13,7 +13,7 @@
 :- type gl_version ---> gl_version(int, int).
 
 % TODO: Needs the other wrappers
-:- type glow_event ---> quit.
+:- type glow_event ---> other ; quit.
 
 :- type keypress ---> press ; release.
 
@@ -92,14 +92,16 @@ destroy_window(!IO, _).
 
 :- pragma foreign_proc("C",
     height(Window::di, WindowOut::uo, H::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
     "
         H = Glow_WindowHeight((WindowOut = Window));
     ").
 
 :- pragma foreign_proc("C",
     size(Window::di, WindowOut::uo, W::uo, H::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+     thread_safe, does_not_affect_liveness],
     "
         W = Glow_WindowWidth((WindowOut = Window));
         H = Glow_WindowHeight((WindowOut = Window));
@@ -107,7 +109,8 @@ destroy_window(!IO, _).
 
 :- pragma foreign_proc("C",
     flip_screen(Window::di, WindowOut::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+     thread_safe, does_not_affect_liveness],
     "
         WindowOut = Window;
         Glow_FlipScreen(Window);
@@ -115,7 +118,8 @@ destroy_window(!IO, _).
 
 :- pragma foreign_proc("C",
     make_window_current(IO0::di, IO1::uo, Window::di, WindowOut::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+     thread_safe, does_not_affect_liveness],
     "
         IO1 = IO0;
         Glow_MakeCurrent((WindowOut = Window));
@@ -129,9 +133,14 @@ create_no_event = no.
 create_quit_event = yes(quit).
 :- pragma foreign_export("C", create_quit_event=(uo), "create_quit_event").
 
+:- func create_other_event = (maybe(glow_event)::uo) is det.
+create_other_event = yes(other).
+:- pragma foreign_export("C", create_other_event=(uo), "create_other_event").
+
 :- pragma foreign_proc("C",
     get_event(EventOut::uo, Window::di, WindowOut::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+        does_not_affect_liveness],
     "
         struct Glow_Event event;
         if(Glow_GetEvent(WindowOut = Window, &event))
@@ -140,7 +149,7 @@ create_quit_event = yes(quit).
                     EventOut = create_quit_event();
                     break;
                 default:
-                    EventOut = create_no_event();
+                    EventOut = create_other_event();
             }
         else
             EventOut = create_no_event();
@@ -148,7 +157,8 @@ create_quit_event = yes(quit).
 
 :- pragma foreign_proc("C",
     key_pressed(Str::in, Press::uo, Win0::di, Win1::uo),
-    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception],
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
     "
         Press = 0;
         if(Glow_IsKeyPressed((Win1 = Win0), Str))
@@ -157,7 +167,8 @@ create_quit_event = yes(quit).
 
 :- pragma foreign_proc("C",
     get_mouse_location(X::uo, Y::uo, Win0::di, Win1::uo),
-    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception],
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
     "
         {
             glow_pixel_coords_t coords;
@@ -169,5 +180,6 @@ create_quit_event = yes(quit).
 
 :- pragma foreign_proc("C",
     center_mouse(Win0::di, Win1::uo),
-    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception],
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
     " Glow_CenterMouse((Win1 = Win0));").

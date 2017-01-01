@@ -15,19 +15,22 @@
 :- use_module scene.node_tree.
 %------------------------------------------------------------------------------%
 
-:- type scene(Model) --->
+:- type scene(Model, Texture) --->
     scene(scene.matrix_tree.matrix_tree,
         scene.node_tree.node(Model),
-        camera.camera).
+        camera.camera, skybox::Texture).
 %------------------------------------------------------------------------------%
 
 % Recursively draws all nodes in the tree.
-:- pred draw(scene.matrix_tree.matrix_tree::in, scene.node_tree.node(Model)::in,
-     Render::in, mglow.window::di, mglow.window::uo) is det
-      <= render.model(Render, Model).
+:- pred draw(
+    scene.matrix_tree.matrix_tree::in,
+    scene.node_tree.node(Model)::in,
+    Render::in, mglow.window::di, mglow.window::uo) is det
+      <= (render.model(Render, Model)).
 
-:- pred draw(scene(Model)::in, Render::in,
-    mglow.window::di, mglow.window::uo) is det <= render.model(Render, Model).
+:- pred draw(scene(Model, Texture)::in, Render::in,
+    mglow.window::di, mglow.window::uo) is det <=
+        (render.model(Render, Model), render.skybox(Render, Texture)).
 
 % Similar to draw. First applies the given transformation without pushing
 % matrices on the renderer, and will pass any further transfom nodes into 
@@ -68,10 +71,13 @@ draw(Tree, scene.node_tree.group(NodeA, NodeB), Render, !Window) :-
     draw(Tree, NodeA, Render, !Window),
     draw(Tree, NodeB, Render, !Window).
 
-draw(scene(MatrixTree, NodeTree, Camera), Render, !Window) :-
+draw(scene(MatrixTree, NodeTree, Camera, Skybox), Render, !Window) :-
+    Pitch = Camera ^ camera.pitch,
+    Yaw = Camera ^ camera.yaw,
+    render.draw_skybox(Render, Pitch, Yaw, Skybox, !Window),
     render.push_matrix(Render, !Window),
-    render.rotate_x(Render, Camera ^ camera.pitch, !Window),
-    render.rotate_y(Render, Camera ^ camera.yaw, !Window),
+    render.rotate_x(Render, Pitch, !Window),
+    render.rotate_y(Render, Yaw,   !Window),
     X = Camera ^ camera.x, Y = Camera ^ camera.y, Z = Camera ^ camera.z,
     render.translate(Render, X, Y, Z, !Window),
     

@@ -13,6 +13,8 @@
 
 :- import_module list.
 
+:- include_module skybox.
+
 :- type gl2.
 
 % Raw OpenGL 2 wrapping
@@ -61,9 +63,6 @@
 :- pred enable_texture(mglow.window::di, mglow.window::uo) is det.
 :- pred disable_texture(mglow.window::di, mglow.window::uo) is det.
 
-:- pred enable_depth(mglow.window::di, mglow.window::uo) is det.
-:- pred disable_depth(mglow.window::di, mglow.window::uo) is det.
-
 :- pred load_matrix(matrix.matrix::in, mglow.window::di, mglow.window::uo) is det.
 :- pred store_matrix(matrix.matrix::out, matrix_mode::in,
     mglow.window::di, mglow.window::uo) is det.
@@ -110,6 +109,7 @@
 
 :- type shape2d ---> shape2d(softshape.shape2d) ; shape2d(softshape.shape2d, opengl.texture).
 :- type shape3d ---> shape3d(softshape.shape3d) ; shape3d(softshape.shape3d, opengl.texture).
+:- type wavefront_shape ---> wavefront_shape(wavefront.shape, opengl.texture).
 
 :- typeclass vertex(T) where [
     % Used with list.foldl to draw shapes.
@@ -120,6 +120,7 @@
 :- instance vertex(softshape.vertex3d).
 
 :- instance render.model(gl2, wavefront.shape).
+:- instance render.model(gl2, wavefront_shape).
 :- instance render.model(gl2, shape2d).
 :- instance render.model(gl2, shape3d).
 :- instance render.render(gl2).
@@ -134,7 +135,7 @@
 
 :- type gl2 ---> gl2(w::int, h::int).
 
-init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), enable_depth(!Window).
+init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), opengl.enable_depth(!Window).
 
 :- pragma foreign_decl("C", "#include <assert.h>").
 :- pragma foreign_decl("C", "#include ""matrix.mh"" ").
@@ -205,16 +206,6 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glDisable(GL_TEXTURE_2D); ").
-    
-:- pragma foreign_proc("C", enable_depth(Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception,
-     thread_safe, promise_pure, does_not_affect_liveness],
-    " Win1 = Win0; glEnable(GL_DEPTH_TEST); ").
-    
-:- pragma foreign_proc("C", disable_depth(Win0::di, Win1::uo),
-    [will_not_call_mercury, will_not_throw_exception,
-     thread_safe, promise_pure, does_not_affect_liveness],
-    " Win1 = Win0; glDisable(GL_DEPTH_TEST); ").
 
 :- pragma foreign_proc("C", begin(Type::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -358,6 +349,11 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
     (render.draw(_, Model, !Window) :- draw(Model, !Window))
 ].
 
+:- instance render.model(gl2, wavefront_shape) where [
+    (render.draw(_, wavefront_shape(Model, Tex), !Window) :-
+        opengl.bind_texture(Tex, !Window), draw(Model, !Window))
+].
+
 
 :- instance render.model(gl2, shape2d) where [
     (render.draw(_, Shape, !Window) :-
@@ -424,7 +420,7 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
 ].
 
 :- pred use_element(pred(T, mglow.window, mglow.window), list(T), int, mglow.window, mglow.window).
-:- mode use_element(pred(in, di, uo) is det, in, in, di, uo).
+:- mode use_element(pred(in, di, uo) is det, in, in, di, uo) is det.
 
 use_element(_, [], _, !Window).
 use_element(Pred, [E|List], N, !Window) :-
@@ -447,6 +443,8 @@ draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
 :- instance render.render(gl2) where [
     (frustum(_, NearZ, FarZ, Left, Right, Top, Bottom, !Window) :-
         frustum(NearZ, FarZ, Left, Right, Top, Bottom, !Window)),
+    (enable_depth(_, !Window) :- opengl.enable_depth(!Window)),
+    (disable_depth(_, !Window) :- opengl.disable_depth(!Window)),
     (render.draw_image(gl2(WinW, WinH), X, Y, W, H, Pix, !Window) :-
         raster_pos(float(X) / float(WinW), float(Y) / float(WinH), !Window),
         draw_pixels(W, H, Pix, !Window),

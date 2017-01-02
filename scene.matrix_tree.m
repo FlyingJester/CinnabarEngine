@@ -1,11 +1,19 @@
 :- module scene.matrix_tree.
 %==============================================================================%
+% The Matrix Tree is used to store matrix/transformation information about the
+% scene. This is stored in a separate structure because this information will
+% be different between different draws, while the actual node structure will
+% usually be the same.
 :- interface.
 %==============================================================================%
 
 :- use_module matrix.
 %------------------------------------------------------------------------------%
 
+% Transformation type. Although these could all be specified in terms of
+% matrices, it is convenient to hold them as some operation for as long as
+% possible to maximize the chance that they will cancel out, can be combined
+% into fewer total matrices, or be modified later.
 :- type transformation --->
     scale(float, float, float) ;
     translate(float, float, float) ;
@@ -14,7 +22,12 @@
     rotate_z(float) ;
     matrix(matrix.matrix).
 
+% A wrapper around some container class. It is opaque at this point to allow it
+% to change, since we may want to enforce uniqueness later.
 :- type matrix_tree.
+
+% Used as a key to get matrix data back.
+% TODO: Should also be opaque.
 :- type id == int.
 
 %------------------------------------------------------------------------------%

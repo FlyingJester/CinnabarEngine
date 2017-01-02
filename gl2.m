@@ -80,7 +80,7 @@
 
 :- pred end(mglow.window::di, mglow.window::uo) is det.
 
-:- pred draw_pixels(int::in, int::in, c_pointer::in,
+:- pred draw_pixels(int::in, int::in, render.pixels::in,
     mglow.window::di, mglow.window::uo) is det.
 :- pred raster_pos(float::in, float::in, mglow.window::di, mglow.window::uo) is det.
 
@@ -151,10 +151,20 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
 #endif
 ").
 
+:- pragma foreign_decl("Java", "import org.lwjgl.opengl.GL;").
+:- pragma foreign_decl("Java", "import org.lwjgl.opengl.GLUtil;").
+:- pragma foreign_decl("Java", "import org.lwjgl.opengl.GL11;").
+
 :- pragma foreign_enum("C", matrix_mode/0,
     [
         modelview - "GL_MODELVIEW",
         projection - "GL_PROJECTION"
+    ]).
+
+:- pragma foreign_enum("Java", matrix_mode/0,
+    [
+        modelview - "GL11.GL_MODELVIEW",
+        projection - "GL11.GL_PROJECTION"
     ]).
 
 :- pragma foreign_proc("C", matrix_mode(Mode::in, Win0::di, Win1::uo),
@@ -162,61 +172,120 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glMatrixMode(Mode); ").
 
+:- pragma foreign_proc("Java", matrix_mode(Mode::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glMatrixMode(Mode); ").
+
 :- pragma foreign_proc("C", load_identity(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glLoadIdentity(); ").
+
+:- pragma foreign_proc("Java", load_identity(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glLoadIdentity(); ").
     
 :- pragma foreign_proc("C", vertex2(X::in, Y::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glVertex2f(X, Y); ").
+    
+:- pragma foreign_proc("Java", vertex2(X::in, Y::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glVertex2f(X, Y); ").
 
 :- pragma foreign_proc("C", vertex3(X::in, Y::in, Z::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glVertex3f(X, Y, Z); ").
 
+:- pragma foreign_proc("Java", vertex3(X::in, Y::in, Z::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glVertex3f(X, Y, Z); ").
+
 :- pragma foreign_proc("C", tex_coord(U::in, V::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glTexCoord2f(U, V); ").
+
+:- pragma foreign_proc("Java", tex_coord(U::in, V::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glTexCoord2f(U, V); ").
 
 :- pragma foreign_proc("C", color3(R::in, G::in, B::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glColor3f(R, G, B); ").
 
+:- pragma foreign_proc("Java", color3(R::in, G::in, B::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glColor3f(R, G, B); ").
+
 :- pragma foreign_proc("C", color(R::in, G::in, B::in, A::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glColor4f(R, G, B, A); ").
+
+:- pragma foreign_proc("Java", color(R::in, G::in, B::in, A::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glColor4f(R, G, B, A); ").
     
 :- pragma foreign_proc("C", unbind_texture(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glBindTexture(GL_TEXTURE_2D, 0); ").
     
+:- pragma foreign_proc("Java", unbind_texture(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glBindTexture(GL_TEXTURE_2D, 0); ").
+    
 :- pragma foreign_proc("C", enable_texture(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glEnable(GL_TEXTURE_2D); ").
+    
+:- pragma foreign_proc("Java", enable_texture(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glEnable(GL11.GL_TEXTURE_2D); ").
     
 :- pragma foreign_proc("C", disable_texture(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glDisable(GL_TEXTURE_2D); ").
 
+:- pragma foreign_proc("Java", disable_texture(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glDisable(GL11.GL_TEXTURE_2D); ").
+
 :- pragma foreign_proc("C", begin(Type::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glBegin(Type); ").
+
+:- pragma foreign_proc("Java", begin(Type::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glBegin(Type); ").
 
 :- pragma foreign_proc("C", end(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glEnd(); ").
 
+:- pragma foreign_proc("Java", end(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glEnd(); ").
 
 :- pragma foreign_proc("C", draw_pixels(W::in, H::in, Pix::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -226,14 +295,25 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
         glDrawPixels(W, H, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)Pix);
     ").
 
-:- pragma foreign_proc("C", raster_pos(X::in, Y::in, Win0::di, Win1::uo),
+:- pragma foreign_proc("Java", draw_pixels(W::in, H::in, Pix::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     "
         Win1 = Win0;
-        glRasterPos2f(X, Y);
+        GL11.glDrawPixels(W, H, GL_RGBA, GL_UNSIGNED_BYTE, Pix);
     ").
 
+:- pragma foreign_proc("C", raster_pos(X::in, Y::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glRasterPos2f(X, Y); ").
+
+:- pragma foreign_proc("Java", raster_pos(X::in, Y::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glRasterPos2f(X, Y); ").
+
+% TODO: Just delete ortho/4 altogether, update the test first.
 :- pragma foreign_proc("C", ortho(W::in, H::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
@@ -246,17 +326,35 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
         glOrtho(0, W, H, 0, -1.0, 1.0);
     ").
 
+ortho(Width, Height, !Window) :-
+    matrix_mode(modelview, !Window),
+    load_identity(!Window),
+    matrix_mode(projection, !Window),
+    ortho(-1.0, 1.0, 0.0, Width, 0.0, Height, !Window).
+
 :- pragma foreign_proc("C",
     ortho(NearZ::in, FarZ::in, Left::in, Right::in, Top::in, Bottom::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glOrtho(Left, Right, Bottom, Top, NearZ, FarZ); ").
 
+:- pragma foreign_proc("Java",
+    ortho(NearZ::in, FarZ::in, Left::in, Right::in, Top::in, Bottom::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glOrtho(Left, Right, Bottom, Top, NearZ, FarZ); ").
+
 :- pragma foreign_proc("C",
     frustum(NearZ::in, FarZ::in, Left::in, Right::in, Top::in, Bottom::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glFrustum(Left, Right, Bottom, Top, NearZ, FarZ); ").
+
+:- pragma foreign_proc("Java",
+    frustum(NearZ::in, FarZ::in, Left::in, Right::in, Top::in, Bottom::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glFrustum(Left, Right, Bottom, Top, NearZ, FarZ); ").
 
 :- pragma foreign_proc("C", load_matrix(Mat::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -268,6 +366,14 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
         LoadMatrix(Mat, mat);
         glLoadMatrixf(mat);
     }
+    ").
+
+:- pragma foreign_proc("Java", load_matrix(Mat::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+    Win1 = Win0;
+        // TODO!
     ").
 
 :- pragma foreign_proc("C", store_matrix(Out::out, Which::in, Win0::di, Win1::uo),
@@ -289,29 +395,43 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
     }
     ").
 
-:- pragma foreign_proc("C", push_matrix(Win0::di, Win1::uo),
+:- pragma foreign_proc("Java", store_matrix(Out::out, Which::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     "
-        Win1 = Win0;
-        glPushMatrix();
+    Win1 = Win0;
+        // TODO!
     ").
+
+:- pragma foreign_proc("C", push_matrix(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glPushMatrix(); ").
+
+:- pragma foreign_proc("Java", push_matrix(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glPushMatrix(); ").
 
 :- pragma foreign_proc("C", pop_matrix(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
-    "
-        Win1 = Win0;
-        glPopMatrix();
-    ").
+    " Win1 = Win0; glPopMatrix(); ").
+
+:- pragma foreign_proc("Java", pop_matrix(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; GL11.glPopMatrix(); ").
 
 :- pragma foreign_proc("C", translate(X::in, Y::in, Z::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
-    "
-        Win1 = Win0;
-        glTranslatef(X, Y, Z);
-    ").
+    " Win1 = Win0; glTranslatef(X, Y, Z); ").
+
+:- pragma foreign_proc("Java", translate(X::in, Y::in, Z::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glTranslatef(X, Y, Z); ").
 
 :- pragma foreign_proc("C",
     rotate(A::in, X::in, Y::in, Z::in, Win0::di, Win1::uo),
@@ -321,6 +441,16 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
         Win1 = Win0;
         const float ADegrees = A * 360.0 / 3.1415;
         glRotatef(ADegrees, X, Y, Z);
+    ").
+
+:- pragma foreign_proc("Java",
+    rotate(A::in, X::in, Y::in, Z::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        final float ADegrees = A * 360.0 / 3.1415;
+        GL11.glRotatef(ADegrees, X, Y, Z);
     ").
 
 draw(Shape, !Window) :- Shape ^ wavefront.faces = [].

@@ -33,8 +33,22 @@ load(!IO, Path, Result, !Window) :-
     aimg.load(!IO, Path, AImgResult),
     load(AImgResult, Result, !Window).
 
+:- func convert_pixels(aimg.pixels) = opengl.pixels.
+
+:- pragma foreign_proc("C", convert_pixels(In::in) = (Out::out),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    "Out = In;").
+
+:- pragma foreign_proc("Java", convert_pixels(In::in) = (Out::out),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    "Out = In;").
+
+:- pragma inline(convert_pixels/1).
+
 upload(AImgTex, Tex, !Window) :-
-    Pix = aimg.pixels(AImgTex),
+    Pix = convert_pixels(aimg.pixels(AImgTex)),
     W = aimg.width(AImgTex),
     H = aimg.height(AImgTex),
     opengl.upload_texture(Tex, Pix, W, H, !Window),

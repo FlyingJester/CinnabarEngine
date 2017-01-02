@@ -7,6 +7,8 @@
 
 :- import_module list.
 
+% General model datatypes. It is preferred that these are used, even on other
+% model type modules, to make the loading experience easier.
 :- type point ---> point(x::float, y::float, z::float).
 :- type normal ---> normal(vx::float, vy::float, vz::float).
 :- type tex ---> tex(u::float, v::float).
@@ -16,6 +18,7 @@
 :- type model(Texture) --->
     model(vertices::list.list(vertex), indices::list.list(int), texture::Texture).
 
+% Used to deconstruct a model. Useful for converting from one type to another.
 :- typeclass loadable(Model) where [
     pred next(Model, Model, vertex),
     mode next(in, out, out) is semidet

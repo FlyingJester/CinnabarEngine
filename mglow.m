@@ -47,10 +47,12 @@
 %==============================================================================%
 
 :- pragma foreign_decl("C", "#include ""glow/glow.h"" ").
+:- pragma foreign_decl("Java", "import org.lwjgl.glfw.*;").
+
 :- pragma foreign_type("C", window, "struct Glow_Window *").
+:- pragma foreign_type("Java", window, "long"). % This is what glfw uses.
 
 :- pragma foreign_decl("C", "void MGlowFinalizeWindow(void *window, void*);").
-
 :- pragma foreign_code("C",
     "
     void MGlowFinalizeWindow(void *window, void *_){
@@ -69,25 +71,50 @@ create_window(!IO, size(W, H), gl_version(Maj, Min), Title, Window) :-
     create_window(!IO, W, H, Maj, Min, Title, Window).
 
 :- pragma foreign_proc("C",
-    create_window(IOin::di, IOout::uo,
-        W::in, H::in,
-        Maj::in, Min::in,
-        Title::in, Window::uo),
+    create_window(IO0::di, IO1::uo, W::in, H::in,
+        Maj::in, Min::in, Title::in, Window::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
+        IO1 = IO0;
         Window = Glow_CreateWindow(W, H, Title, Maj, Min);
         Glow_ShowWindow(Window);
-        
-        IOout = IOin;
+    ").
+
+:- pragma foreign_proc("Java",
+    create_window(IO0::di, IO1::uo, W::in, H::in,
+        Maj::in, Min::in, Title::in, Window::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+     thread_safe, tabled_for_io],
+    "
+        IO1 = IO0;
+        Window = GLFW.glfwCreateWindow(W, H, Title, GLFW.NULL, GLFW.NULL);
     ").
 
 destroy_window(!IO, _).
 
+:- pragma foreign_proc("Java", destroy_window(IO0::di, IO1::uo, Window::di),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+     thread_safe, tabled_for_io],
+    "
+        IO1 = IO0;
+        GLFW.glfwDestroyWindow(Window).
+    ").
+
 :- pragma foreign_proc("C",
     width(Window::di, WindowOut::uo, W::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
     "
         W = Glow_WindowWidth((WindowOut = Window));
+    ").
+
+:- pragma foreign_proc("Java",
+    width(Window::di, WindowOut::uo, W::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    "
+        WindowOut = Window;
+        W = 1; // TODO!
     ").
 
 :- pragma foreign_proc("C",
@@ -96,6 +123,15 @@ destroy_window(!IO, _).
      thread_safe, does_not_affect_liveness],
     "
         H = Glow_WindowHeight((WindowOut = Window));
+    ").
+
+:- pragma foreign_proc("Java",
+    height(Window::di, WindowOut::uo, H::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    "
+        WindowOut = Window;
+        H = 1; // TODO!
     ").
 
 :- pragma foreign_proc("C",
@@ -107,6 +143,16 @@ destroy_window(!IO, _).
         H = Glow_WindowHeight((WindowOut = Window));
     ").
 
+:- pragma foreign_proc("Java",
+    size(Window::di, WindowOut::uo, W::uo, H::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+     thread_safe, does_not_affect_liveness],
+    "
+        WindowOut = Window;
+        W = 1; // TODO!
+        H = 1; // TODO!
+    ").
+
 :- pragma foreign_proc("C",
     flip_screen(Window::di, WindowOut::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception, 
@@ -114,6 +160,15 @@ destroy_window(!IO, _).
     "
         WindowOut = Window;
         Glow_FlipScreen(Window);
+    ").
+
+:- pragma foreign_proc("Java",
+    flip_screen(Window::di, WindowOut::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+     thread_safe, does_not_affect_liveness],
+    "
+        WindowOut = Window;
+        GLFW.glfwSwapBuffers(Window);
     ").
 
 :- pragma foreign_proc("C",
@@ -125,17 +180,30 @@ destroy_window(!IO, _).
         Glow_MakeCurrent((WindowOut = Window));
     ").
 
+:- pragma foreign_proc("Java",
+    make_window_current(IO0::di, IO1::uo, Window::di, WindowOut::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+     thread_safe, does_not_affect_liveness],
+    "
+        IO1 = IO0;
+        WindowOut = Window;
+        GLFW.glfwMakeContextCurrent(Window);
+    ").
+
 :- func create_no_event = (maybe(glow_event)::uo) is det.
 create_no_event = no.
 :- pragma foreign_export("C", create_no_event=(uo), "create_no_event").
+:- pragma foreign_export("Java", create_no_event=(uo), "CreateGlowNoEvent").
 
 :- func create_quit_event = (maybe(glow_event)::uo) is det.
 create_quit_event = yes(quit).
 :- pragma foreign_export("C", create_quit_event=(uo), "create_quit_event").
+:- pragma foreign_export("Java", create_quit_event=(uo), "CreateGlowQuitEvent").
 
 :- func create_other_event = (maybe(glow_event)::uo) is det.
 create_other_event = yes(other).
 :- pragma foreign_export("C", create_other_event=(uo), "create_other_event").
+:- pragma foreign_export("Java", create_other_event=(uo), "CreateGlowOtherEvent").
 
 :- pragma foreign_proc("C",
     get_event(EventOut::uo, Window::di, WindowOut::uo),
@@ -155,6 +223,20 @@ create_other_event = yes(other).
             EventOut = create_no_event();
     ").
 
+:- pragma foreign_proc("Java",
+    get_event(EventOut::uo, Window::di, WindowOut::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+        does_not_affect_liveness],
+    "
+        WindowOut = Window;
+        GLFW.glfwPollEvents(Window);
+        if(GLFW.glfwWindowShouldClose(Window))
+            EventOut = CreateGlowQuitEvent();
+        else{
+            EventOut = CreateGlowNoEvent();
+        }
+    ").
+
 :- pragma foreign_proc("C",
     key_pressed(Str::in, Press::uo, Win0::di, Win1::uo),
     [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
@@ -163,6 +245,15 @@ create_other_event = yes(other).
         Press = 0;
         if(Glow_IsKeyPressed((Win1 = Win0), Str))
             Press = 1;
+    ").
+
+:- pragma foreign_proc("Java",
+    key_pressed(Str::in, Press::uo, Win0::di, Win1::uo),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        Press = false;
     ").
 
 :- pragma foreign_proc("C",
@@ -178,8 +269,22 @@ create_other_event = yes(other).
         }
     ").
 
+:- pragma foreign_proc("Java",
+    get_mouse_location(X::uo, Y::uo, Win0::di, Win1::uo),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    "
+        GLFW.glfwGetCursorPos();
+    ").
+
 :- pragma foreign_proc("C",
     center_mouse(Win0::di, Win1::uo),
     [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
      thread_safe, does_not_affect_liveness],
     " Glow_CenterMouse((Win1 = Win0));").
+
+:- pragma foreign_proc("Java",
+    center_mouse(Win0::di, Win1::uo),
+    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    " Win1 = Win0;").

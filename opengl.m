@@ -20,8 +20,10 @@
 :- type filter_set ---> mag_filter ; min_filter.
 :- type filter_type ---> linear ; nearest.
 
+:- type pixels.
+
 % upload_texture(Output, Pixels, W, H, !Window)
-:- pred upload_texture(texture::uo, c_pointer::in, int::in, int::in,
+:- pred upload_texture(texture::uo, pixels::in, int::in, int::in,
     mglow.window::di, mglow.window::uo) is det.
 
 :- pred bind_texture(texture::in, mglow.window::di, mglow.window::uo) is det. 
@@ -61,10 +63,12 @@
 #include <GL/gl.h>
 ").
 
+:- pragma foreign_decl("Java", "import org.lwjgl.opengl.GL;").
+:- pragma foreign_decl("Java", "import org.lwjgl.opengl.GLUtil;").
+
 :- pragma foreign_decl("C", "
     void OpenGL_TextureFinalizer(void *in, void *unused);
 ").
-
 :- pragma foreign_code("C", "
     void OpenGL_TextureFinalizer(void *in, void *win){
         Glow_MakeCurrent((struct Glow_Window*)win);
@@ -82,10 +86,26 @@
         point - "GL_POINTS"
     ]).
 
+:- pragma foreign_enum("Java", shape_type/0,
+    [
+        triangle_strip - "GL.TRIANGLE_STRIP",
+        triangle_fan - "GL.TRIANGLE_FAN",
+        triangles - "GL.TRIANGLES",
+        line_loop - "GL.LINE_LOOP",
+        lines - "GL.LINES",
+        point - "GL.POINTS"
+    ]).
+
 :- pragma foreign_enum("C", filter_set/0,
     [
         min_filter - "GL_TEXTURE_MAG_FILTER",
         mag_filter - "GL_TEXTURE_MIN_FILTER"
+    ]).
+
+:- pragma foreign_enum("Java", filter_set/0,
+    [
+        min_filter - "GL.TEXTURE_MAG_FILTER",
+        mag_filter - "GL.TEXTURE_MIN_FILTER"
     ]).
 
 :- pragma foreign_enum("C", filter_type/0,
@@ -94,7 +114,16 @@
         nearest - "GL_NEAREST"
     ]).
 
+:- pragma foreign_enum("Java", filter_type/0,
+    [
+        linear - "GL.LINEAR",
+        nearest - "GL.NEAREST"
+    ]).
+
 :- pragma foreign_type("C", texture, "GLuint*").
+:- pragma foreign_type("Java", texture, "long").
+:- pragma foreign_type("C", pixels, "void*").
+:- pragma foreign_type("Java", pixels, "int[]").
 
 :- pragma foreign_proc("C",
     upload_texture(Tex::uo, Data::in, W::in, H::in, Win0::di, Win1::uo),

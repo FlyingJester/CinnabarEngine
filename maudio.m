@@ -87,8 +87,14 @@
     
     ").
 
-:- pragma foreign_type("C", context, "struct AudioCtx*").
+:- pragma foreign_decl("Java", "javax.sound.sampled.*").
+:- pragma foreign_decl("Java", "java.io.File").
+:- pragma foreign_decl("Java", "java.io.IOException").
+
+:- pragma foreign_type("C",    context, "struct AudioCtx*").
+:- pragma foreign_type("Java", context, "Object"). % Will always be null anyway.
 :- pragma foreign_type("C", sound, "struct Sound*").
+:- pragma foreign_type("Java", sound, "Clip").
 
 :- pragma foreign_proc("C", init_context = (Ctx::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
@@ -106,27 +112,37 @@
         alListener3f(AL_ORIENTATION, 0.0f, 0.0f, 0.0f);
     ").
 
+:- pragma foreign_proc("Java", init_context = (Ctx::uo),
+    [thread_safe, will_not_call_mercury, will_not_throw_exception,
+     promise_pure, thread_safe, does_not_affect_liveness],
+    "Ctx = null;").
+
 :- func create_ok(sound::di) = (load::uo) is det.
 create_ok(S) = ok(S).
-:- pragma foreign_export("C", create_ok(di) = (uo), "M_CreateOK").
+:- pragma foreign_export("C",    create_ok(di) = (uo), "M_CreateOK").
+:- pragma foreign_export("Java", create_ok(di) = (uo), "CreateAudioOK").
 
 :- func create_badfile = (load::uo) is det.
 create_badfile = badfile.
-:- pragma foreign_export("C", create_badfile = (uo), "M_CreateBadFile").
+:- pragma foreign_export("C",    create_badfile = (uo), "M_CreateBadFile").
+:- pragma foreign_export("Java", create_badfile = (uo), "CreateAudioBadFile").
 
 :- func create_nofile = (load::uo) is det.
 create_nofile = nofile.
-:- pragma foreign_export("C", create_nofile = (uo), "M_CreateNoFile").
+:- pragma foreign_export("C",    create_nofile = (uo), "M_CreateNoFile").
+:- pragma foreign_export("Java", create_nofile = (uo), "CreateAudioNoFile").
 
 :- func create_internal_error = (load::uo) is det.
 create_internal_error = internal_error.
-:- pragma foreign_export("C", create_internal_error = (uo), "M_CreateInternalError").
-
-
+:- pragma foreign_export("C",
+    create_internal_error = (uo), "M_CreateInternalError").
+:- pragma foreign_export("Java",
+    create_internal_error = (uo), "CreateAudioInternalError").
 
 :- pragma foreign_proc("C",
     load_sound(IOi::di, IOo::uo, Ctx::in, Path::in, Res::uo),
-    [may_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
+    [may_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, tabled_for_io],
     "
     IOo = IOi;
     do{
@@ -241,46 +257,114 @@ create_internal_error = internal_error.
     }while(0);
     ").
 
-
-:- pragma foreign_proc("C", play_sound(IOi::di, IOo::uo, Snd::in),
-    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
+:- pragma foreign_proc("Java",
+    load_sound(IO0::di, IO1::uo, Ctx::in, Path::in, Result::uo),
+    [may_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, tabled_for_io],
     "
-        IOo = IOi;
+        IO1 = IO0;
+        File file = new File(Path);
+        if(file.exists() && file.canRead()){
+            try{
+                Clip clip = AudioSystem.getClip();
+                clip.open(AudioSystem.getAudioInputStream(file));
+                Result = CreateAudioOK(clip);
+            }
+            catch(Exception err){
+                Result = CreateAudioBadFile();
+            }
+        }
+        else
+            Result = CreateAudioNoFile();
+    ").
+
+:- pragma foreign_proc("C", play_sound(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
+    "
+        IO1 = IO0;
         alcMakeContextCurrent(Snd->ctx->context);
         alSourcei(Snd->snd, AL_LOOPING, AL_FALSE);
         alSourcePlay(Snd->snd);
     ").
 
-:- pragma foreign_proc("C", play_sound_looping(IOi::di, IOo::uo, Snd::in),
-    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
+
+:- pragma foreign_proc("Java", play_sound(IOi::di, IOo::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
     "
-        IOo = IOi;
+        IO1 = IO0;
+        Snd.start();
+    ").
+
+:- pragma foreign_proc("C", play_sound_looping(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
+    "
+        IO1 = IO0;
         alcMakeContextCurrent(Snd->ctx->context);
         alSourcei(Snd->snd, AL_LOOPING, AL_TRUE);
         alSourcePlay(Snd->snd);
     ").
 
+:- pragma foreign_proc("Java", play_sound_looping(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
+    "
+        IO1 = IO0;
+        Snd.loop(Clip.LOOP_CONTINUOUSLY);
+    ").
+
 :- pragma foreign_proc("C", stop_sound(IOi::di, IOo::uo, Snd::in),
-    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
     "
         IOo = IOi;
         alcMakeContextCurrent(Snd->ctx->context);
         alSourceStop(Snd->snd);
     ").
 
-:- pragma foreign_proc("C", pause_sound(IOi::di, IOo::uo, Snd::in),
-    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
+:- pragma foreign_proc("Java", stop_sound(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
     "
-        IOo = IOi;
+        IO1 = IO0;
+        Snd.stop();
+        Snd.setFramePosition(0);
+    ").
+
+:- pragma foreign_proc("C", pause_sound(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
+    "
+        IO1 = IO0;
         alcMakeContextCurrent(Snd->ctx->context);
         alSourcePause(Snd->snd);
     ").
 
-:- pragma foreign_proc("C", rewind_sound(IOi::di, IOo::uo, Snd::in),
-    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
+:- pragma foreign_proc("Java", pause_sound(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
     "
-        IOo = IOi;
+        IO1 = IO0;
+        Snd.stop();
+    ").
+
+:- pragma foreign_proc("C", rewind_sound(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
+    "
+        IO1 = IO0;
         alcMakeContextCurrent(Snd->ctx->context);
         alSourceRewind(Snd->snd);
     ").
 
+:- pragma foreign_proc("Java", rewind_sound(IO0::di, IO1::uo, Snd::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure,
+     thread_safe, does_not_affect_liveness, tabled_for_io],
+    "
+        IO1 = IO0;
+        Snd.stop();
+        Snd.setFramePosition(0);
+        Snd.start();
+    ").

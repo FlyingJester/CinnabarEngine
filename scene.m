@@ -1,5 +1,9 @@
 :- module scene.
 %==============================================================================%
+% Scene Graph implementation.
+% See scene.node_tree for the actual graph implementation, and scene.matrix_tree
+% for the handling of transformations on the nodes. The main module here handles
+% drawing the scene in terms of a renderer.
 :- interface.
 %==============================================================================%
 

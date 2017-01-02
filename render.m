@@ -7,6 +7,8 @@
 :- use_module mglow.
 %------------------------------------------------------------------------------%
 
+:- type pixels.
+
 :- typeclass render(T) where [
     pred frustum(T,
         float, float, float, float, float, float,
@@ -43,7 +45,7 @@
     % is recommended only for bridging some software rendering with the
     % hardware renderer.
     % draw_image(X, Y, W, H, Pixels, !Window)
-    pred draw_image(T, int, int, int, int, c_pointer,
+    pred draw_image(T, int, int, int, int, pixels,
         mglow.window, mglow.window),
     mode draw_image(in, in, in, in, in, in, di, uo) is det
 %    pred matrix(T, matrix.matrix, mglow.window, mglow.window),
@@ -64,3 +66,6 @@
 %==============================================================================%
 :- implementation.
 %==============================================================================%
+
+:- pragma foreign_type("C", pixels, "void*").
+:- pragma foreign_type("Java", pixels, "int[]").

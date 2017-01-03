@@ -12,13 +12,14 @@
 %------------------------------------------------------------------------------%
 
 :- func init_context = (context::uo) is det.
-:- pred load_sound(io.io::di, io.io::uo, context::in, string::in, load::uo) is det.
+:- pred load(context::in, string::in, load::uo, io.io::di, io.io::uo) is det.
 
-:- pred play_sound(io.io::di, io.io::uo, sound::in) is det.
-:- pred play_sound_looping(io.io::di, io.io::uo, sound::in) is det.
-:- pred stop_sound(io.io::di, io.io::uo, sound::in) is det.
-:- pred pause_sound(io.io::di, io.io::uo, sound::in) is det.
-:- pred rewind_sound(io.io::di, io.io::uo, sound::in) is det.
+:- pred play(sound::in, io.io::di, io.io::uo) is det.
+:- pred play_looping(sound::in, io.io::di, io.io::uo) is det.
+:- pred stop(sound::in, io.io::di, io.io::uo) is det.
+:- pred pause(sound::in, io.io::di, io.io::uo) is det.
+:- pred rewind(sound::in, io.io::di, io.io::uo) is det.
+:- pred volume(sound::in, float::in, io.io::di, io.io::uo) is det.
 
 %==============================================================================%
 :- implementation.
@@ -125,7 +126,7 @@ create_internal_error = internal_error.
 
 
 :- pragma foreign_proc("C",
-    load_sound(IOi::di, IOo::uo, Ctx::in, Path::in, Res::uo),
+    load(Ctx::in, Path::in, Res::uo, IOi::di, IOo::uo),
     [may_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
     "
     IOo = IOi;
@@ -242,7 +243,7 @@ create_internal_error = internal_error.
     ").
 
 
-:- pragma foreign_proc("C", play_sound(IOi::di, IOo::uo, Snd::in),
+:- pragma foreign_proc("C", play(Snd::in, IOi::di, IOo::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
     "
         IOo = IOi;
@@ -251,7 +252,7 @@ create_internal_error = internal_error.
         alSourcePlay(Snd->snd);
     ").
 
-:- pragma foreign_proc("C", play_sound_looping(IOi::di, IOo::uo, Snd::in),
+:- pragma foreign_proc("C", play_looping(Snd::in, IOi::di, IOo::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
     "
         IOo = IOi;
@@ -260,7 +261,7 @@ create_internal_error = internal_error.
         alSourcePlay(Snd->snd);
     ").
 
-:- pragma foreign_proc("C", stop_sound(IOi::di, IOo::uo, Snd::in),
+:- pragma foreign_proc("C", stop(Snd::in, IOi::di, IOo::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
     "
         IOo = IOi;
@@ -268,7 +269,7 @@ create_internal_error = internal_error.
         alSourceStop(Snd->snd);
     ").
 
-:- pragma foreign_proc("C", pause_sound(IOi::di, IOo::uo, Snd::in),
+:- pragma foreign_proc("C", pause(Snd::in, IOi::di, IOo::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
     "
         IOo = IOi;
@@ -276,11 +277,19 @@ create_internal_error = internal_error.
         alSourcePause(Snd->snd);
     ").
 
-:- pragma foreign_proc("C", rewind_sound(IOi::di, IOo::uo, Snd::in),
+:- pragma foreign_proc("C", rewind(Snd::in, IOi::di, IOo::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
     "
         IOo = IOi;
         alcMakeContextCurrent(Snd->ctx->context);
         alSourceRewind(Snd->snd);
+    ").
+
+:- pragma foreign_proc("C", volume(Snd::in, Vol::in, IOi::di, IOo::uo),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe],
+    "
+        IOo = IOi;
+        alcMakeContextCurrent(Snd->ctx->context);
+        alSourcef(Snd->snd, AL_GAIN, Vol);
     ").
 

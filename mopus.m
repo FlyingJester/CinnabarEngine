@@ -146,6 +146,14 @@ init(Input, Len, MaybeDecoder, !IO) :-
         IO1 = IO0;
     ").
 
+% Much slower since it needs to make a list of bytes as 32- or 64-bit ints, but
+% doesn't need language backend.
+decode_16(Size, Out, !Decoder, !IO) :-
+    binary_input_stream(Stream, !IO),
+    buffer.read(Stream, Size, MaybeBuffer, !IO),
+    ( MaybeBuffer = io.error(Buffer, _) ; MaybeBuffer = io.ok(Buffer) ),
+    decode_16(Buffer, Out, !Decoder).
+
 decode_16(Size, Input, BufferOut, !Decoder, !IO) :-
     io.set_binary_input_stream(Input, OriginalInput, !IO),
     decode_16(Size, BufferOut, !Decoder, !IO),
@@ -181,6 +189,14 @@ decode_16(Size, Input, BufferOut, !Decoder, !IO) :-
             free(buffer.data);
         IO1 = IO0;
     ").
+
+% Much slower since it needs to make a list of bytes as 32- or 64-bit ints, but
+% doesn't need language backend.
+decode_float(Size, Out, !Decoder, !IO) :-
+    binary_input_stream(Stream, !IO),
+    buffer.read(Stream, Size, MaybeBuffer, !IO),
+    ( MaybeBuffer = io.error(Buffer, _) ; MaybeBuffer = io.ok(Buffer) ),
+    decode_float(Buffer, Out, !Decoder).
 
 decode_float(Size, Input, BufferOut, !Decoder, !IO) :-
     io.set_binary_input_stream(Input, OriginalInput, !IO),

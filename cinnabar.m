@@ -34,7 +34,7 @@
 :- import_module int.
 :- use_module string.
 :- use_module maybe.
-
+ 
 %------------------------------------------------------------------------------%
 :- pred frame(scene.scene(Model, Skybox)::in, Renderer::in,
     mglow.window::di, mglow.window::uo, io.io::di, io.io::uo) is det

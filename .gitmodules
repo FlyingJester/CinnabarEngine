@@ -1,0 +1,3 @@
+[submodule "fjogg"]
+	path = fjogg
+	url = https://github.com/FlyingJester/fjogg

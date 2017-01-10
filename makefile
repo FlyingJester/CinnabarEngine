@@ -59,6 +59,7 @@ MERCURY_SRC=camera.m gl2.m gl2.skybox.m matrix.m maudio.m model.m opengl.m rende
 
 cinnabar: $(LIBTARGETS) $(WRAPPERS_SRC) $(MERCURY_SRC) cinnabar.m
 	$(MMCIN) cinnabar -L lib $(LIBS)
+	touch cinnabar # This is mostly to ensure that when a library changes but Cinnabar doesn't, we don't keep redoing the mmc --make.
 
 test: test.m test.wavefront.m wavefront.m
 	$(MMCIN) test -L lib $(LIBS)

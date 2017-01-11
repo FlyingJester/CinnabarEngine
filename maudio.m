@@ -123,8 +123,6 @@ create_nofile = nofile.
 create_internal_error = internal_error.
 :- pragma foreign_export("C", create_internal_error = (uo), "M_CreateInternalError").
 
-
-
 :- pragma foreign_proc("C",
     load(Ctx::in, Path::in, Res::uo, IOi::di, IOo::uo),
     [may_call_mercury, will_not_throw_exception, promise_pure, thread_safe],

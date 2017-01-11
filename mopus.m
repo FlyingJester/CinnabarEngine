@@ -58,6 +58,15 @@
 :- pragma foreign_decl("C", "struct MOpus_Decoder{OpusDecoder*dec;int nchan;};").
 :- pragma foreign_type("C", decoder, "struct MOpus_Decoder *").
 
+:- pragma foreign_decl("C", "void MOpus_DecoderFinalizer(void *ptr, void *data);").
+:- pragma foreign_code("C",
+    "
+    void MOpus_DecoderFinalizer(void *ptr, void *data){
+        struct MOpus_Decoder *decoder = (struct MOpus_Decoder*)ptr;
+        opus_decoder_destroy(dec->decoder);
+    }
+    ").
+
 :- pragma foreign_export("C", decode_16(in, uo, di, uo), "MOpus_Decode16").
 :- pragma foreign_export("C", decode_16(in, uo, di, uo, di, uo), "MOpus_Decode16IO").
 :- pragma foreign_export("C", decode_float(in, uo, di, uo), "MOpus_DecodeFloat").
@@ -110,6 +119,9 @@ init(Input, Len, MaybeDecoder, !IO) :-
                 if(!SUCCESS_INDICATOR){
                     MR_GC_free(Out);
                     Out = NULL;
+                }
+                else{
+                    MR_GC_register_finalizer(Out, MOpus_DecoderFinalizer, NULL);
                 }
             }
         }

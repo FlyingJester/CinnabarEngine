@@ -14,7 +14,7 @@
 :- func normalize3(vector3) = vector3.
 :- func normalize4(vector4) = vector4.
 
-:- func magnitude2(vector2) = float.
+:- func magnitude2(vector2) = float. 
 :- func magnitude3(vector3) = float.
 :- func magnitude4(vector4) = float.
 

@@ -55,11 +55,13 @@ $(FJOGG): fjogg/fjogg.m
 
 LIBS=-l glow -l openal -l opus -l ogg -l chrono -l spherefonts -l aimg -l bufferfile -l GL -l png
 
-MERCURY_SRC=camera.m gl2.m gl2.skybox.m matrix.m maudio.m model.m opengl.m render.m scene.m scene.matrix_tree.m scene.node_tree.m softshape.m vector.m wavefront.m
+MERCURY_SRC=camera.m gl2.m gl2.skybox.m matrix.m maudio.m model.m opengl.m \
+render.m scene.m scene.matrix_tree.m scene.node_tree.m softshape.m vector.m \
+wavefront.m mopus.m mopenal.m
 
 cinnabar: $(LIBTARGETS) $(WRAPPERS_SRC) $(MERCURY_SRC) cinnabar.m
 	$(MMCIN) cinnabar -L lib $(LIBS)
-	touch cinnabar # This is mostly to ensure that when a library changes but Cinnabar doesn't, we don't keep redoing the mmc --make.
+	touch cinnabar 
 
 test: test.m test.wavefront.m wavefront.m
 	$(MMCIN) test -L lib $(LIBS)

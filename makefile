@@ -1,5 +1,7 @@
 all: cinnabar test
 
+tests: test sinetest
+
 LIBPX?=lib
 LIBSX?=so
 LIBSA?=a
@@ -65,6 +67,9 @@ cinnabar: $(LIBTARGETS) $(WRAPPERS_SRC) $(MERCURY_SRC) cinnabar.m
 
 test: test.m test.wavefront.m wavefront.m
 	$(MMCIN) test -L lib $(LIBS)
+
+sinetest: sinetest.m sinegen.m mopenal.m $(CHRONO)
+	$(MMCIN) sinetest -L lib -l openal -l chrono
 
 clean:
 	scons -C glow -c

@@ -8,6 +8,8 @@
 :- func ms_to_int(microseconds) = (int).
 :- func int_to_ms(int) = (microseconds).
 
+:- func seconds_to_ms(int) = microseconds.
+
 :- pred micro_sleep(io::di, io::uo, microseconds::in) is det.
 :- pred micro_ticks(io::di, io::uo, microseconds::uo) is det.
 
@@ -24,6 +26,8 @@ ms_to_int(microseconds(I)) = I.
 
 int_to_ms(I) = microseconds(I).
 :- pragma foreign_export("C", int_to_ms(in)=(out), "int_to_ms").
+
+seconds_to_ms(Seconds) = microseconds(Seconds * 1000000).
 
 :- pragma foreign_proc("C",
     micro_sleep(IOin::di, IOout::uo, MS::in),

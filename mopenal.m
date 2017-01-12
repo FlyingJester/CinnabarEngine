@@ -34,8 +34,8 @@
 :- pred listener_ctl(listener_ctl, float, float, float, io.io, io.io).
 :- mode listener_ctl(in, in, in, in, di, uo) is det.
 
-:- pred create_loader(loader, format, int, context, io.io, io.io).
-:- mode create_loader(uo, in, in, in, di, uo) is det.
+:- pred create_loader(format, int, context, loader, io.io, io.io).
+:- mode create_loader(in, in, in, uo, di, uo) is det.
 :- pred put_data(loader::di, loader::uo, buffer.buffer::in) is det.
 :- pred finalize(loader::di, sound::uo) is det.
 
@@ -215,7 +215,7 @@ listener_ctl(Ctl, vector.vector(X, Y, Z), !IO) :- listener_ctl(Ctl, X, Y, Z, !IO
     ").
 
 :- pragma foreign_proc("C",
-    create_loader(Out::uo, Format::in, Rate::in, Ctx::in, IO0::di, IO1::uo),
+    create_loader(Format::in, Rate::in, Ctx::in, Out::uo, IO0::di, IO1::uo),
     [will_not_throw_exception, promise_pure, thread_safe],
     "
         IO1 = IO0;
@@ -236,19 +236,31 @@ listener_ctl(Ctl, vector.vector(X, Y, Z), !IO) :- listener_ctl(Ctl, X, Y, Z, !IO
         if(!MOpenAL_CleanSound(*In, &buffer)){
             alGenBuffers(1, &buffer);
         }
-        alBufferData(buffer, In[1], Buffer->data, Buffer->size, In[2]);        
-        alDeleteBuffers(1, &buffer);
+        alBufferData(buffer, In[1], Buffer->data, Buffer->size, In[2]);
+        alSourceQueueBuffers(*In, 1, &buffer);
+        /*alDeleteBuffers(1, &buffer); */
     ").
 
 :- pragma foreign_proc("C", finalize(Loader::di, Sound::uo),
     [will_not_call_mercury, does_not_affect_liveness, will_not_throw_exception,
     promise_pure, thread_safe],
-    " Sound = Loader; ").
+    "
+        Sound = Loader;
+        alSourcef(*Sound, AL_PITCH, 1.0f);
+        alSourcef(*Sound, AL_GAIN, 1.0f);
+        alSource3f(*Sound, AL_POSITION, 1.0f, 1.0f, 1.0f);
+        alSource3f(*Sound, AL_VELOCITY, 1.0f, 1.0f, 1.0f);
+        alSourcei(*Sound, AL_LOOPING, AL_FALSE);
+    ").
 
 :- pragma foreign_proc("C", play(Snd::in, IO0::di, IO1::uo),
     [will_not_call_mercury, does_not_affect_liveness, will_not_throw_exception,
     promise_pure, thread_safe, tabled_for_io],
-    " IO1 = IO0; alSourcePlay(*Snd); ").
+    " 
+        IO1 = IO0; 
+        alSourcei(*Snd, AL_LOOPING, AL_FALSE);
+        alSourcePlay(*Snd); 
+    ").
 
 :- pragma foreign_proc("C", stop(Snd::in, IO0::di, IO1::uo),
     [will_not_call_mercury, does_not_affect_liveness, will_not_throw_exception,

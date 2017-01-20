@@ -32,6 +32,9 @@
 :- include_module test.wavefront.
 :- use_module test.wavefront.
 
+:- include_module test.buffer.
+:- use_module test.buffer.
+
 %------------------------------------------------------------------------------%
 :- pred write_fail(io.io::di, io.io::uo, string::in, string::in, int::uo) is det.
 write_fail(!IO, Description, TestName, 0) :-
@@ -73,4 +76,5 @@ sum_suite(!IO, SuiteName, OK, Total) :-
 
 %------------------------------------------------------------------------------%
 main(!IO) :-
-    test.wavefront.test(!IO).
+    test.wavefront.test(!IO),
+    test.buffer.test(!IO).

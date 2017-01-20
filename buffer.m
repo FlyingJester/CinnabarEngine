@@ -40,6 +40,18 @@
 :- pred to_list_float(buffer::in, list.list(float)::uo) is det.
 :- pred to_list_double(buffer::in, list.list(float)::uo) is det.
 
+:- func to_list_8_reverse(buffer) = list.list(int).
+:- func to_list_16_reverse(buffer) = list.list(int).
+:- func to_list_32_reverse(buffer) = list.list(int).
+:- func to_list_float_reverse(buffer) = list.list(float).
+:- func to_list_double_reverse(buffer) = list.list(float).
+
+:- pred to_list_8_reverse(buffer::in, list.list(int)::uo) is det.
+:- pred to_list_16_reverse(buffer::in, list.list(int)::uo) is det.
+:- pred to_list_32_reverse(buffer::in, list.list(int)::uo) is det.
+:- pred to_list_float_reverse(buffer::in, list.list(float)::uo) is det.
+:- pred to_list_double_reverse(buffer::in, list.list(float)::uo) is det.
+
 :- func from_list_8(list.list(int)) = buffer.
 :- func from_list_16(list.list(int)) = buffer.
 :- func from_list_32(list.list(int)) = buffer.
@@ -66,6 +78,9 @@
 
 :- pred append(buffer::in, buffer::in, buffer::uo) is det.
 :- func append(buffer, buffer) = (buffer).
+
+:- pred concatenate(list(buffer)::in, buffer::out) is det.
+:- func concatenate(list(buffer)) = buffer.
 
 %==============================================================================%
 :- implementation.
@@ -130,6 +145,12 @@ to_list_32(In) = Out :- to_list_16(In, Out).
 to_list_float(In) = Out  :- to_list_float(In, Out).
 to_list_double(In) = Out :- to_list_double(In, Out).
 
+to_list_8_reverse(In) = Out  :- to_list_8_reverse(In, Out).
+to_list_16_reverse(In) = Out :- to_list_16_reverse(In, Out).
+to_list_32_reverse(In) = Out :- to_list_16_reverse(In, Out).
+to_list_float_reverse(In) = Out  :- to_list_float_reverse(In, Out).
+to_list_double_reverse(In) = Out :- to_list_double_reverse(In, Out).
+
 from_list_8(In) = Out  :- from_list_8(In, Out).
 from_list_16(In) = Out :- from_list_16(In, Out).
 from_list_32(In) = Out :- from_list_32(In, Out).
@@ -150,6 +171,16 @@ sizefloat = 4.
 
 :- func sizedouble = int.
 sizedouble = 8.
+
+:- func append_float_to_list(float, list.list(float)) = list.list(float).
+append_float_to_list(F, L) = list.append(L, [F|[]]).
+:- pragma foreign_export("C", append_float_to_list(in, in) = (out),
+    "M_Buffer_AppendFloatToList").
+
+:- func append_int_to_list(int, list.list(int)) = list.list(int).
+append_int_to_list(F, L) = list.append(L, [F|[]]).
+:- pragma foreign_export("C", append_int_to_list(in, in) = (out),
+    "M_Buffer_AppendIntToList").
 
 get_8(B, I, O)      :- get_byte_8(B, I, O).
 get_16(B, I, O)     :- get_byte_16(B, I*size16, O).
@@ -201,7 +232,8 @@ get_byte_double(Buf, I, O) :-
         unsigned i;
         List = MR_list_empty();
         for(i = 0; i < Buf->size; i++){
-            List = MR_list_cons(((unsigned char*)Buf->data)[i], List);
+            const unsigned char b = ((unsigned char*)Buf->data)[i];
+            List = M_Buffer_AppendIntToList(b, List);
         }
     ").
 
@@ -213,7 +245,7 @@ get_byte_double(Buf, I, O) :-
         List = MR_list_empty();
         const unsigned short *const array = (unsigned short*)((char*)Buf->data);
         for(i = 0; i < Buf->size >> 1; i++){
-            List = MR_list_cons(array[i], List);
+            List = M_Buffer_AppendIntToList(array[i], List);
         }
     ").
 
@@ -225,7 +257,7 @@ get_byte_double(Buf, I, O) :-
         List = MR_list_empty();
         const unsigned int *const array = (unsigned int*)((char*)Buf->data);
         for(i = 0; i < Buf->size >> 2; i++){
-            List = MR_list_cons(array[i], List);
+            List = M_Buffer_AppendIntToList(array[i], List);
         }
     ").
 
@@ -237,7 +269,7 @@ get_byte_double(Buf, I, O) :-
         List = MR_list_empty();
         const float *const array = (float*)((char*)Buf->data);
         for(i = 0; i < Buf->size >> 2; i++){
-            List = MR_list_cons(MR_float_to_word(array[i]), List);
+            List = M_Buffer_AppendFloatToList(array[i], List);
         }
     ").
 
@@ -249,10 +281,69 @@ get_byte_double(Buf, I, O) :-
         List = MR_list_empty();
         const double *const array = (double*)((char*)Buf->data);
         for(i = 0; i < Buf->size >> 3; i++){
+            List = M_Buffer_AppendFloatToList(array[i], List);
+        }
+    ").
+
+:- pragma foreign_proc("C",
+    to_list_8_reverse(Buf::in, List::uo),
+    [will_not_throw_exception, promise_pure, thread_safe],
+    "
+        unsigned i;
+        List = MR_list_empty();
+        for(i = 0; i < Buf->size; i++){
+            const unsigned char b = ((unsigned char*)Buf->data)[i];
+            List = MR_list_cons(b, List);
+        }
+    ").
+
+:- pragma foreign_proc("C",
+    to_list_16_reverse(Buf::in, List::uo),
+    [will_not_throw_exception, promise_pure, thread_safe],
+    "
+        unsigned i;
+        List = MR_list_empty();
+        const unsigned short *const array = (unsigned short*)((char*)Buf->data);
+        for(i = 0; i < Buf->size >> 1; i++){
+            List = MR_list_cons(array[i], List);
+        }
+    ").
+
+:- pragma foreign_proc("C",
+    to_list_32_reverse(Buf::in, List::uo),
+    [will_not_throw_exception, promise_pure, thread_safe],
+    "
+        unsigned i;
+        List = MR_list_empty();
+        const unsigned int *const array = (unsigned int*)((char*)Buf->data);
+        for(i = 0; i < Buf->size >> 2; i++){
+            List = MR_list_cons(array[i], List);
+        }
+    ").
+
+:- pragma foreign_proc("C",
+    to_list_float_reverse(Buf::in, List::uo),
+    [will_not_throw_exception, promise_pure, thread_safe],
+    "
+        unsigned i;
+        List = MR_list_empty();
+        const float *const array = (float*)((char*)Buf->data);
+        for(i = 0; i < Buf->size >> 2; i++){
             List = MR_list_cons(MR_float_to_word(array[i]), List);
         }
     ").
 
+:- pragma foreign_proc("C",
+    to_list_double_reverse(Buf::in, List::uo),
+    [will_not_throw_exception, promise_pure, thread_safe],
+    "
+        unsigned i;
+        List = MR_list_empty();
+        const double *const array = (double*)((char*)Buf->data);
+        for(i = 0; i < Buf->size >> 3; i++){
+            List = MR_list_cons(MR_float_to_word(array[i]), List);
+        }
+    ").
 
 :- pragma foreign_proc("C", from_list_8(List::in, Buffer::uo),
     [will_not_throw_exception, promise_pure, thread_safe, tabled_for_io],
@@ -270,6 +361,7 @@ get_byte_double(Buf, I, O) :-
         while(!MR_list_is_empty(list)){
             ((unsigned char*)buf->data)[len++] = MR_list_head(list);
             list = MR_list_tail(list);
+            printf(""Append %i\\n"", ((unsigned char*)buf->data)[len-1]);
         }
         Buffer = buf;
     ").
@@ -399,3 +491,63 @@ append(A, B) = Out :-
     ;
         append(A, B, Out)
     ).
+
+concatenate(List) = Out :-
+    concatenate(List, Out).
+
+:- pragma foreign_proc("C", concatenate(In::in, Out::out),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,
+    tabled_for_io],
+    "
+        /* There are optimizations for lists of sizes 0 or 1, and lists with
+         * only one buffer of a size other than zero. */
+        
+        MR_Word list = In;
+        unsigned n = 0, size = 0;
+        /* -2 is unset, -1 is multiple found. Used to determine if there is
+         * only one non-empty buffer */
+        int only_found = -2;
+        const struct M_Buffer *found = NULL;
+        
+        while(!MR_list_is_empty(list)){
+            const struct M_Buffer *const buf =
+                (struct M_Buffer*)MR_list_head(list);
+            list = MR_list_tail(list);
+            if(size == 0 && buf->size > 0 && only_found == -2){
+                only_found = n;
+                found = buf;
+            }
+            else if(size != 0 && buf->size > 0){
+                found = NULL;
+                only_found = -1;
+            }
+            n++;
+            size+=buf->size;
+        }
+        
+        if(only_found >= 0){
+            Out = found;
+        }
+        if(n == 0){
+            struct M_Buffer *const buffer =
+                MR_GC_malloc_atomic(sizeof(struct M_Buffer));
+            buffer->size = 0;
+            Out = buffer;
+        }
+        if(n == 1){
+            Out = (struct M_Buffer*)MR_list_head(list);
+        }
+        else{
+            unsigned at = 0;
+            Out = M_Buffer_Allocate(size);
+            list = In;
+            do{
+                const struct M_Buffer *const buf = (void*)MR_list_head(list);
+                list = MR_list_tail(list);
+                if(buf->size == 0)
+                    continue;
+                memcpy(((char*)Out->data) + at, buf->data, buf->size);
+                at += buf->size;
+            }while(!MR_list_is_empty(list));
+        }
+    ").

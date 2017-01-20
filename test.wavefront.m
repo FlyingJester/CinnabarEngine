@@ -31,7 +31,7 @@ test1src = "
 v 0.0 0.0 0.0
 v 0.0 1.0 0.0
 v 1.0 0.0 0.0
-f 0 1 2
+f 1 2 3
 ".
 
 test1src_comment = "
@@ -40,7 +40,7 @@ v 0.0 1.0 0.0
 v 1.0 0.0 0.0
 # A comment here, too.
 # v 0.0 0.0 0.0
-f 0 1 2
+f 1 2 3
 ".
 
 test1ver(Shape) :-

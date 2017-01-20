@@ -361,7 +361,6 @@ get_byte_double(Buf, I, O) :-
         while(!MR_list_is_empty(list)){
             ((unsigned char*)buf->data)[len++] = MR_list_head(list);
             list = MR_list_tail(list);
-            printf(""Append %i\\n"", ((unsigned char*)buf->data)[len-1]);
         }
         Buffer = buf;
     ").

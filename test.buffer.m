@@ -1,5 +1,8 @@
 :- module test.buffer.
 %==============================================================================%
+% This test module is a little copypasta'd, but that's mostly because we want to
+% test buffers in every size for each test, and it's not simple to mix float and
+% int tests.
 :- interface.
 %==============================================================================%
 
@@ -115,7 +118,6 @@ lists_equal(I, I).
 buffer_equals_list(List, ToList, Buffer) :- ToList(Buffer, List).
 
 test(!IO) :-
-    % 8 bit
     append_test("8 bit", !IO, buffer.from_list_8, buffer.to_list_8, 0, OK8, 0, Sum8),
     append_test("16 bit", !IO, buffer.from_list_16, buffer.to_list_16, OK8, OK16, Sum8, Sum16),
     append_test("32 bit", !IO, buffer.from_list_32, buffer.to_list_32, OK16, OK32, Sum16, Sum32),
@@ -125,7 +127,9 @@ test(!IO) :-
     reverse_test("8 bit", !IO, buffer.from_list_8, buffer.to_list_8_reverse, 0, OK8r, 0, Sum8r),
     reverse_test("16 bit", !IO, buffer.from_list_16, buffer.to_list_16_reverse, OK8r, OK16r, Sum8r, Sum16r),
     reverse_test("32 bit", !IO, buffer.from_list_32, buffer.to_list_32_reverse, OK16r, OK32r, Sum16r, Sum32r),
-    sum_suite(!IO, "Buffer Reverse", OK32r, Sum32r).
+    reverse_test_float("float", !IO, buffer.from_list_float, buffer.to_list_float_reverse, OK32r, OKfloatr, Sum32r, Sumfloatr),
+    reverse_test_float("double", !IO, buffer.from_list_double, buffer.to_list_double_reverse, OKfloatr, OKdoubler, Sumfloatr, Sumdoubler),
+    sum_suite(!IO, "Buffer Reverse", OKdoubler, Sumdoubler).
 
 :- func str_append(string, string) = string.
 str_append(A, B) = string.append(A, B).

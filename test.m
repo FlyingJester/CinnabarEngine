@@ -1,6 +1,9 @@
 :- module test.
 %==============================================================================%
 % Test application for Cinnabar components.
+%
+% Includes a simple unit test framework, since there are no other open source
+% test frameworks for Mercury.
 :- interface.
 %==============================================================================%
 
@@ -10,7 +13,27 @@
 
 :- pred main(io.io::di, io.io::uo) is det.
 
-% Test runners for submodules
+% Test runners for submodules.
+% The intention is that Producer will take in Input and produce some output that
+% will cause OutputIsValid to succeed or fail, indicate the test worked or not.
+%  
+% As an example, to test an integer-pair summing function:
+%
+% > :- pred sum(pair(int, int)::in, int::uo) is det.
+% > sum(pair(A, B), A + B).
+%
+% > :- pred equals(int::in, int::in) is semidet.
+% > equals(I, I).
+% 
+% Then, to run the test:
+% > run_test(!IO, "1 + 2", pair(1, 2), equal(3), sum, !OK, !Sum).
+% 
+% It's true that many simple cases don't need verification functions to test
+% validity, but many more complex cases only test certain portions of a result.
+%
+%
+% The point of OK and Sum are to sum up results for sum_suite.
+% 
 % run_test(!IO, TestName, Input, OutputIsValid, Producer, OK_In, OK_Out, Sum_In, Sum_Out)
 :- pred run_test(io.io, io.io, string, T, pred(O), pred(T, O), int, int, int, int).
 :- mode run_test(di, uo, in, in, pred(in) is semidet, pred(in, out) is semidet, di, uo, di, uo) is det.

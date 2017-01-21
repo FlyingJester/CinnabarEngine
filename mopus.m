@@ -1,10 +1,16 @@
 :- module mopus.
 %==============================================================================%
+% Bindings for the Opus audio codec reference implementation.
+% This is partially tailored for Opus inside Ogg containers, as the decode preds
+% will skip packets that start with the string "OpusTags", which is metadata in
+% Ogg+Opus streams, and the init preds that accept buffers or binary input look
+% for the "OpusHead" packet which is the first packet in Ogg+Opus streams.
 :- interface.
 %==============================================================================%
 
 :- use_module io.
 :- use_module maybe.
+:- import_module pair.
 :- use_module buffer.
 
 %------------------------------------------------------------------------------%
@@ -16,15 +22,16 @@
 
 %------------------------------------------------------------------------------%
 
-% init(SampleRate, Channels, Decoder).
-:- pred init(int::in, int::in, decoder::uo) is semidet.
-
 % Uses the first packet of an Ogg stream to initialize the decoder
-:- pred init(buffer.buffer::in, decoder::uo) is semidet.
+% init(Packet, Decoder, NumChannels)
+:- pred init(buffer.buffer::in, decoder::uo, int::uo) is semidet.
 
 % Reads in the first packet of an Ogg stream to initialize the decoder
-:- pred init(io_input, int, maybe.maybe(decoder), io.io, io.io).
+:- pred init(io_input, int, maybe.maybe(pair(decoder, int)), io.io, io.io).
 :- mode init(in, in, uo, di, uo) is det.
+
+% init2(SampleRate, Channels, Decoder, Channels).
+:- pred init2(int::in, int::in, decoder::uo, int::uo) is semidet.
 
 % decode_16(EncodedInput, PCM16Output, !Decoder)
 :- pred decode_16(buffer.buffer, buffer.buffer, decoder, decoder).
@@ -52,6 +59,7 @@
 
 :- import_module int.
 
+:- pragma foreign_decl("C", "#include ""buffer.mh"" ").
 :- pragma foreign_import_module("C", buffer).
 :- pragma foreign_import_module("C", io).
 :- pragma foreign_decl("C", "#include <opus/opus.h>").
@@ -63,14 +71,14 @@
     "
     void MOpus_DecoderFinalizer(void *ptr, void *data){
         struct MOpus_Decoder *decoder = (struct MOpus_Decoder*)ptr;
-        opus_decoder_destroy(dec->decoder);
+        opus_decoder_destroy(decoder->dec);
     }
     ").
 
 :- pragma foreign_export("C", decode_16(in, uo, di, uo), "MOpus_Decode16").
-:- pragma foreign_export("C", decode_16(in, uo, di, uo, di, uo), "MOpus_Decode16IO").
+:- pragma foreign_export("C", decode_16(in, in, uo, di, uo, di, uo), "MOpus_Decode16IO").
 :- pragma foreign_export("C", decode_float(in, uo, di, uo), "MOpus_DecodeFloat").
-:- pragma foreign_export("C", decode_float(in, uo, di, uo, di, uo), "MOpus_DecodeFloatIO").
+:- pragma foreign_export("C", decode_float(in, in, uo, di, uo, di, uo), "MOpus_DecodeFloatIO").
 
 init(Input, Len, MaybeDecoder, !IO) :-
     buffer.read(Input, Len, MaybeBuffer, !IO),
@@ -80,23 +88,23 @@ init(Input, Len, MaybeDecoder, !IO) :-
         MaybeBuffer = io.ok(Buffer)
     ),
     % Enough data for a head packet...
-    ( buffer.length(Buffer) >= 19, init(Buffer, Decoder) ->
-        MaybeDecoder = maybe.yes(Decoder)
+    ( buffer.length(Buffer) >= 19, init(Buffer, Decoder, C) ->
+        MaybeDecoder = maybe.yes((Decoder - C))
     ;
         MaybeDecoder = maybe.no
     ).
 
-:- pragma foreign_proc("C", init(SampleRate::in, Chans::in, Out::uo),
+:- pragma foreign_proc("C", init2(SampleRate::in, Chans::in, Out::uo, NChan::uo),
     [will_not_throw_exception, promise_pure, thread_safe],
     "
         const unsigned size = sizeof(struct MOpus_Decoder) + opus_decoder_get_size(Chans);
         Out = MR_GC_malloc_atomic(size);
         Out->dec = (OpusDecoder*)(Out+1);
-        Out->nchan = Chans;
+        Out->nchan = NChan = Chans;
         SUCCESS_INDICATOR = opus_decoder_init(Out->dec, SampleRate, Chans) == OPUS_OK;
     ").
 
-:- pragma foreign_proc("C", init(Buffer::in, Out::uo),
+:- pragma foreign_proc("C", init(Buffer::in, Out::uo, NChan::uo),
     [will_not_throw_exception, promise_pure, thread_safe],
     "
         const char sig[] = ""OpusHead"";
@@ -121,6 +129,7 @@ init(Input, Len, MaybeDecoder, !IO) :-
                     Out = NULL;
                 }
                 else{
+                    NChan = nchan;
                     MR_GC_register_finalizer(Out, MOpus_DecoderFinalizer, NULL);
                 }
             }
@@ -134,12 +143,17 @@ init(Input, Len, MaybeDecoder, !IO) :-
         const unsigned max_samples =  5760 * nchan,
             max_bytes = max_samples << 1;
         struct M_Buffer *buffer = M_Buffer_Allocate(max_bytes);
+        buffer->size = 0;
+
         OpusDecoder *const dec = Decoder0->dec;
-        const int num =
-            opus_decode(dec, In->data, In->size, buffer->data, max_samples, 0);
-        buffer->size = num * (nchan << 1);
-        if(num < 0)
-            buffer->size = 0;
+
+        if(!(In->size >= 8 && memcmp(In->data, ""OpusTags"", 8) == 0)){
+            const int num =
+                opus_decode(dec, In->data, In->size, buffer->data, max_samples, 0);
+            if(num > 0)
+                buffer->size = num * (nchan << 1);
+        }
+        
         Decoder1 = Decoder0;
         Out = buffer;
     ").
@@ -178,12 +192,16 @@ decode_16(Size, Input, BufferOut, !Decoder, !IO) :-
         const unsigned max_samples =  5760 * nchan,
             max_bytes = max_samples << 2;
         struct M_Buffer *buffer = M_Buffer_Allocate(max_bytes);
+        buffer->size = 0;
+
         OpusDecoder *const dec = Decoder0->dec;
-        const int num =
-            opus_decode_float(dec, In->data, In->size, buffer->data, max_samples, 0);
-        buffer->size = num * (nchan << 2);
-        if(num < 0)
-            buffer->size = 0;
+        
+        if(!(In->size >= 8 && memcmp(In->data, ""OpusTags"", 8) == 0)){
+            const int num =
+                opus_decode_float(dec, In->data, In->size, buffer->data, max_samples, 0);
+            if(num > 0)
+                buffer->size = num * (nchan << 2);
+        }
         Decoder1 = Decoder0;
         Out = buffer;
     ").

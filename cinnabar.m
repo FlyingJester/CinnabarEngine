@@ -11,10 +11,10 @@
 %==============================================================================%
 :- implementation.
 %==============================================================================%
-:- use_module maudio.
 :- use_module mchrono.
 :- use_module mglow.
 
+:- use_module audio_loader.
 :- use_module upload_aimg.
 :- use_module opengl.
 :- use_module gl2.

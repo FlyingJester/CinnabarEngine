@@ -26,6 +26,8 @@
 
 :- pred supports_float(device::in) is semidet.
 
+:- pred context_supports_float(context::in) is semidet.
+
 :- pred make_current(context::in, io.io::di, io.io::uo) is det.
 
 :- pred listener_ctl(listener_ctl, vector.vector3, io.io, io.io).
@@ -195,6 +197,15 @@ create_ctx_ok(Ctx) = io.ok(Ctx).
         SUCCESS_INDICATOR = (exists == AL_TRUE);
     ").
 
+:- pragma foreign_proc("C", context_supports_float(Ctx::in),
+    [will_not_call_mercury, does_not_affect_liveness, will_not_throw_exception,
+    promise_pure, thread_safe],
+    "
+        ALCdevice *const dev = alcGetContextsDevice(*Ctx);
+        const ALboolean exists = alcIsExtensionPresent(dev, ""AL_EXT_FLOAT32"");
+        SUCCESS_INDICATOR = (exists == AL_TRUE);
+    ").
+
 :- pragma foreign_proc("C", make_current(Ctx::in, IO0::di, IO1::uo),
     [will_not_call_mercury, does_not_affect_liveness, will_not_throw_exception,
     promise_pure, thread_safe, tabled_for_io],
@@ -229,7 +240,7 @@ listener_ctl(Ctl, vector.vector(X, Y, Z), !IO) :- listener_ctl(Ctl, X, Y, Z, !IO
 
 
 :- pragma foreign_proc("C", put_data(In::di, Out::uo, Buffer::in),
-    [will_not_throw_exception, promise_pure, thread_safe],
+    [will_not_throw_exception, promise_pure, thread_safe, tabled_for_io],
     "
         Out = In;
         ALuint buffer;
@@ -238,7 +249,6 @@ listener_ctl(Ctl, vector.vector(X, Y, Z), !IO) :- listener_ctl(Ctl, X, Y, Z, !IO
         }
         alBufferData(buffer, In[1], Buffer->data, Buffer->size, In[2]);
         alSourceQueueBuffers(*In, 1, &buffer);
-        /*alDeleteBuffers(1, &buffer); */
     ").
 
 :- pragma foreign_proc("C", finalize(Loader::di, Sound::uo),

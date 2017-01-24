@@ -64,6 +64,19 @@
 :- pred from_list_float(list.list(float)::in, buffer::uo) is det.
 :- pred from_list_double(list.list(float)::in, buffer::uo) is det.
 
+% Succeeds if the buffer is as long or longer than the string, and matches for
+% the length of the string matches bytewise.
+% Fails if buffer is shorter than string.
+:- pred matches(buffer::in, string::in) is semidet.
+
+% Creates a string from Length bytes of Buffer. Fails if Length is greater
+% than the length of Buffer, or if any invalid codepoints are encountered.
+% get_string(Buffer, Length, String)
+% :- pred get_string(buffer::in, int::in, string::uo) is semidet.
+
+% Same as get_string, but only accepts ascii characters. Slightly faster.
+:- pred get_ascii_string(buffer::in, int::in, string::uo) is semidet.
+
 % Used to implement all other getters. These should be the only native getters.
 % These do NOT do any bounds checking, the callers MUST bounds check. Otherwise you
 % WILL CRASH. I guarantee it.
@@ -75,6 +88,10 @@
 
 :- pred read(io.binary_input_stream, int, io.maybe_partial_res(buffer), io.io, io.io).
 :- mode read(in, in, out, di, uo) is det.
+
+% Reads from the current binary input stream.
+:- pred read(int, buffer, io.io, io.io).
+:- mode read(in, uo, di, uo) is det.
 
 :- pred append(buffer::in, buffer::in, buffer::uo) is det.
 :- func append(buffer, buffer) = (buffer).
@@ -88,6 +105,7 @@
 
 :- import_module int.
 
+:- pragma foreign_import_module("C", io).
 :- pragma foreign_decl("C", "struct M_Buffer { unsigned long size; void *data; };").
 :- pragma foreign_decl("C", "struct M_Buffer *M_Buffer_Allocate(unsigned long len);").
 :- pragma foreign_code("C",
@@ -199,6 +217,35 @@ get_byte_float(Buf, I, O) :-
 
 get_byte_double(Buf, I, O) :-
     I + sizedouble =< length(Buf), get_native_double(Buf, I, O).
+
+:- pragma foreign_proc("C", matches(Buf::in, Str::in),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,
+     does_not_affect_liveness],
+    "
+        const unsigned len = strnlen(Str, Buf->size + 1);
+        SUCCESS_INDICATOR = (len <= Buf->size && memcmp(Buf->data, Str, len) == 0);
+    ").
+
+:- pragma foreign_proc("C", get_ascii_string(Buf::in, Len::in, Out::uo),
+    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,
+     does_not_affect_liveness],
+    "
+        if((SUCCESS_INDICATOR = Buf->size >= Len)){
+            unsigned i;
+            for(i = 0; i < Len; i++){
+                const char c = ((char*)Buf->data)[i];
+                if(!((c >= ' ' || c == '\\n' || c == '\\r' ||
+                    c == '\\t') && !(c & 0x80))){
+                    SUCCESS_INDICATOR = 0;
+                    goto m_buffer_failure_not_ascii;
+                }
+            }
+            Out = MR_GC_malloc_atomic(Len+1);
+            memcpy(Out, Buf->data, Len);
+            Out[Len] = '\\0';
+        }
+        m_buffer_failure_not_ascii: 
+    ").
 
 :- pragma foreign_proc("C", get_native_8(Buf::in, I::in, O::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,
@@ -445,30 +492,20 @@ get_byte_double(Buf, I, O) :-
         Buffer = buf;
     ").
 
-:- pred read(io.binary_input_stream,
-    int, list.list(int), io.maybe_partial_res(buffer), io.io, io.io).
-:- mode read(in,
-    in, in, out, di, uo) is det.
+read(In, Len, io.ok(Out), !IO) :-
+    io.set_binary_input_stream(In, OldStream, !IO),
+    read(Len, Out, !IO),
+    io.set_binary_input_stream(OldStream, _, !IO).
 
-% Passes the list through reversed. Slightly faster.
-read(In, Len, Out, !IO) :- read(In, Len, [], Out, !IO).
-read(In, Len, InList, Result, !IO) :-
-    from_list_8(list.reverse(InList), Buffer),
-    ( Len =< 0 ->
-        Result = io.ok(Buffer)
-    ;
-        io.read_byte(In, ByteResult, !IO),
-        (
-            ByteResult = io.eof,
-            Result = io.error(Buffer, io.make_io_error("EOF"))
-        ;
-            ByteResult = io.error(Err),
-            Result = io.error(Buffer, Err)
-        ;
-            ByteResult = io.ok(Byte),
-            read(In, Len-1, [Byte|InList], Result, !IO)
-        )
-    ).
+:- pragma foreign_proc("C", read(Len::in, Buffer::uo, IO0::di, IO1::uo),
+    [will_not_throw_exception, promise_pure, thread_safe, tabled_for_io],
+    "
+        struct M_Buffer *const buffer = M_Buffer_Allocate(Len);
+        MercuryFile *const stream = mercury_current_binary_output();
+        MR_READ(*stream, buffer->data, Len);
+        Buffer = buffer;
+        IO1 = IO0;
+    ").
 
 :- pragma foreign_proc("C", append(A::in, B::in, Out::uo),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,

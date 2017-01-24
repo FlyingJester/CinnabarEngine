@@ -152,10 +152,7 @@
 
 :- pragma foreign_proc("C", length(Buffer::in) = (Size::out),
     [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,
-    does_not_affect_liveness],
-    "
-        Size = Buffer->size;
-    ").
+    does_not_affect_liveness], " Size = Buffer->size; ").
 
 to_list_8(In) = Out  :- to_list_8(In, Out).
 to_list_16(In) = Out :- to_list_16(In, Out).
@@ -227,8 +224,7 @@ get_byte_double(Buf, I, O) :-
     ").
 
 :- pragma foreign_proc("C", get_ascii_string(Buf::in, Len::in, Out::uo),
-    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,
-     does_not_affect_liveness],
+    [will_not_throw_exception, promise_pure, thread_safe],
     "
         if((SUCCESS_INDICATOR = Buf->size >= Len)){
             unsigned i;
@@ -498,11 +494,11 @@ read(In, Len, io.ok(Out), !IO) :-
     io.set_binary_input_stream(OldStream, _, !IO).
 
 :- pragma foreign_proc("C", read(Len::in, Buffer::uo, IO0::di, IO1::uo),
-    [will_not_throw_exception, promise_pure, thread_safe, tabled_for_io],
+    [promise_pure, thread_safe, tabled_for_io],
     "
         struct M_Buffer *const buffer = M_Buffer_Allocate(Len);
         MercuryFile *const stream = mercury_current_binary_output();
-        MR_READ(*stream, buffer->data, Len);
+        buffer->size = MR_READ(*stream, buffer->data, Len);
         Buffer = buffer;
         IO1 = IO0;
     ").
@@ -532,8 +528,7 @@ concatenate(List) = Out :-
     concatenate(List, Out).
 
 :- pragma foreign_proc("C", concatenate(In::in, Out::out),
-    [will_not_call_mercury, will_not_throw_exception, promise_pure, thread_safe,
-    tabled_for_io],
+    [will_not_throw_exception, promise_pure, thread_safe, tabled_for_io],
     "
         /* There are optimizations for lists of sizes 0 or 1, and lists with
          * only one buffer of a size other than zero. */

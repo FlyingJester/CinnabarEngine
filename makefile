@@ -1,4 +1,4 @@
-all: cinnabar test
+all: cinnabar test sinetest
 
 tests: test sinetest
 
@@ -12,7 +12,7 @@ GRADE?=hlc.gc
 MMC?=mmc
 
 # MMCIN=$(MMC) -E -j4 --grade=asm_fast.gc.debug.stseg --make
-MMCFLAGS?=--cflags "-g -O2 " --opt-level 7 --intermodule-optimization 
+MMCFLAGS?=--cflags "-g -O2 " --opt-level 7 --intermodule-optimization --mercury-linkage static
 MMCCALL=$(MMC) --grade=$(GRADE) $(MMCFLAGS) -L./ --mld lib/mercury
 MMCIN=$(MMCCALL) -E -j4 --make
 

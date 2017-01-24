@@ -14,6 +14,7 @@
 :- use_module mchrono.
 :- use_module mglow.
 
+:- use_module mopenal.
 :- use_module audio_loader.
 :- use_module upload_aimg.
 :- use_module opengl.
@@ -21,6 +22,7 @@
 :- use_module gl2.skybox.
 :- use_module render.
 
+:- use_module vector.
 :- use_module softshape.
 :- use_module wavefront.
 
@@ -85,7 +87,8 @@ load_texture(Path, !IO, !Window, Output) :-
 
 %------------------------------------------------------------------------------%
 main(!IO) :-
-    mglow.create_window(!IO, mglow.size(w, h), mglow.gl_version(2, 0), "Cinnabar", Win0),
+    mglow.create_window(!IO, 
+        mglow.size(w, h), mglow.gl_version(2, 0), "Cinnabar", Win0),
     
     gl2.init(Win0, Win1, GL2),
     setup_gl2(GL2, Win1, Win2),
@@ -108,6 +111,39 @@ main(!IO) :-
     ;
         SeeResult = io.error(_),
         Shape = wavefront.init_shape
+    ),
+    
+    mopenal.open_device(DevResult, !IO),
+    (
+        DevResult = io.ok(Dev),
+        mopenal.create_context(Dev, CtxResult, !IO),
+        (
+            CtxResult = io.ok(Ctx),
+            mopenal.make_current(Ctx, !IO),
+            Zero = vector.vector(0.0, 0.0, 0.0),
+            mopenal.listener_ctl(mopenal.position, Zero, !IO),
+            mopenal.listener_ctl(mopenal.velocity, Zero, !IO),
+            mopenal.listener_ctl(mopenal.orientation, Zero, !IO),
+            audio_loader.load("res/spiders.opus", Ctx, SndResult, !IO),
+            (
+                SndResult = io.ok(Snd)
+            ;
+                SndResult = io.error(Err),
+                io.error_message(Err, ErrMsg),
+                io.write_string("Could not open res/spiders.opus: ", !IO),
+                io.write_string(ErrMsg, !IO), io.nl(!IO)
+            )
+        ;
+            CtxResult = io.error(Err),
+            io.error_message(Err, ErrMsg),
+            io.write_string("Could not open OpenAL context: ", !IO),
+            io.write_string(ErrMsg, !IO), io.nl(!IO)
+        )
+    ;
+        DevResult = io.error(Err),
+        io.error_message(Err, ErrMsg),
+        io.write_string("Could not open OpenAL device: ", !IO),
+        io.write_string(ErrMsg, !IO), io.nl(!IO)
     ),
     
     load_texture(tex_path, !IO, Win2, Win3, MaybeTexture),

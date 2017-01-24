@@ -22,6 +22,8 @@
 
 %------------------------------------------------------------------------------%
 
+% TODO: Expose Opus error codes!
+
 % Uses the first packet of an Ogg stream to initialize the decoder
 % init(Packet, Decoder, NumChannels)
 :- pred init(buffer.buffer::in, decoder::uo, int::uo) is semidet.
@@ -59,11 +61,34 @@
 
 :- import_module int.
 
+:- type error --->
+    ok ;
+    bad_arg ;
+    buffer_too_small ;
+    internal_error ;
+    invalid_packet ;
+    unimplemented ;
+    invalid_state ;
+    alloc_fail.
+
 :- pragma foreign_decl("C", "#include ""buffer.mh"" ").
 :- pragma foreign_import_module("C", buffer).
 :- pragma foreign_import_module("C", io).
 :- pragma foreign_decl("C", "#include <opus/opus.h>").
 :- pragma foreign_decl("C", "struct MOpus_Decoder{OpusDecoder*dec;int nchan;};").
+
+:- pragma foreign_enum("C", error/0,
+    [ok - "OPUS_OK",
+    bad_arg - "OPUS_BAD_ARG",
+    buffer_too_small - "OPUS_BUFFER_TOO_SMALL",
+    internal_error - "OPUS_INTERNAL_ERROR",
+    invalid_packet - "OPUS_INVALID_PACKET",
+    unimplemented - "OPUS_UNIMPLEMENTED",
+    invalid_state - "OPUS_INVALID_STATE",
+    alloc_fail - "OPUS_ALLOC_FAIL"]).
+
+:- pragma foreign_decl("C", "const char *MOpus_NameError(int);").
+
 :- pragma foreign_type("C", decoder, "struct MOpus_Decoder *").
 
 :- pragma foreign_decl("C", "void MOpus_DecoderFinalizer(void *ptr, void *data);").
@@ -72,6 +97,25 @@
     void MOpus_DecoderFinalizer(void *ptr, void *data){
         struct MOpus_Decoder *decoder = (struct MOpus_Decoder*)ptr;
         opus_decoder_destroy(decoder->dec);
+    }
+    ").
+
+:- pragma foreign_code("C",
+    "
+    const char *MOpus_NameError(int err){
+#define MOPUS_ERROR_CASE(WHAT) case OPUS_ ## WHAT: return #WHAT
+        switch(err){
+            MOPUS_ERROR_CASE(OK);
+            MOPUS_ERROR_CASE(BAD_ARG);
+            MOPUS_ERROR_CASE(BUFFER_TOO_SMALL);
+            MOPUS_ERROR_CASE(INTERNAL_ERROR);
+            MOPUS_ERROR_CASE(INVALID_PACKET);
+            MOPUS_ERROR_CASE(UNIMPLEMENTED);
+            MOPUS_ERROR_CASE(INVALID_STATE);
+            MOPUS_ERROR_CASE(ALLOC_FAIL);
+            default: return ""<UNKNOWN>"";
+        }
+#undef MOPUS_ERROR_CASE
     }
     ").
 
@@ -88,7 +132,7 @@ init(Input, Len, MaybeDecoder, !IO) :-
         MaybeBuffer = io.ok(Buffer)
     ),
     % Enough data for a head packet...
-    ( buffer.length(Buffer) >= 19, init(Buffer, Decoder, C) ->
+    ( init(Buffer, Decoder, C) ->
         MaybeDecoder = maybe.yes((Decoder - C))
     ;
         MaybeDecoder = maybe.no
@@ -108,7 +152,32 @@ init(Input, Len, MaybeDecoder, !IO) :-
     [will_not_throw_exception, promise_pure, thread_safe],
     "
         const char sig[] = ""OpusHead"";
-        if(Buffer->size < 19 || memcmp(Buffer->data, sig, sizeof(sig)-1) != 0){
+        if(Buffer->size < 19){
+#ifndef NDEBUG
+            fputs(""[MOpus] Error: Buffer too small. Size is "", stderr);
+            fprintf(stderr, ""%i\\n"", (int)Buffer->size);
+#endif
+            SUCCESS_INDICATOR = 0;
+        }
+        else if(memcmp(Buffer->data, sig, sizeof(sig)-1) != 0){
+#ifndef NDEBUG
+            unsigned i;
+            fputs(""[MOpus] Error: Invalid signature in buffer of size "", stderr);
+            fprintf(stderr, ""%i\\n"", (int)Buffer->size);
+            fputs(""[MOpus] Error: Wanted "", stderr);
+            for(i = 0; i < sizeof(sig) - 2; i++){
+                fprintf(stderr, ""0x%X, "", sig[i]);
+            }
+            fprintf(stderr, ""0x%X\\n"", sig[7]);
+            fputs(""[MOpus] Error: Got    "", stderr);
+            for(i = 0; i < sizeof(sig) - 2; i++){
+                fprintf(stderr, ""0x%X, "", ((unsigned char*)Buffer->data)[i]);
+            }
+            fprintf(stderr, ""0x%X\\n"", ((unsigned char*)Buffer->data)[7]);
+            for(i = 0; i < 19; i++){
+                fprintf(stderr, ""0x%X, "", ((unsigned char*)Buffer->data)[i]);
+            }
+#endif
             SUCCESS_INDICATOR = 0;
         }
         else{
@@ -116,6 +185,10 @@ init(Input, Len, MaybeDecoder, !IO) :-
             const unsigned nchan = uchar_data[9];
             const unsigned ver = uchar_data[8];
             if(ver != 1 || nchan == 0 || nchan > 2){
+#ifndef NDEBUG
+                fputs(""[MOpus] Error: Invalid number of channels:"", stderr);
+                fprintf(stderr, ""%i\\n"", nchan);
+#endif
                 SUCCESS_INDICATOR = 0;
             }
             else{ /* Very evil. Stash the decoder at the end of the struct. */
@@ -123,14 +196,23 @@ init(Input, Len, MaybeDecoder, !IO) :-
                 Out = MR_GC_malloc_atomic(size);
                 Out->dec = (OpusDecoder*)(Out+1);
                 Out->nchan = nchan;
-                SUCCESS_INDICATOR = opus_decoder_init(Out->dec, 48000, nchan) == OPUS_OK;
-                if(!SUCCESS_INDICATOR){
-                    MR_GC_free(Out);
-                    Out = NULL;
-                }
-                else{
-                    NChan = nchan;
-                    MR_GC_register_finalizer(Out, MOpus_DecoderFinalizer, NULL);
+
+                {
+                    const int err = opus_decoder_init(Out->dec, 48000, nchan);
+                    if(err != OPUS_OK){
+                        SUCCESS_INDICATOR = 0;
+#ifndef NDEBUG
+                        fputs(""[MOpus] Error: libopus error: "", stderr);
+                        fputs(MOpus_NameError(err), stderr); fputc('\\n', stderr);
+#endif
+                        MR_GC_free(Out);
+                        Out = NULL;
+                    }
+                    else{
+                        SUCCESS_INDICATOR = 1;
+                        NChan = nchan;
+                        MR_GC_register_finalizer(Out, MOpus_DecoderFinalizer, NULL);
+                    }
                 }
             }
         }
@@ -165,7 +247,7 @@ init(Input, Len, MaybeDecoder, !IO) :-
         buffer.size = Size;
         buffer.data = (Size < 8192) ? malloc(Size) : alloca(Size);
         MercuryFile *const stream = mercury_current_binary_output();
-        MR_READ(*stream, buffer.data, Size);
+        buffer.size = MR_READ(*stream, buffer.data, Size);
         MOpus_Decode16(&buffer, &Out, Decoder0, &Decoder1);
         if(Size < 8192)
             free(buffer.data);
@@ -213,7 +295,7 @@ decode_16(Size, Input, BufferOut, !Decoder, !IO) :-
         buffer.size = Size;
         buffer.data = (Size < 8192) ? malloc(Size) : alloca(Size);
         MercuryFile *const stream = mercury_current_binary_output();
-        MR_READ(*stream, buffer.data, Size);
+        buffer.size = MR_READ(*stream, buffer.data, Size);
         MOpus_DecodeFloat(&buffer, &Out, Decoder0, &Decoder1);
         if(Size < 8192)
             free(buffer.data);

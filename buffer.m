@@ -6,6 +6,8 @@
 :- import_module list.
 :- use_module io.
 
+%------------------------------------------------------------------------------%
+
 :- type buffer.
 :- func init(int) = (buffer).
 :- func length(buffer) = (int).
@@ -13,6 +15,8 @@
 % Just used for clarity.
 :- type index == int.
 :- type byte_index == int.
+
+%------------------------------------------------------------------------------%
 
 % Reads using from the indexed element based on element size, not byte number.
 :- pred get_8(buffer::in, index::in, int::uo) is semidet.
@@ -27,6 +31,8 @@
 :- pred get_byte_32(buffer::in, byte_index::in, int::uo) is semidet.
 :- pred get_byte_float(buffer::in, byte_index::in, float::uo) is semidet.
 :- pred get_byte_double(buffer::in, byte_index::in, float::uo) is semidet.
+
+%------------------------------------------------------------------------------%
 
 :- func to_list_8(buffer) = list.list(int).
 :- func to_list_16(buffer) = list.list(int).
@@ -52,6 +58,8 @@
 :- pred to_list_float_reverse(buffer::in, list.list(float)::uo) is det.
 :- pred to_list_double_reverse(buffer::in, list.list(float)::uo) is det.
 
+%------------------------------------------------------------------------------%
+
 :- func from_list_8(list.list(int)) = buffer.
 :- func from_list_16(list.list(int)) = buffer.
 :- func from_list_32(list.list(int)) = buffer.
@@ -63,6 +71,8 @@
 :- pred from_list_32(list.list(int)::in, buffer::uo) is det.
 :- pred from_list_float(list.list(float)::in, buffer::uo) is det.
 :- pred from_list_double(list.list(float)::in, buffer::uo) is det.
+
+%------------------------------------------------------------------------------%
 
 % Succeeds if the buffer is as long or longer than the string, and matches for
 % the length of the string matches bytewise.
@@ -77,6 +87,25 @@
 % Same as get_string, but only accepts ascii characters. Slightly faster.
 :- pred get_ascii_string(buffer::in, int::in, string::uo) is semidet.
 
+%------------------------------------------------------------------------------%
+
+:- pred read(io.binary_input_stream, int, io.maybe_partial_res(buffer), io.io, io.io).
+:- mode read(in, in, out, di, uo) is det.
+
+% Reads from the current binary input stream.
+:- pred read(int, buffer, io.io, io.io).
+:- mode read(in, uo, di, uo) is det.
+
+%------------------------------------------------------------------------------%
+
+:- pred append(buffer::in, buffer::in, buffer::uo) is det.
+:- func append(buffer, buffer) = (buffer).
+
+:- pred concatenate(list(buffer)::in, buffer::out) is det.
+:- func concatenate(list(buffer)) = buffer.
+
+%------------------------------------------------------------------------------%
+
 % Used to implement all other getters. These should be the only native getters.
 % These do NOT do any bounds checking, the callers MUST bounds check. Otherwise you
 % WILL CRASH. I guarantee it.
@@ -86,26 +115,19 @@
 :- pred get_native_float(buffer::in, byte_index::in, float::uo) is det.
 :- pred get_native_double(buffer::in, byte_index::in, float::uo) is det.
 
-:- pred read(io.binary_input_stream, int, io.maybe_partial_res(buffer), io.io, io.io).
-:- mode read(in, in, out, di, uo) is det.
-
-% Reads from the current binary input stream.
-:- pred read(int, buffer, io.io, io.io).
-:- mode read(in, uo, di, uo) is det.
-
-:- pred append(buffer::in, buffer::in, buffer::uo) is det.
-:- func append(buffer, buffer) = (buffer).
-
-:- pred concatenate(list(buffer)::in, buffer::out) is det.
-:- func concatenate(list(buffer)) = buffer.
-
 %==============================================================================%
 :- implementation.
 %==============================================================================%
 
 :- import_module int.
 
+%------------------------------------------------------------------------------%
+
 :- pragma foreign_import_module("C", io).
+
+%------------------------------------------------------------------------------%
+% Houskeeping for C to help working with the GC
+
 :- pragma foreign_decl("C", "struct M_Buffer { unsigned long size; void *data; };").
 :- pragma foreign_decl("C", "struct M_Buffer *M_Buffer_Allocate(unsigned long len);").
 :- pragma foreign_code("C",
@@ -117,7 +139,10 @@
         }
     ").
 
+%------------------------------------------------------------------------------%
+
 :- pragma foreign_type("C", buffer, "const struct M_Buffer*").
+:- pragma foreign_type("Java", buffer, "byte[]").
 
 :- pragma foreign_export("C", get_native_8(in, in, uo), "M_Buffer_GetNative8").
 :- pragma foreign_export("C", get_native_16(in, in, uo), "M_Buffer_GetNative16").
@@ -148,6 +173,12 @@
         buf->size = Size;
         buf->data = MR_GC_malloc_atomic(Size);
         Buffer = buf;
+    ").
+
+:- pragma foreign_proc("Java", init(Size::in) = (Buffer::out),
+    [will_not_throw_exception, promise_pure, thread_safe, tabled_for_io],
+    "
+        Buffer = new byte[Size];
     ").
 
 :- pragma foreign_proc("C", length(Buffer::in) = (Size::out),
@@ -490,16 +521,35 @@ get_byte_double(Buf, I, O) :-
 
 read(In, Len, io.ok(Out), !IO) :-
     io.set_binary_input_stream(In, OldStream, !IO),
-    read(Len, Out, !IO),
+    
+    io.write_string("[Buffer] Reading ", !IO),
+    io.write_int(Len, !IO),
+    
+    io.binary_input_stream_name(Name, !IO),
+    io.write_string(" from ", !IO),
+    io.write_string(Name, !IO),
+    
+    io.nl(!IO),
+    
+    buffer.read(Len, Out, !IO),
     io.set_binary_input_stream(OldStream, _, !IO).
 
 :- pragma foreign_proc("C", read(Len::in, Buffer::uo, IO0::di, IO1::uo),
     [promise_pure, thread_safe, tabled_for_io],
     "
-        struct M_Buffer *const buffer = M_Buffer_Allocate(Len);
-        MercuryFile *const stream = mercury_current_binary_output();
-        buffer->size = MR_READ(*stream, buffer->data, Len);
-        Buffer = buffer;
+        MercuryFile *const stream = mercury_current_binary_input();
+
+        if(stream != NULL){
+            struct M_Buffer *const buffer = M_Buffer_Allocate(Len);
+            buffer->size = MR_READ(*stream, buffer->data, Len);
+            Buffer = buffer;
+        }
+        else{
+            struct M_Buffer *const buffer = MR_GC_malloc_atomic(sizeof(struct M_Buffer));
+            buffer->size = 0;
+            fputs(""[Buffer] Invalid binary input stream.\\n"", stderr);
+            Buffer = buffer;
+        }
         IO1 = IO0;
     ").
 

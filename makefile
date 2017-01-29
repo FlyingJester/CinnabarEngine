@@ -7,13 +7,13 @@ LIBSX?=so
 LIBSA?=a
 LIBPA?=$(LIBPX)
 INSTALL?=install
-GRADE?=hlc.gc
+GRADE?=hlc.gc # asm_fast.gc.debug.stseg
 
 MMC?=mmc
 
-# MMCIN=$(MMC) -E -j4 --grade=asm_fast.gc.debug.stseg --make
-MMCFLAGS?=--cflags "-g -O2 " --opt-level 7 --intermodule-optimization --mercury-linkage static
-MMCCALL=$(MMC) --grade=$(GRADE) $(MMCFLAGS) -L./ --mld lib/mercury
+MMCFLAGS?=--cflags "-g " --ld-flags " -g "
+#  --mercury-linkage static --opt-level 7 --intermodule-optimization 
+MMCCALL=$(MMC) $(MMCFLAGS) -L./ --mld lib/mercury --grade=$(GRADE)
 MMCIN=$(MMCCALL) -E -j4 --make
 
 GLOW=lib/$(LIBPX)glow.$(LIBSX)
@@ -73,7 +73,21 @@ sinetest: sinetest.m sinegen.m mopenal.m $(CHRONO)
 	$(MMCIN) sinetest -L lib -l openal -l chrono
 	touch -c sinetest
 
-clean:
+EDITLIBS=libwavefront.so 
+
+libwavefront.so:
+	$(MMCIN) libwavefront
+
+cinedit: editor $(LIBTARGETS) $(EDITLIBS)
+	cp -r lib editor
+	cp libwavefront.so editor/lib
+	cp *.mh editor/include
+	$(MAKE) -C editor
+
+cinedit_clean:
+	$(MAKE) -C editor clean
+
+clean: cinedit_clean
 	scons -C glow -c
 	scons -C chrono -c
 	scons -C bufferfile -c
@@ -84,13 +98,13 @@ clean:
 	rm -f lib/*.$(LIBSX) lib/*.$(LIBSA) *.mh *.err cinnabar test
 
 libclean: clean
-	rm -rf lib/mercury
-	rm *.init
-	rm *.err
-	rm Mercury
-	cd fjogg && rm Mercury
+	rm -rf lib/mercury || true
+	rm *.init || true
+	rm  -rf Mercury || true
 	cd fjogg && $(MMCIN) libfjogg.clean
+	cd fjogg && $(MMCIN) fjogg.clean
+	cd fjogg && rm -rf Mercury || true
 
-PHONY: all clean $(LIBTARGETS)
-IGNORE: clean
-SILENT: clean
+PHONY: all cinedit_clean clean $(LIBTARGETS)
+IGNORE: clean cinedit_clean libclean
+SILENT: clean cinedit_clean libclean

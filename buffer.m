@@ -521,16 +521,6 @@ get_byte_double(Buf, I, O) :-
 
 read(In, Len, io.ok(Out), !IO) :-
     io.set_binary_input_stream(In, OldStream, !IO),
-    
-    io.write_string("[Buffer] Reading ", !IO),
-    io.write_int(Len, !IO),
-    
-    io.binary_input_stream_name(Name, !IO),
-    io.write_string(" from ", !IO),
-    io.write_string(Name, !IO),
-    
-    io.nl(!IO),
-    
     buffer.read(Len, Out, !IO),
     io.set_binary_input_stream(OldStream, _, !IO).
 
@@ -578,7 +568,7 @@ concatenate(List) = Out :-
     concatenate(List, Out).
 
 :- pragma foreign_proc("C", concatenate(In::in, Out::out),
-    [will_not_throw_exception, promise_pure, thread_safe, tabled_for_io],
+    [will_not_throw_exception, promise_pure, thread_safe],
     "
         /* There are optimizations for lists of sizes 0 or 1, and lists with
          * only one buffer of a size other than zero. */
@@ -593,6 +583,7 @@ concatenate(List) = Out :-
         while(!MR_list_is_empty(list)){
             const struct M_Buffer *const buf =
                 (struct M_Buffer*)MR_list_head(list);
+            assert(buf != NULL);
             list = MR_list_tail(list);
             if(size == 0 && buf->size > 0 && only_found == -2){
                 only_found = n;
@@ -607,28 +598,30 @@ concatenate(List) = Out :-
         }
         
         if(only_found >= 0){
+            assert(found != NULL);
             Out = found;
         }
-        if(n == 0){
+        if(size == 0 || n == 0){
             struct M_Buffer *const buffer =
                 MR_GC_malloc_atomic(sizeof(struct M_Buffer));
             buffer->size = 0;
             Out = buffer;
         }
-        if(n == 1){
+        else if(n == 1){
             Out = (struct M_Buffer*)MR_list_head(list);
         }
         else{
             unsigned at = 0;
-            Out = M_Buffer_Allocate(size);
+            struct M_Buffer *const output = M_Buffer_Allocate(size);
             list = In;
             do{
                 const struct M_Buffer *const buf = (void*)MR_list_head(list);
                 list = MR_list_tail(list);
                 if(buf->size == 0)
                     continue;
-                memcpy(((char*)Out->data) + at, buf->data, buf->size);
+                memcpy(((char*)output->data) + at, buf->data, buf->size);
                 at += buf->size;
             }while(!MR_list_is_empty(list));
+            Out = output;
         }
     ").

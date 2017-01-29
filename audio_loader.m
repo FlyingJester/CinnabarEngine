@@ -116,7 +116,7 @@ read_from_page(Input, Format, PageIn, BufferIn, BufferOut, !Loader, !Decoder, !I
                     BufferOut = [Buffer|[]]
                 ;
                     buffer.concatenate(BufferIn, AllBuffersIn),
-                    buffer.append(AllBuffersIn, Buffer, DataBuffer),
+                    buffer.append(AllBuffersIn, Buffer) = DataBuffer,
                     mopus.decode_16(DataBuffer, PCMBuffer, !Decoder),
                     mopenal.put_data(!Loader, PCMBuffer),
                     BufferOut = []

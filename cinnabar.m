@@ -126,7 +126,8 @@ main(!IO) :-
             mopenal.listener_ctl(mopenal.orientation, Zero, !IO),
             audio_loader.load("res/spiders.opus", Ctx, SndResult, !IO),
             (
-                SndResult = io.ok(Snd)
+                SndResult = io.ok(Snd),
+                mopenal.play(Snd, !IO)
             ;
                 SndResult = io.error(Err),
                 io.error_message(Err, ErrMsg),

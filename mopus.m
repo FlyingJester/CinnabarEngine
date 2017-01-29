@@ -127,7 +127,10 @@
 init(Input, Len, MaybeDecoder, !IO) :-
     buffer.read(Input, Len, MaybeBuffer, !IO),
     (
-        MaybeBuffer = io.error(Buffer, _)
+        MaybeBuffer = io.error(Buffer, Err),
+        io.write_string("[MOpus] Read Error: ", !IO),
+        io.write_string(io.error_message(Err), !IO),
+        io.nl(!IO)
     ;
         MaybeBuffer = io.ok(Buffer)
     ),
@@ -246,7 +249,7 @@ init(Input, Len, MaybeDecoder, !IO) :-
         struct M_Buffer buffer;
         buffer.size = Size;
         buffer.data = (Size < 8192) ? malloc(Size) : alloca(Size);
-        MercuryFile *const stream = mercury_current_binary_output();
+        MercuryFile *const stream = mercury_current_binary_input();
         buffer.size = MR_READ(*stream, buffer.data, Size);
         MOpus_Decode16(&buffer, &Out, Decoder0, &Decoder1);
         if(Size < 8192)
@@ -291,14 +294,22 @@ decode_16(Size, Input, BufferOut, !Decoder, !IO) :-
 :- pragma foreign_proc("C", decode_float(Size::in, Out::uo, Decoder0::di, Decoder1::uo, IO0::di, IO1::uo),
     [will_not_throw_exception, promise_pure, thread_safe],
     "
-        struct M_Buffer buffer;
-        buffer.size = Size;
-        buffer.data = (Size < 8192) ? malloc(Size) : alloca(Size);
-        MercuryFile *const stream = mercury_current_binary_output();
-        buffer.size = MR_READ(*stream, buffer.data, Size);
-        MOpus_DecodeFloat(&buffer, &Out, Decoder0, &Decoder1);
-        if(Size < 8192)
-            free(buffer.data);
+        MercuryFile *const stream = mercury_current_binary_input();
+        if(stream == NULL){
+            struct M_Buffer *buffer = MR_GC_malloc_atomic(sizeof(struct M_Buffer));
+            buffer->size = 0;
+            Out = buffer;
+        }
+        else{
+            struct M_Buffer buffer;
+            buffer.size = Size;
+            buffer.data = (Size > 8192) ? malloc(Size) : alloca(Size);
+
+            buffer.size = MR_READ(*stream, buffer.data, Size);
+            MOpus_DecodeFloat(&buffer, &Out, Decoder0, &Decoder1);
+            if(Size > 8192)
+                free(buffer.data);
+        }
         IO1 = IO0;
     ").
 

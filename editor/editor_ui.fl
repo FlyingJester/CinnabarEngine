@@ -1,0 +1,437 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0304
+use_FL_COMMAND
+header_name {.hpp}
+code_name {.cpp}
+decl {\#include "editor.hpp"} {private global
+}
+
+decl {\#include "editor_ilib.hpp"} {private global
+}
+
+decl {\#include <FL/Fl_File_Chooser.H>} {private global
+}
+
+decl {\#include <FL/fl_ask.H>} {private global
+}
+
+Function {make_editor_window()} {open
+} {
+  code {if(CinEdit::GetCellType() == CinEdit::eExterior){
+    menu_interior_toggle->flags &= ~FL_MENU_VALUE;
+    menu_exterior_toggle->flags |= FL_MENU_VALUE;
+}
+else{
+    menu_interior_toggle->flags |= FL_MENU_VALUE;
+    menu_exterior_toggle->flags &= ~FL_MENU_VALUE;
+}} {}
+  Fl_Window {} {
+    label {Cinnabar Editor} open
+    xywh {87 155 680 525} type Double box THIN_UP_BOX align 80 visible
+  } {
+    Fl_Menu_Bar {} {open
+      xywh {-5 0 710 25} selection_color 133
+    } {
+      Submenu {} {
+        label {&File} open
+        xywh {0 0 70 20}
+      } {
+        MenuItem {} {
+          label {&New}
+          xywh {15 15 36 20} shortcut 0x4006e
+        }
+        Submenu {} {
+          label {Cr&eate} open
+          xywh {0 0 70 20}
+        } {
+          MenuItem {} {
+            label {New &Cell}
+            xywh {5 5 36 20} shortcut 0x50063
+          }
+          MenuItem {} {
+            label {New &Item Lib}
+            xywh {15 15 36 20} shortcut 0x50069
+          }
+        }
+        MenuItem {} {
+          label {&Open}
+          xywh {10 10 36 20} shortcut 0x4006f
+        }
+        MenuItem save_menu_item {
+          label {&Save}
+          callback {const Fl_Widget *const selected_tab = editor_tabs->value();
+const int flags = Fl_File_Chooser::CREATE|Fl_File_Chooser::SINGLE;
+static Fl_File_Chooser chooser("./", "", flags, "");
+
+if(selected_tab == item_tab){
+    CinEdit::ilib& ilib = CinEdit::GetIlib();
+    if(ilib.getPath().empty()){
+        chooser.label("Create New Item Library");
+        chooser.filter("Item Library (*.ilib)");
+        chooser.show();
+        while(chooser.shown())
+            Fl::wait();
+        if(chooser.count() > 0)
+            ilib.setPath(chooser.value(1));
+        else
+            return;
+    }
+    ilib.save();
+}}
+          xywh {20 20 36 20} shortcut 0x40073 deactivate
+        }
+        MenuItem save_as_menu_item {
+          label {Save As}
+          xywh {30 30 36 20} shortcut 0x50073 deactivate divider
+        }
+        MenuItem {} {
+          label {&Export...}
+          xywh {0 0 36 20} shortcut 0x50065 deactivate
+        }
+        MenuItem {} {
+          label {&Import...}
+          xywh {10 10 36 20} shortcut 0x50069 deactivate divider
+        }
+        MenuItem {} {
+          label {&Quit}
+          callback {const char *const warning = "Are you sure you want to quit? Any unsaved changes will be lost.";
+if(!CinEdit::GetUnsavedChanges() || 
+    fl_choice(warning, "Quit", "Cancel", NULL) == 0)
+    exit(EXIT_SUCCESS);}
+          xywh {20 20 36 20} shortcut 0x40071
+        }
+      }
+      Submenu {} {
+        label {&Edit} open
+        xywh {0 0 70 20}
+      } {
+        MenuItem {} {
+          label {&Undo}
+          xywh {10 10 36 20} shortcut 0x4007a
+        }
+        MenuItem {} {
+          label {&Redo}
+          xywh {20 20 36 20} shortcut 0x40079 divider
+        }
+        MenuItem {} {
+          label {C&ut}
+          xywh {30 30 36 20} shortcut 0x40078
+        }
+        MenuItem {} {
+          label {&Copy}
+          xywh {40 40 36 20} shortcut 0x40063
+        }
+        MenuItem {} {
+          label {&Paste}
+          xywh {50 50 36 20} shortcut 0x40076
+        }
+        MenuItem {} {
+          label {&Duplicate}
+          xywh {60 60 36 20} shortcut 0x40064 divider
+        }
+        MenuItem {} {
+          label {&Find}
+          xywh {70 70 36 20} shortcut 0x40066 divider
+        }
+        MenuItem {} {
+          label {&Preferences}
+          xywh {70 70 36 20} shortcut 0x40070
+        }
+      }
+      Submenu {} {
+        label Cell open
+        xywh {0 0 70 20}
+      } {
+        MenuItem menu_interior_toggle {
+          label Interior
+          callback {CinEdit::SetCellType(CinEdit::eInterior);}
+          private xywh {0 0 36 20} type Radio
+        }
+        MenuItem menu_exterior_toggle {
+          label Exterior
+          callback {CinEdit::SetCellType(CinEdit::eExterior);}
+          private xywh {10 10 36 20} type Radio divider
+        }
+      }
+    }
+    Fl_Tabs editor_tabs {
+      callback {if(editor_tabs->value() != cell_tab){
+    save_menu_item->activate();
+    save_as_menu_item->activate();
+}
+else{
+    save_menu_item->deactivate();
+    save_as_menu_item->deactivate();
+}} open selected
+      xywh {0 25 680 505} selection_color 133
+    } {
+      Fl_Group cell_tab {
+        label Cell
+        xywh {0 45 680 485} selection_color 133
+      } {
+        Fl_Tabs cell_tabs {open
+          xywh {5 50 300 470} selection_color 133
+        } {
+          Fl_Group heightmap_tab {
+            label Heightmap open
+            private xywh {5 75 300 445} hide
+          } {
+            Fl_File_Input {} {
+              label {File:}
+              xywh {50 81 205 34} selection_color 133
+            }
+            Fl_Button {} {
+              label {...}
+              xywh {255 90 45 25}
+            }
+            Fl_Box {} {
+              label {Image...}
+              xywh {50 124 205 172}
+            }
+          }
+          Fl_Group statics_tab {
+            label Statics open
+            private xywh {5 75 300 445}
+          } {
+            Fl_Browser {} {
+              label Statics
+              xywh {10 95 290 395} selection_color 133 align 1
+            }
+            Fl_Button {} {
+              label {Add...}
+              xywh {230 495 70 20}
+            }
+            Fl_Button {} {
+              label Remove
+              xywh {155 495 70 20}
+            }
+            Fl_Button {} {
+              label Clear
+              xywh {80 495 70 20}
+            }
+          }
+          Fl_Group {} {
+            label Triggers open
+            xywh {5 75 300 445} hide
+          } {
+            Fl_Browser {} {
+              label Triggers
+              xywh {10 95 290 395} selection_color 133 align 1
+            }
+            Fl_Button {} {
+              label {Add...}
+              xywh {230 495 70 20}
+            }
+            Fl_Button {} {
+              label Remove
+              xywh {155 495 70 20}
+            }
+            Fl_Button {} {
+              label Clear
+              xywh {80 495 70 20}
+            }
+          }
+          Fl_Group {} {
+            label Libraries open
+            xywh {5 70 300 450} hide
+          } {
+            Fl_Tile {} {open
+              xywh {5 75 300 445}
+            } {
+              Fl_Box library_tile_resize_limiter {
+                xywh {24 130 35 335} resizable
+              }
+              Fl_Group {} {open
+                xywh {5 75 300 230} box THIN_UP_BOX
+              } {
+                Fl_Browser {} {
+                  label {Item Libraries}
+                  xywh {10 95 290 180} selection_color 133 align 1 resizable
+                }
+                Fl_Button {} {
+                  label {Add...}
+                  xywh {230 280 70 20}
+                }
+                Fl_Button {} {
+                  label Remove
+                  xywh {155 280 70 20}
+                }
+                Fl_Button {} {
+                  label Clear
+                  xywh {80 280 70 20}
+                }
+              }
+              Fl_Group {} {open
+                xywh {5 305 300 215} box THIN_UP_BOX
+              } {
+                Fl_Browser {} {
+                  label {Character Libraries}
+                  xywh {10 325 290 165} selection_color 133 align 1 resizable
+                }
+                Fl_Button {} {
+                  label {Add...}
+                  xywh {230 495 70 20}
+                }
+                Fl_Button {} {
+                  label Clear
+                  xywh {80 495 70 20}
+                }
+                Fl_Button {} {
+                  label Remove
+                  xywh {155 495 70 20}
+                }
+              }
+            }
+          }
+        }
+      }
+      Fl_Group item_tab {
+        label {Item Library} open
+        xywh {0 50 680 475} hide
+      } {
+        Fl_Tile {} {open
+          xywh {5 55 670 465} resizable
+        } {
+          Fl_Browser {} {
+            xywh {5 55 235 465} selection_color 133
+          }
+          Fl_Group {} {open
+            xywh {240 55 435 465} box FLAT_BOX
+          } {
+            Fl_Group {} {open
+              xywh {245 60 425 425} box ENGRAVED_BOX deactivate resizable
+            } {
+              Fl_Box {} {
+                xywh {505 384 160 52} resizable
+              }
+              Fl_Choice {} {
+                label Type open
+                xywh {290 70 115 20} down_box BORDER_BOX selection_color 133 when 1
+              } {
+                MenuItem armor_menu_item {
+                  label Armor
+                  callback {item_type_wizard->value(armor_wiz);
+item_type_wizard->redraw();}
+                  xywh {0 0 36 20}
+                }
+                MenuItem weapon_menu_item {
+                  label Weapon
+                  callback {item_type_wizard->value(weapon_wiz);
+item_type_wizard->redraw();}
+                  xywh {10 10 36 20}
+                }
+                MenuItem consumable_menu_item {
+                  label Consumable
+                  xywh {20 20 36 20}
+                }
+                MenuItem junk_menu_item {
+                  label Junk
+                  xywh {30 30 36 20}
+                }
+              }
+              Fl_Wizard item_type_wizard {open
+                xywh {255 120 405 155}
+              } {
+                Fl_Group armor_wiz {
+                  label Armor open
+                  xywh {255 120 405 155} box ENGRAVED_BOX hide
+                } {
+                  Fl_Choice armor_type {
+                    label {Armor Type} open
+                    xywh {365 130 115 20} down_box BORDER_BOX selection_color 133
+                  } {
+                    MenuItem {} {
+                      label Helmet
+                      xywh {0 0 36 20}
+                    }
+                    MenuItem {} {
+                      label Chestplate
+                      xywh {10 10 36 20}
+                    }
+                    MenuItem {} {
+                      label Boots
+                      xywh {20 20 36 20}
+                    }
+                  }
+                  Fl_Value_Input {} {
+                    label Defense
+                    xywh {365 160 115 20} selection_color 133 maximum 4096 step 1 value 1
+                  }
+                }
+                Fl_Group weapon_wiz {
+                  label Weapon open
+                  xywh {255 120 405 155} box ENGRAVED_BOX
+                } {
+                  Fl_Choice weapon_type {
+                    label {Weapon Type} open
+                    xywh {365 130 115 20} down_box BORDER_BOX selection_color 133
+                  } {
+                    MenuItem {} {
+                      label Sword
+                      xywh {10 10 36 20}
+                    }
+                    MenuItem {} {
+                      label Axe
+                      xywh {20 20 36 20}
+                    }
+                  }
+                  Fl_Value_Input {} {
+                    label {Attack Power}
+                    xywh {365 160 115 20} selection_color 133 maximum 4096 step 1 value 1
+                  }
+                  Fl_Value_Input {} {
+                    label {Attack Speed}
+                    tooltip milliseconds xywh {365 190 115 20} selection_color 133 maximum 4096 step 1 value 1
+                  }
+                  Fl_Box {} {
+                    xywh {490 224 160 36} resizable
+                  }
+                }
+              }
+              Fl_Value_Input {} {
+                label Value
+                xywh {365 282 115 20} selection_color 133
+              }
+              Fl_Value_Input {} {
+                label Durability
+                xywh {365 310 115 20} selection_color 133
+              }
+              Fl_Value_Input {} {
+                label Weight
+                xywh {365 340 115 20} selection_color 133
+              }
+              Fl_Input {} {
+                label Name
+                xywh {455 70 205 20}
+              }
+            }
+            Fl_Button {} {
+              label New
+              xywh {245 490 105 25}
+            }
+            Fl_Button {} {
+              label Delete
+              xywh {360 490 105 25} deactivate
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+Function {SetCellTypeUI(unsigned to_exterior)} {open C return_type void
+} {
+  code {if(to_exterior){
+    heightmap_tab->activate();
+    cell_tabs->redraw();
+    menu_interior_toggle->flags &= ~FL_MENU_VALUE;
+    menu_exterior_toggle->flags |= FL_MENU_VALUE;
+}
+else{
+    heightmap_tab->deactivate();
+    cell_tabs->redraw();
+    menu_interior_toggle->flags |= FL_MENU_VALUE;
+    menu_exterior_toggle->flags &= ~FL_MENU_VALUE;
+}} {}
+}

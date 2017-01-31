@@ -302,12 +302,13 @@ decode_16(Size, Input, BufferOut, !Decoder, !IO) :-
         }
         else{
             struct M_Buffer buffer;
+            char lbuffer[0xFF]; /* For small stuff, use the stack */
             buffer.size = Size;
-            buffer.data = (Size > 8192) ? malloc(Size) : alloca(Size);
+            buffer.data = (Size > sizeof(lbuffer)) ? malloc(Size) : lbuffer;
 
             buffer.size = MR_READ(*stream, buffer.data, Size);
             MOpus_DecodeFloat(&buffer, &Out, Decoder0, &Decoder1);
-            if(Size > 8192)
+            if(Size > sizeof(lbuffer))
                 free(buffer.data);
         }
         IO1 = IO0;

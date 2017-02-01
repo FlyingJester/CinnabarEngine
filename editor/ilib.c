@@ -90,6 +90,7 @@ void Bottle_WriteItemFile(const struct BottleItem* from, FILE *to){
     }
 }
 unsigned Bottle_LoadItemMem(struct BottleItem *out, const void *mem, unsigned len){
+    return BOTTLE_OK;
 }
 unsigned Bottle_LoadItemFile(struct BottleItem *out, FILE *from){
     if(feof(from) != 0) return BOTTLE_FAIL;
@@ -146,4 +147,5 @@ unsigned Bottle_LoadItemFile(struct BottleItem *out, FILE *from){
             break;
         }
     }
+    return BOTTLE_OK;
 }

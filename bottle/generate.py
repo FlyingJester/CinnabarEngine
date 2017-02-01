@@ -460,11 +460,11 @@ class CWriter(Writer):
 
             self.c.write(mem_reader  +"{" + nl)
             self.writeMemReader(block_name, block)
-            self.c.write("}" + nl)
+            self.c.write(tab + "return BOTTLE_OK;" + nl + "}" + nl)
 
             self.c.write(file_reader  +"{" + nl)
             self.writeFileReader(block_name, block)
-            self.c.write("}" + nl)
+            self.c.write(tab + "return BOTTLE_OK;" + nl + "}" + nl)
 
             self.h.write("struct Bottle" + cap_name + " { " + nl)
 

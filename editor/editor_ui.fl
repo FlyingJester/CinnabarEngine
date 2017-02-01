@@ -27,6 +27,53 @@ decl {struct BottleItem;} {public global
 decl {Fl_Image *item_icon_image = NULL;} {private local
 }
 
+Function {SaveChanges(CinEdit::EnumSystem sys)} {open private return_type bool
+} {
+  code {const int flags = Fl_File_Chooser::CREATE|Fl_File_Chooser::SINGLE;
+static Fl_File_Chooser create_chooser("./", "", flags, "");
+
+switch(sys){
+    case CinEdit::eItemSystem:
+        {
+            CinEdit::ilib& ilib = CinEdit::GetIlib();
+            if(ilib.getPath().empty()){
+               create_chooser.label("Create New Item Library");
+               create_chooser.filter("Item Library (*.ilib)");
+               create_chooser.show();
+               while(create_chooser.shown())
+                   Fl::wait();
+               if(create_chooser.count() > 0)
+                   ilib.setPath(create_chooser.value(1));
+               else
+                   return false;
+           }
+           ilib.save();
+       }
+    break;
+    case CinEdit::eCellSystem: break;
+    case CinEdit::eNUM_SYSTEMS: break;
+}
+
+return true;} {}
+}
+
+Function {AskSaveChanges(CinEdit::EnumSystem sys)} {open private return_type bool
+} {
+  code {const int flags = Fl_File_Chooser::CREATE|Fl_File_Chooser::SINGLE;
+static Fl_File_Chooser chooser("./", "", flags, "");
+
+const char warning[] = "Any unsaved changes will be lost. Would you like to save all changes?";
+if(CinEdit::GetUnsavedChanges(sys)){
+    const int choice = fl_choice(warning, "Don't Save", "Save", "Cancel");
+    if(choice == 2)
+        return false;
+    if(choice == 1)
+        SaveChanges(sys);
+}
+
+return true;} {}
+}
+
 Function {make_editor_window()} {open
 } {
   code {if(CinEdit::GetCellType() == CinEdit::eExterior){
@@ -39,7 +86,7 @@ else{
 }} {}
   Fl_Window {} {
     label {Cinnabar Editor} open
-    xywh {87 155 680 525} type Double box THIN_UP_BOX align 80 visible
+    xywh {87 155 680 525} type Double box THIN_UP_BOX align 80 hide
   } {
     Fl_Menu_Bar {} {open
       xywh {-5 0 710 25} selection_color 133
@@ -62,11 +109,69 @@ else{
           }
           MenuItem {} {
             label {New &Item Lib}
+            callback {// Do all updates first thing.
+const int n = item_browser->value();
+if(n > 0)
+    UpdateItemFromInfoFrame(n - 1);
+
+const Fl_Widget *const selected_tab = editor_tabs->value();
+
+if(selected_tab == item_tab){
+    if(!AskSaveChanges(CinEdit::eItemSystem))
+        return;
+}}
             xywh {15 15 36 20} shortcut 0x50069
           }
         }
         MenuItem {} {
           label {&Open}
+          callback {// Do all updates first thing.
+const int n = item_browser->value();
+if(n > 0)
+    UpdateItemFromInfoFrame(n - 1);
+
+const Fl_Widget *const selected_tab = editor_tabs->value();
+const int flags = Fl_File_Chooser::SINGLE;
+static Fl_File_Chooser chooser("./", "", flags, "");
+
+if(selected_tab == item_tab){
+    if(!AskSaveChanges(CinEdit::eItemSystem))
+        return;
+    CinEdit::ilib &ilib = CinEdit::GetIlib();
+    chooser.label("Open Item Library");
+    chooser.filter("Item Library (*.ilib)");
+    chooser.show();
+    while(chooser.shown())
+        Fl::wait();
+    if(chooser.count() > 0){
+        ilib.load(chooser.value(1));
+        const unsigned size = ilib.getNumItems();
+        const BottleItem *const items = ilib.getItems();
+        char staticbuffer[0x100], *dynbuffer = NULL;
+        unsigned dynbuffer_capacity = 0;
+        for(unsigned i = 0; i < size; i++){
+            char *buffer = NULL;
+            if(items[i].name.len + 1 < sizeof(staticbuffer)){
+                buffer = staticbuffer;
+            }
+            else{
+                if(dynbuffer_capacity < items[i].name.len){
+                    if(dynbuffer_capacity == 0)
+                        dynbuffer_capacity = 1;
+                    while(dynbuffer_capacity < items[i].name.len + 1)
+                       dynbuffer_capacity <<= 1;
+                    dynbuffer = (char*)realloc(dynbuffer, dynbuffer_capacity);
+                }
+                buffer = dynbuffer;
+            }
+            memcpy(buffer, items[i].name.str, items[i].name.len);
+            buffer[items[i].name.len] = '\\0';
+            item_browser->add(buffer, (void*)(items + i));
+        }
+        item_browser->redraw();
+        free(dynbuffer);
+    }
+}} selected
           xywh {10 10 36 20} shortcut 0x4006f
         }
         MenuItem save_menu_item {
@@ -77,24 +182,10 @@ if(n > 0)
     UpdateItemFromInfoFrame(n - 1);
 
 const Fl_Widget *const selected_tab = editor_tabs->value();
-const int flags = Fl_File_Chooser::CREATE|Fl_File_Chooser::SINGLE;
-static Fl_File_Chooser chooser("./", "", flags, "");
-
-if(selected_tab == item_tab){
-    CinEdit::ilib& ilib = CinEdit::GetIlib();
-    if(ilib.getPath().empty()){
-        chooser.label("Create New Item Library");
-        chooser.filter("Item Library (*.ilib)");
-        chooser.show();
-        while(chooser.shown())
-            Fl::wait();
-        if(chooser.count() > 0)
-            ilib.setPath(chooser.value(1));
-        else
-            return;
-    }
-    ilib.save();
-}}
+if(selected_tab == item_tab)
+    SaveChanges(CinEdit::eItemSystem);
+else if(selected_tab == cell_tab)
+    SaveChanges(CinEdit::eCellSystem);}
           private xywh {20 20 36 20} shortcut 0x40073 deactivate
         }
         MenuItem save_as_menu_item {
@@ -683,6 +774,5 @@ Function {SetIconPathUI(const char *path)} {open
   code {if(path == NULL)
     SetIconPathUI("", 1, true);
 else
-    SetIconPathUI(path, strlen(path), true);} {selected
-  }
+    SetIconPathUI(path, strlen(path), true);} {}
 }

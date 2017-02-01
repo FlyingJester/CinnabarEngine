@@ -3,4 +3,4 @@
 	url = https://github.com/FlyingJester/fjogg
 [submodule "libbottle"]
 	path = libbottle
-	url = https://github.com/FlyingJester/libbottle
+	url = https://github.com/FlyingJester/bottlegen

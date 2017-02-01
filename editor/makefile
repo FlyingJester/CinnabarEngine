@@ -8,7 +8,7 @@ CCFLAGS=-g -Wall -Werror -I${PWD}/../
 CFLAGS=$(CCFALGS) -Os -ansi
 CXXFLAGS=$(CCFLAGS) -O2 -fno-exceptions -fno-rtti -std=c++98
 AUTOCFLAGS=$(CFLAGS) -Wno-switch -Wno-unused-function
-FLTKFLAGS!=fltk-config --ldstaticflags
+FLTKFLAGS!=fltk-config --ldstaticflags --use-images
 LINKFLAGS=-g -Llib 
 
 OBJECTS=editor.o editor_ui.o editor_ilib.o ilib.o
@@ -17,7 +17,7 @@ GENSRC=editor_ui.cpp editor_ui.hpp
 $(GENSRC): editor_ui.fl
 	fluid -c editor_ui.fl
 
-editor_ui.o: editor_ui.cpp editor_ui.hpp
+editor_ui.o: editor_ui.cpp editor_ui.hpp ilib_glue.h
 	$(CXX) $(CXXFLAGS) -c editor_ui.cpp -o editor_ui.o
 
 editor.o: editor.cpp editor.hpp glow_fltk_glue.hpp editor_ui.hpp

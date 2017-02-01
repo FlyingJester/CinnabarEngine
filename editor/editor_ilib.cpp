@@ -88,7 +88,13 @@ bool ilib::load(const std::string &path){
     m_items.resize(nitems);
     for(unsigned i = 0; i < nitems; i++){
         m_items[i].name.str = NULL;
+        m_items[i].name.len = 0;
         m_items[i].ItemTypeData.junk.JunkTypeData.book.text.str = NULL;
+        m_items[i].ItemTypeData.junk.JunkTypeData.book.text.len = 0;
+        m_items[i].model.str = NULL;
+        m_items[i].model.len = 0;
+        m_items[i].icon.str = NULL;
+        m_items[i].icon.len = 0;
     }
     
     for(unsigned i = 0; i < nitems; i++){
@@ -160,6 +166,19 @@ private:
     std::string m_path;
 */
 
+
+BottleItem *ilib::getItems() {
+    return &m_items.front();
+}
+
+const BottleItem *ilib::getItems() const {
+    return &m_items.front();
+}
+
+unsigned ilib::getNumItems() const {
+    return m_items.size();
+}
+
 void ilib::clear(){
     for(unsigned i = 0; i < m_items.size(); i++){
         free(m_items[i].name.str);
@@ -168,6 +187,13 @@ void ilib::clear(){
             free(m_items[i].ItemTypeData.junk.JunkTypeData.book.text.str);
     }
     m_items.clear();
+}
+
+BottleItem &ilib::append(){
+    m_items.resize(m_items.size() + 1);
+    BottleItem &item = m_items.back();
+    memset(&item, 0, sizeof(BottleItem));
+    return item;
 }
 
 } // namespace CinEdit

@@ -47,11 +47,11 @@ w = 480.
 :- func h = int.
 h = 320.
 :- func tex_path = string.
-tex_path = "moldy.tga".
+tex_path = "sword.png".
 :- func skybox_path = string.
 skybox_path = "skybox.png".
 :- func shape_path = string.
-shape_path = "texcube.obj".
+shape_path = "sword.obj".
 
 %------------------------------------------------------------------------------%
 :- pred setup_gl2(gl2.gl2::in, mglow.window::di, mglow.window::uo) is det.
@@ -123,17 +123,17 @@ main(!IO) :-
             Zero = vector.vector(0.0, 0.0, 0.0),
             mopenal.listener_ctl(mopenal.position, Zero, !IO),
             mopenal.listener_ctl(mopenal.velocity, Zero, !IO),
-            mopenal.listener_ctl(mopenal.orientation, Zero, !IO),
-            audio_loader.load("res/spiders.opus", Ctx, SndResult, !IO),
-            (
-                SndResult = io.ok(Snd),
-                mopenal.play(Snd, !IO)
-            ;
-                SndResult = io.error(Err),
-                io.error_message(Err, ErrMsg),
-                io.write_string("Could not open res/spiders.opus: ", !IO),
-                io.write_string(ErrMsg, !IO), io.nl(!IO)
-            )
+            mopenal.listener_ctl(mopenal.orientation, Zero, !IO)
+            %audio_loader.load("res/spiders.opus", Ctx, SndResult, !IO),
+            %(
+            %    SndResult = io.ok(Snd),
+            %    mopenal.play(Snd, !IO)
+            %;
+            %    SndResult = io.error(Err),
+            %    io.error_message(Err, ErrMsg),
+            %    io.write_string("Could not open res/spiders.opus: ", !IO),
+            %    io.write_string(ErrMsg, !IO), io.nl(!IO)
+            %)
         ;
             CtxResult = io.error(Err),
             io.error_message(Err, ErrMsg),

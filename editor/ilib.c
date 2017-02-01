@@ -54,10 +54,12 @@ static void bottle_write_string_mem(void *to_v, unsigned *at,
 void *Bottle_WriteItemMem(const struct BottleItem* from, unsigned *size_out){
 }
 void Bottle_WriteItemFile(const struct BottleItem* from, FILE *to){
-    fwrite(&(from->weight), 1, 4, to);
     bottle_write_string_file(to, &(from->name));
-    fwrite(&(from->value), 1, 4, to);
+    fwrite(&(from->weight), 1, 4, to);
     fwrite(&(from->durability), 1, 4, to);
+    fwrite(&(from->value), 1, 4, to);
+    bottle_write_string_file(to, &(from->model));
+    bottle_write_string_file(to, &(from->icon));
     {
         fputc(from->ItemType, to); 
         switch(from->ItemType){
@@ -91,13 +93,17 @@ unsigned Bottle_LoadItemMem(struct BottleItem *out, const void *mem, unsigned le
 }
 unsigned Bottle_LoadItemFile(struct BottleItem *out, FILE *from){
     if(feof(from) != 0) return BOTTLE_FAIL;
+    bottle_read_string_file(from, &(out->name));
+    if(feof(from) != 0) return BOTTLE_FAIL;
     fread(&(out->weight), 1, 4, from);
     if(feof(from) != 0) return BOTTLE_FAIL;
-    bottle_read_string_file(from, &(out->name));
+    fread(&(out->durability), 1, 4, from);
     if(feof(from) != 0) return BOTTLE_FAIL;
     fread(&(out->value), 1, 4, from);
     if(feof(from) != 0) return BOTTLE_FAIL;
-    fread(&(out->durability), 1, 4, from);
+    bottle_read_string_file(from, &(out->model));
+    if(feof(from) != 0) return BOTTLE_FAIL;
+    bottle_read_string_file(from, &(out->icon));
     {
         out->ItemType = fgetc(from); 
         switch(out->ItemType){

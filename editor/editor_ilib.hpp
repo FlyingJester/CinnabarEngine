@@ -17,12 +17,12 @@ public:
     const std::string &getPath() const { return m_path; }
     
     BottleItem *getItems();
-    const BottleItem *getItems() const { return &m_items.front(); }
-    unsigned getNumItems() const { return m_items.size(); }
+    const BottleItem *getItems() const;
+    unsigned getNumItems() const;
     void erase(unsigned i);
     void clear();
     
-    BottleItem *append();
+    BottleItem &append();
 private:
     std::vector<BottleItem> m_items;
     std::string m_path;

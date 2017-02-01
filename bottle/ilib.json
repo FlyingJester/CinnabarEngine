@@ -27,18 +27,20 @@
     
   "blocks":{
     "item":{
-      "name":{"type":"string"},
-      "value":{"type":"int"},
-      "durability":{"type":"int"},
-      "weight":{"type":"int"},
+      "name":"string",
+      "value":"int",
+      "durability":"int",
+      "weight":"int",
+      "icon":"string",
+      "model":"string",
       "children":{
         "enum":"item_type",
         "armor":{
-          "atype":{"type":"armor_type"},
+          "atype":"armor_type",
           "defense":"int"
         },
         "weapon":{
-          "wtype":{"type":"weapon_type"},
+          "wtype":"weapon_type",
           "attack":"int",
           "speed":"int"
         },

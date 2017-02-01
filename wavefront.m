@@ -170,7 +170,7 @@ line(!Parser, !Model) :-
                     GetFloat(!Parser, U),
                     skip_whitespace(!Parser),
                     GetFloat(!Parser, V),
-                    puttex(model.tex(U, V), !Model)
+                    puttex(model.tex(U, 1.0-V), !Model)
                 ; Char2 = 'n' ->
                     skip_whitespace(!Parser),
                     GetFloat(!Parser, X),

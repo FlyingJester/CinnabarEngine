@@ -1,3 +1,6 @@
 [submodule "fjogg"]
 	path = fjogg
 	url = https://github.com/FlyingJester/fjogg
+[submodule "libbottle"]
+	path = libbottle
+	url = https://github.com/FlyingJester/libbottle

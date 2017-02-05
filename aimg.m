@@ -14,6 +14,7 @@
 :- type result ---> ok(texture) ; nofile ; badfile.
 
 :- pred load(io.io::di, io.io::uo, string::in, result::out) is det.
+:- func empty = (texture::uo) is det.
 
 %==============================================================================%
 :- implementation.
@@ -80,4 +81,13 @@ void AImg_Finalizer(void *image, void *unused){
     }
     ").
 
+:- pragma foreign_proc("C", empty = (Image::uo), 
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        struct AImg_Image *const image = MR_GC_malloc_atomic(sizeof(struct AImg_Image));
+        image->w = image->h;
+        image->pixels = NULL;
+        Image = image;
+    ").
 

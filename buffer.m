@@ -87,6 +87,9 @@
 % Same as get_string, but only accepts ascii characters. Slightly faster.
 :- pred get_ascii_string(buffer::in, int::in, string::uo) is semidet.
 
+% get_ascii_string(Buffer, Index, Length, String).
+:- pred get_ascii_string(buffer::in, int::in, int::in, string::uo) is semidet.
+
 %------------------------------------------------------------------------------%
 
 :- pred read(io.binary_input_stream, int, io.maybe_partial_res(buffer), io.io, io.io).
@@ -254,13 +257,15 @@ get_byte_double(Buf, I, O) :-
         SUCCESS_INDICATOR = (len <= Buf->size && memcmp(Buf->data, Str, len) == 0);
     ").
 
-:- pragma foreign_proc("C", get_ascii_string(Buf::in, Len::in, Out::uo),
+get_ascii_string(Buffer, Length, String) :- get_ascii_string(Buffer, 0, Length, String).
+
+:- pragma foreign_proc("C", get_ascii_string(Buf::in, Index::in, Len::in, Out::uo),
     [will_not_throw_exception, promise_pure, thread_safe],
     "
-        if((SUCCESS_INDICATOR = Buf->size >= Len)){
+        if((SUCCESS_INDICATOR = Buf->size >= Index + Len)){
             unsigned i;
             for(i = 0; i < Len; i++){
-                const char c = ((char*)Buf->data)[i];
+                const char c = ((char*)Buf->data)[i + Index];
                 if(!((c >= ' ' || c == '\\n' || c == '\\r' ||
                     c == '\\t') && !(c & 0x80))){
                     SUCCESS_INDICATOR = 0;
@@ -268,7 +273,7 @@ get_byte_double(Buf, I, O) :-
                 }
             }
             Out = MR_GC_malloc_atomic(Len+1);
-            memcpy(Out, Buf->data, Len);
+            memcpy(Out, ((char*)Buf->data) + Index, Len);
             Out[Len] = '\\0';
         }
         m_buffer_failure_not_ascii: 

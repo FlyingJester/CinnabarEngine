@@ -73,9 +73,8 @@ void MerBufferFile_FileFinalizer(void *data, void *unused){
 
 void MerBufferFile_BufferFinalizer(void *data, void *unused){
     (void)unused;
-    const struct MerBufferFile_Buffer *const buffer =
-        (struct MerBufferFile_Buffer *)data;
-    munmap(buffer->data, buffer->len);
+    const struct M_Buffer *const buffer = (struct M_Buffer *)data;
+    munmap(buffer->data, buffer->size);
 }
 
 void MerBufferFile_FileFinalizer(void *data, void *unused){
@@ -106,7 +105,10 @@ void MerBufferFile_FileFinalizer(void *data, void *unused){
         MaybeFile = MerBufferFile_OKFile(out);
     }
     else{
-        MaybeFile = MerBufferFile_ErrorFile(""Could not open file"");
+        const char err[] = ""Could not open file"";
+        char *output_err = MR_GC_malloc_atomic(sizeof(err));
+        memcpy(output_err, err, sizeof(err));
+        MaybeFile = MerBufferFile_ErrorFile(output_err);
     }
     IO1 = IO0;
     ").
@@ -130,7 +132,7 @@ void MerBufferFile_FileFinalizer(void *data, void *unused){
     [will_not_call_mercury, promise_pure, will_not_throw_exception,
      thread_safe, does_not_affect_liveness, tabled_for_io],
     "
-        struct M_Buffer* const buffer = MR_GC_malloc_atomic(sizeof(struct MerBufferFile_Buffer));
+        struct M_Buffer* const buffer = MR_GC_malloc_atomic(sizeof(struct M_Buffer));
         buffer->size = Len;
 #ifdef _WIN32
         {

@@ -7,11 +7,11 @@ LIBSX?=so
 LIBSA?=a
 LIBPA?=$(LIBPX)
 INSTALL?=install
-GRADE?=hlc.gc # asm_fast.gc.debug.stseg
+GRADE?=asm_fast.gc.debug.stseg
 
 MMC?=mmc
 
-MMCFLAGS?=--cflags "-g " --ld-flags " -g "
+MMCFLAGS?=--cflags -g  --ld-flag -g
 #  --mercury-linkage static --opt-level 7 --intermodule-optimization 
 MMCCALL=$(MMC) $(MMCFLAGS) -L./ --mld lib/mercury --grade=$(GRADE)
 MMCIN=$(MMCCALL) -E -j4 --make
@@ -78,14 +78,30 @@ EDITLIBS=libwavefront.so
 libwavefront.so:
 	$(MMCIN) libwavefront
 
-cinedit: editor $(LIBTARGETS) $(EDITLIBS)
+ilib.m editor/ilib.m: bottles/ilib.json
+	python bottlegen/generate.py -lm bottles/ilib.json
+	cp ilib.m editor/ilib.m
+
+editor/aimg.m: aimg.m
+	cp aimg.m editor/aimg.m
+
+editor/buffer.m: buffer.m
+	cp buffer.m editor/buffer.m
+
+editor/bufferfile.m: bufferfile.m
+	cp bufferfile.m editor/bufferfile.m
+
+cinedit: editor $(LIBTARGETS) $(EDITLIBS) editor/ilib.m editor/aimg.m editor/buffer.m editor/bufferfile.m
 	cp -r lib editor
+	mkdir editor/aimage || true
+	cp aimage/image.h editor/aimage/image.h
+	cp aimage/export.h editor/aimage/export.h
 	cp libwavefront.so editor/lib
 	cp *.mh editor/include
-	$(MAKE) -C editor
+	$(MAKE) -C editor MMCIN="$(MMCIN)" GRADE=$(GRADE) MMC="$(MMC)"
 
 cinedit_clean:
-	$(MAKE) -C editor clean
+	$(MAKE) -C editor MMCIN="$(MMCIN)" GRADE=$(GRADE) MMC="$(MMC)" clean
 
 clean: cinedit_clean
 	scons -C glow -c

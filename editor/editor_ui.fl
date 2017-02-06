@@ -60,8 +60,11 @@ Function {make_editor_window()} {open
 } {
   Fl_Window {} {
     label {Cinnabar Editor} open
-    xywh {105 97 680 525} type Double box THIN_UP_BOX align 80 visible
+    xywh {604 177 680 525} type Double box THIN_UP_BOX align 80 resizable visible
   } {
+    Fl_Box {} {
+      xywh {13 81 658 384} resizable
+    }
     Fl_Menu_Bar {} {open
       xywh {-5 0 710 25} selection_color 133
     } {
@@ -236,15 +239,15 @@ else
       xywh {0 25 680 505} selection_color 133 when 1
     } {
       Fl_Group cell_tab {
-        label Cell
-        xywh {0 45 680 485} selection_color 133
+        label Cell open
+        xywh {0 45 680 485} selection_color 133 resizable
       } {
         Fl_Tabs cell_tabs {open
           xywh {5 50 300 470} selection_color 133
         } {
           Fl_Group heightmap_tab {
             label Heightmap open
-            private xywh {5 75 300 445} hide
+            private xywh {5 70 300 450} hide resizable
           } {
             Fl_File_Input {} {
               label {File:}
@@ -258,14 +261,17 @@ else
               label {Image...}
               xywh {50 124 205 172}
             }
+            Fl_Box {} {
+              xywh {10 304 290 211} resizable
+            }
           }
           Fl_Group statics_tab {
-            label Statics open selected
-            private xywh {5 75 300 445}
+            label Statics open
+            private xywh {5 70 300 450}
           } {
             Fl_Browser {} {
-              label Statics
-              xywh {10 95 290 395} selection_color 133 align 1
+              label Statics selected
+              xywh {10 95 290 395} selection_color 133 align 1 resizable
             }
             Fl_Button {} {
               label {Add...}
@@ -282,11 +288,11 @@ else
           }
           Fl_Group {} {
             label Triggers open
-            xywh {5 75 300 445} hide
+            xywh {5 70 300 450} hide
           } {
             Fl_Browser {} {
               label Triggers
-              xywh {10 95 290 395} selection_color 133 align 1
+              xywh {10 95 290 395} selection_color 133 align 1 resizable
             }
             Fl_Button {} {
               label {Add...}
@@ -306,7 +312,7 @@ else
             xywh {5 70 300 450} hide
           } {
             Fl_Tile {} {open
-              xywh {5 75 300 445}
+              xywh {5 70 300 450}
             } {
               Fl_Box library_tile_resize_limiter {
                 xywh {24 130 35 335} resizable
@@ -316,7 +322,7 @@ else
               } {
                 Fl_Browser {} {
                   label {Item Libraries}
-                  xywh {10 95 290 180} selection_color 133 align 1 resizable
+                  xywh {10 100 290 175} selection_color 133 align 1 resizable
                 }
                 Fl_Button {} {
                   label {Add...}
@@ -354,6 +360,32 @@ else
             }
           }
         }
+        Fl_Tile {} {open
+          xywh {310 55 365 465} resizable
+        } {
+          Fl_Box {} {
+            xywh {325 72 335 387} resizable
+          }
+          Fl_Group cell_preview_group {open
+            xywh {310 55 365 215} box BORDER_BOX color 39
+          } {}
+          Fl_Group cell_draft_group {open
+            xywh {310 270 365 250} color 39
+          } {
+            Fl_Box {} {
+              xywh {310 270 350 235} box BORDER_BOX color 55 resizable
+            }
+            Fl_Scrollbar {} {
+              xywh {660 270 15 235}
+            }
+            Fl_Scrollbar {} {
+              xywh {310 505 350 15} type Horizontal
+            }
+            Fl_Box {} {
+              xywh {660 504 15 16} box DOWN_BOX
+            }
+          }
+        }
       }
       Fl_Group item_tab {
         label {Item Library} open
@@ -367,13 +399,13 @@ else
             xywh {5 55 235 465} type Hold selection_color 133 when 1
           }
           Fl_Group {} {open
-            xywh {240 55 435 465} box FLAT_BOX
+            xywh {240 55 435 465} box FLAT_BOX resizable
           } {
             Fl_Group item_info_frame {open
               xywh {250 60 420 420} box ENGRAVED_BOX deactivate resizable
             } {
               Fl_Box {} {
-                xywh {505 458 160 22} resizable
+                xywh {505 458 160 22}
               }
               Fl_Choice item_type_choice {
                 label Type
@@ -388,10 +420,6 @@ else
                   label Armor
                   private xywh {0 0 36 20}
                 }
-                MenuItem weapon_menu_item {
-                  label Weapon
-                  private xywh {10 10 36 20}
-                }
                 MenuItem consumable_menu_item {
                   label Consumable
                   private xywh {20 20 36 20}
@@ -400,29 +428,39 @@ else
                   label Junk
                   private xywh {30 30 36 20}
                 }
+                MenuItem weapon_menu_item {
+                  label Weapon
+                  private xywh {10 10 36 20}
+                }
               }
               Fl_Wizard item_type_wizard {open
-                xywh {260 120 400 155}
+                xywh {260 120 400 155} resizable
               } {
+                Fl_Box {} {
+                  xywh {495 229 160 36} hide resizable
+                }
                 Fl_Group armor_wiz {
                   label Armor open
-                  xywh {260 120 400 155} box ENGRAVED_BOX
+                  xywh {260 120 400 155} box ENGRAVED_BOX hide
                 } {
+                  Fl_Box {} {
+                    xywh {490 229 160 36} hide resizable
+                  }
                   Fl_Choice armor_type_choice {
                     label {Armor Type} open
                     private xywh {365 130 115 20} down_box BORDER_BOX selection_color 133
                   } {
-                    MenuItem helmet_menu_item {
-                      label Helmet
-                      private xywh {0 0 36 20}
+                    MenuItem boots_menu_item {
+                      label Boots
+                      private xywh {20 20 36 20}
                     }
                     MenuItem chestplate_menu_item {
                       label Chestplate
                       private xywh {10 10 36 20}
                     }
-                    MenuItem boots_menu_item {
-                      label Boots
-                      private xywh {20 20 36 20}
+                    MenuItem helmet_menu_item {
+                      label Helmet
+                      private xywh {0 0 36 20}
                     }
                   }
                   Fl_Value_Input armor_defense_input {
@@ -432,19 +470,22 @@ else
                 }
                 Fl_Group weapon_wiz {
                   label Weapon open
-                  private xywh {260 120 400 155} box ENGRAVED_BOX hide
+                  private xywh {260 120 400 155} box ENGRAVED_BOX
                 } {
+                  Fl_Box {} {
+                    xywh {490 224 160 36} hide resizable
+                  }
                   Fl_Choice weapon_type_choice {
                     label {Weapon Type} open
                     xywh {365 130 115 20} down_box BORDER_BOX selection_color 133
                   } {
-                    MenuItem sword_menu_item {
-                      label Sword
-                      private xywh {10 10 36 20}
-                    }
                     MenuItem axe_menu_item {
                       label Axe
                       private xywh {20 20 36 20}
+                    }
+                    MenuItem sword_menu_item {
+                      label Sword
+                      private xywh {10 10 36 20}
                     }
                   }
                   Fl_Value_Input weapon_attack_power_input {
@@ -454,9 +495,6 @@ else
                   Fl_Value_Input weapon_attack_speed_input {
                     label {Attack Speed}
                     tooltip milliseconds xywh {365 190 115 20} selection_color 133 maximum 4096 step 1 value 1
-                  }
-                  Fl_Box {} {
-                    xywh {490 224 160 36} resizable
                   }
                 }
               }

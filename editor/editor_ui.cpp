@@ -162,6 +162,10 @@ static Fl_Group *statics_tab=(Fl_Group *)0;
 
 Fl_Box *library_tile_resize_limiter=(Fl_Box *)0;
 
+Fl_Group *cell_preview_group=(Fl_Group *)0;
+
+Fl_Group *cell_draft_group=(Fl_Group *)0;
+
 Fl_Group *item_tab=(Fl_Group *)0;
 
 Fl_Browser *item_browser=(Fl_Browser *)0;
@@ -184,9 +188,9 @@ static void cb_item_type_choice(Fl_Choice*, void* v) {
 
 Fl_Menu_Item menu_item_type_choice[] = {
  {"Armor", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Weapon", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Consumable", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Junk", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Weapon", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0}
 };
 
@@ -197,9 +201,9 @@ Fl_Group *armor_wiz=(Fl_Group *)0;
 static Fl_Choice *armor_type_choice=(Fl_Choice *)0;
 
 Fl_Menu_Item menu_armor_type_choice[] = {
- {"Helmet", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Chestplate", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Boots", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Chestplate", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Helmet", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0}
 };
 
@@ -210,8 +214,8 @@ static Fl_Group *weapon_wiz=(Fl_Group *)0;
 Fl_Choice *weapon_type_choice=(Fl_Choice *)0;
 
 Fl_Menu_Item menu_weapon_type_choice[] = {
- {"Sword", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Axe", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Sword", 0,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0}
 };
 
@@ -297,6 +301,9 @@ Fl_Double_Window* make_editor_window() {
     w = o; if (w) {/* empty */}
     o->box(FL_THIN_UP_BOX);
     o->align(Fl_Align(FL_ALIGN_CLIP|FL_ALIGN_INSIDE));
+    { Fl_Box* o = new Fl_Box(13, 81, 658, 384);
+      Fl_Group::current()->resizable(o);
+    } // Fl_Box* o
     { Fl_Menu_Bar* o = new Fl_Menu_Bar(-5, 0, 710, 25);
       o->selection_color((Fl_Color)133);
       o->menu(menu_);
@@ -309,7 +316,7 @@ Fl_Double_Window* make_editor_window() {
         cell_tab->selection_color((Fl_Color)133);
         { cell_tabs = new Fl_Tabs(5, 50, 300, 470);
           cell_tabs->selection_color((Fl_Color)133);
-          { heightmap_tab = new Fl_Group(5, 75, 300, 445, "Heightmap");
+          { heightmap_tab = new Fl_Group(5, 70, 300, 450, "Heightmap");
             heightmap_tab->hide();
             { Fl_File_Input* o = new Fl_File_Input(50, 81, 205, 34, "File:");
               o->selection_color((Fl_Color)133);
@@ -318,12 +325,17 @@ Fl_Double_Window* make_editor_window() {
             } // Fl_Button* o
             { new Fl_Box(50, 124, 205, 172, "Image...");
             } // Fl_Box* o
+            { Fl_Box* o = new Fl_Box(10, 304, 290, 211);
+              Fl_Group::current()->resizable(o);
+            } // Fl_Box* o
             heightmap_tab->end();
+            Fl_Group::current()->resizable(heightmap_tab);
           } // Fl_Group* heightmap_tab
-          { statics_tab = new Fl_Group(5, 75, 300, 445, "Statics");
+          { statics_tab = new Fl_Group(5, 70, 300, 450, "Statics");
             { Fl_Browser* o = new Fl_Browser(10, 95, 290, 395, "Statics");
               o->selection_color((Fl_Color)133);
               o->align(Fl_Align(FL_ALIGN_TOP));
+              Fl_Group::current()->resizable(o);
             } // Fl_Browser* o
             { new Fl_Button(230, 495, 70, 20, "Add...");
             } // Fl_Button* o
@@ -333,11 +345,12 @@ Fl_Double_Window* make_editor_window() {
             } // Fl_Button* o
             statics_tab->end();
           } // Fl_Group* statics_tab
-          { Fl_Group* o = new Fl_Group(5, 75, 300, 445, "Triggers");
+          { Fl_Group* o = new Fl_Group(5, 70, 300, 450, "Triggers");
             o->hide();
             { Fl_Browser* o = new Fl_Browser(10, 95, 290, 395, "Triggers");
               o->selection_color((Fl_Color)133);
               o->align(Fl_Align(FL_ALIGN_TOP));
+              Fl_Group::current()->resizable(o);
             } // Fl_Browser* o
             { new Fl_Button(230, 495, 70, 20, "Add...");
             } // Fl_Button* o
@@ -349,13 +362,13 @@ Fl_Double_Window* make_editor_window() {
           } // Fl_Group* o
           { Fl_Group* o = new Fl_Group(5, 70, 300, 450, "Libraries");
             o->hide();
-            { Fl_Tile* o = new Fl_Tile(5, 75, 300, 445);
+            { Fl_Tile* o = new Fl_Tile(5, 70, 300, 450);
               { library_tile_resize_limiter = new Fl_Box(24, 130, 35, 335);
                 Fl_Group::current()->resizable(library_tile_resize_limiter);
               } // Fl_Box* library_tile_resize_limiter
               { Fl_Group* o = new Fl_Group(5, 75, 300, 230);
                 o->box(FL_THIN_UP_BOX);
-                { Fl_Browser* o = new Fl_Browser(10, 95, 290, 180, "Item Libraries");
+                { Fl_Browser* o = new Fl_Browser(10, 100, 290, 175, "Item Libraries");
                 o->selection_color((Fl_Color)133);
                 o->align(Fl_Align(FL_ALIGN_TOP));
                 Fl_Group::current()->resizable(o);
@@ -389,7 +402,37 @@ Fl_Double_Window* make_editor_window() {
           } // Fl_Group* o
           cell_tabs->end();
         } // Fl_Tabs* cell_tabs
+        { Fl_Tile* o = new Fl_Tile(310, 55, 365, 465);
+          { Fl_Box* o = new Fl_Box(325, 72, 335, 387);
+            Fl_Group::current()->resizable(o);
+          } // Fl_Box* o
+          { cell_preview_group = new Fl_Group(310, 55, 365, 215);
+            cell_preview_group->box(FL_BORDER_BOX);
+            cell_preview_group->color(FL_DARK3);
+            cell_preview_group->end();
+          } // Fl_Group* cell_preview_group
+          { cell_draft_group = new Fl_Group(310, 270, 365, 250);
+            cell_draft_group->color(FL_DARK3);
+            { Fl_Box* o = new Fl_Box(310, 270, 350, 235);
+              o->box(FL_BORDER_BOX);
+              o->color((Fl_Color)55);
+              Fl_Group::current()->resizable(o);
+            } // Fl_Box* o
+            { new Fl_Scrollbar(660, 270, 15, 235);
+            } // Fl_Scrollbar* o
+            { Fl_Scrollbar* o = new Fl_Scrollbar(310, 505, 350, 15);
+              o->type(1);
+            } // Fl_Scrollbar* o
+            { Fl_Box* o = new Fl_Box(660, 504, 15, 16);
+              o->box(FL_DOWN_BOX);
+            } // Fl_Box* o
+            cell_draft_group->end();
+          } // Fl_Group* cell_draft_group
+          o->end();
+          Fl_Group::current()->resizable(o);
+        } // Fl_Tile* o
         cell_tab->end();
+        Fl_Group::current()->resizable(cell_tab);
       } // Fl_Group* cell_tab
       { item_tab = new Fl_Group(0, 50, 680, 475, "Item Library");
         item_tab->hide();
@@ -405,8 +448,7 @@ Fl_Double_Window* make_editor_window() {
             { item_info_frame = new Fl_Group(250, 60, 420, 420);
               item_info_frame->box(FL_ENGRAVED_BOX);
               item_info_frame->deactivate();
-              { Fl_Box* o = new Fl_Box(505, 458, 160, 22);
-                Fl_Group::current()->resizable(o);
+              { new Fl_Box(505, 458, 160, 22);
               } // Fl_Box* o
               { item_type_choice = new Fl_Choice(300, 70, 115, 20, "Type");
                 item_type_choice->down_box(FL_BORDER_BOX);
@@ -416,8 +458,17 @@ Fl_Double_Window* make_editor_window() {
                 item_type_choice->menu(menu_item_type_choice);
               } // Fl_Choice* item_type_choice
               { item_type_wizard = new Fl_Wizard(260, 120, 400, 155);
+                { Fl_Box* o = new Fl_Box(495, 229, 160, 36);
+                o->hide();
+                Fl_Group::current()->resizable(o);
+                } // Fl_Box* o
                 { armor_wiz = new Fl_Group(260, 120, 400, 155, "Armor");
                 armor_wiz->box(FL_ENGRAVED_BOX);
+                armor_wiz->hide();
+                { Fl_Box* o = new Fl_Box(490, 229, 160, 36);
+                o->hide();
+                Fl_Group::current()->resizable(o);
+                } // Fl_Box* o
                 { armor_type_choice = new Fl_Choice(365, 130, 115, 20, "Armor Type");
                 armor_type_choice->down_box(FL_BORDER_BOX);
                 armor_type_choice->selection_color((Fl_Color)133);
@@ -433,7 +484,10 @@ Fl_Double_Window* make_editor_window() {
                 } // Fl_Group* armor_wiz
                 { weapon_wiz = new Fl_Group(260, 120, 400, 155, "Weapon");
                 weapon_wiz->box(FL_ENGRAVED_BOX);
-                weapon_wiz->hide();
+                { Fl_Box* o = new Fl_Box(490, 224, 160, 36);
+                o->hide();
+                Fl_Group::current()->resizable(o);
+                } // Fl_Box* o
                 { weapon_type_choice = new Fl_Choice(365, 130, 115, 20, "Weapon Type");
                 weapon_type_choice->down_box(FL_BORDER_BOX);
                 weapon_type_choice->selection_color((Fl_Color)133);
@@ -452,12 +506,10 @@ Fl_Double_Window* make_editor_window() {
                 weapon_attack_speed_input->step(1);
                 weapon_attack_speed_input->value(1);
                 } // Fl_Value_Input* weapon_attack_speed_input
-                { Fl_Box* o = new Fl_Box(490, 224, 160, 36);
-                Fl_Group::current()->resizable(o);
-                } // Fl_Box* o
                 weapon_wiz->end();
                 } // Fl_Group* weapon_wiz
                 item_type_wizard->end();
+                Fl_Group::current()->resizable(item_type_wizard);
               } // Fl_Wizard* item_type_wizard
               { item_value_input = new Fl_Value_Input(365, 282, 115, 20, "Value");
                 item_value_input->selection_color((Fl_Color)133);
@@ -500,6 +552,7 @@ Fl_Double_Window* make_editor_window() {
               item_delete_button->deactivate();
             } // Fl_Button* item_delete_button
             o->end();
+            Fl_Group::current()->resizable(o);
           } // Fl_Group* o
           o->end();
           Fl_Group::current()->resizable(o);

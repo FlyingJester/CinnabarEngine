@@ -493,8 +493,7 @@ void CinEdit_AppendItemView(const char *name, MR_Word data){
     
     s_item_browser_dirty = true;
     s_item_info_frame_dirty = true;
-    
-    CinEdit_SetItemsExistUI();
+
 }
 
 void CinEdit_ClearItemView(){

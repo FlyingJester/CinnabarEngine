@@ -1,0 +1,36 @@
+{
+  "name":"cell",
+  "enums":{
+    "cell_type":["interior", "exterior"]
+  },
+  "blocks":{
+    "position":{
+      "x":"float","y":"float","z":"float"
+    },
+    "static":{
+      "model":"string",
+      "rot_x":"float",
+      "rot_y":"float",
+      "rot_z":"float",
+      "location":"position"
+    },
+    "trigger":{
+      "script":"string"
+    },
+    "heightmap":{
+      "file":"string"
+    },
+    "lib":{
+      "file":"string"
+    },
+    "header":{
+      "cell_type":"cell_type",
+      "cell_position_x":"int",
+      "cell_position_y":"int",
+      "num_statics":"int",
+      "num_triggers":"int",
+      "num_ilibs":"int",
+      "num_clibs":"int"
+    }
+  }
+}

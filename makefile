@@ -82,6 +82,10 @@ ilib.m editor/ilib.m: bottles/ilib.json
 	python bottlegen/generate.py -lm bottles/ilib.json
 	cp ilib.m editor/ilib.m
 
+cell.m editor/cell.m: bottles/cell.json
+	python bottlegen/generate.py -lm bottles/cell.json
+	cp cell.m editor/cell.m
+
 editor/aimg.m: aimg.m
 	cp aimg.m editor/aimg.m
 
@@ -91,7 +95,7 @@ editor/buffer.m: buffer.m
 editor/bufferfile.m: bufferfile.m
 	cp bufferfile.m editor/bufferfile.m
 
-cinedit: editor $(LIBTARGETS) $(EDITLIBS) editor/ilib.m editor/aimg.m editor/buffer.m editor/bufferfile.m
+cinedit: editor $(LIBTARGETS) $(EDITLIBS) editor/cell.m editor/ilib.m editor/aimg.m editor/buffer.m editor/bufferfile.m
 	cp -r lib editor
 	mkdir editor/aimage || true
 	cp aimage/image.h editor/aimage/image.h

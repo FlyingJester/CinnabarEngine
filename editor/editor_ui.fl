@@ -60,7 +60,7 @@ Function {make_editor_window()} {open
 } {
   Fl_Window {} {
     label {Cinnabar Editor} open
-    xywh {536 81 680 525} type Double box THIN_UP_BOX align 80 visible
+    xywh {105 97 680 525} type Double box THIN_UP_BOX align 80 visible
   } {
     Fl_Menu_Bar {} {open
       xywh {-5 0 710 25} selection_color 133
@@ -107,7 +107,7 @@ if(chooser.count()){
     if(err != NULL){
         fl_alert("Could not open file:\\n%s", err);
     }
-}} selected
+}}
           xywh {10 10 36 20} shortcut 0x4006f
         }
         MenuItem save_menu_item {
@@ -237,7 +237,7 @@ else
     } {
       Fl_Group cell_tab {
         label Cell
-        xywh {0 45 680 485} selection_color 133 hide
+        xywh {0 45 680 485} selection_color 133
       } {
         Fl_Tabs cell_tabs {open
           xywh {5 50 300 470} selection_color 133
@@ -260,7 +260,7 @@ else
             }
           }
           Fl_Group statics_tab {
-            label Statics open
+            label Statics open selected
             private xywh {5 75 300 445}
           } {
             Fl_Browser {} {
@@ -357,7 +357,7 @@ else
       }
       Fl_Group item_tab {
         label {Item Library} open
-        xywh {0 50 680 475}
+        xywh {0 50 680 475} hide
       } {
         Fl_Tile {} {open
           xywh {5 55 670 465} resizable

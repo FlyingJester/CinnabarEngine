@@ -270,7 +270,7 @@ void CinEdit_SetItemType(const unsigned i, enum EnumItemTypeType type){
     MR_String name = NULL, model, icon;
     MR_Integer weight, durability, value; 
     MR_Word child;
-    Ilib_GetItem(&name, &weight, &durability, &value, &model, &child, &icon, item);
+    Ilib_GetItem(&child, &durability, &icon, &model, &name, &value, &weight, item);
     fputs("New Type ", stdout); puts(name);
     printf("Number %i\n", i);
     switch(type){
@@ -302,7 +302,7 @@ void CinEdit_SetItemType(const unsigned i, enum EnumItemTypeType type){
     }
 
     item = 0;
-    Ilib_CreateItem(name, weight, durability, value, model, child, icon, &item);
+    Ilib_CreateItem(child, durability, icon, model, name, value, weight, &item);
     try_replace_push(i, item);
 }
 
@@ -318,14 +318,14 @@ static void CinEdit_SetItemString(unsigned i,
     MR_Word child;
     MR_String name, model, icon;
     MR_Integer weight, durability, value;
-    Ilib_GetItem(&name, &weight, &durability, &value, &model, &child, &icon, item);
+    Ilib_GetItem(&child, &durability, &icon, &model, &name, &value, &weight, item);
     if(in_name)
         name = create_mr_string(*in_name);
     if(in_model)
         model = create_mr_string(*in_model);
     if(in_icon)
         icon = create_mr_string(*in_icon);
-    Ilib_CreateItem(name, weight, durability, value, model, child, icon, &item);
+    Ilib_CreateItem(child, durability, icon, model, name, value, weight, &item);
     try_replace_push(i, item);
 }
 
@@ -359,14 +359,14 @@ static void CinEdit_SetItemData(unsigned i,
     MR_Word child;
     MR_String name, model, icon;
     MR_Integer weight, durability, value;
-    Ilib_GetItem(&name, &weight, &durability, &value, &model, &child, &icon, item);
+    Ilib_GetItem(&child, &durability, &icon, &model, &name, &value, &weight, item);
     if(in_weight)
         weight = *in_weight;
     if(in_value)
         value = *in_value;
     if(in_durability)
         durability = *in_durability;
-    Ilib_CreateItem(name, weight, durability, value, model, child, icon, &item);
+    Ilib_CreateItem(child, durability, icon, model, name, value, weight, &item);
     try_replace_push(i, item);
 }
 
@@ -393,12 +393,12 @@ static void CinEdit_SetItemArmorData(unsigned i,
     MR_Word child;
     MR_String name, model, icon;
     MR_Integer weight, durability, value;
-    Ilib_GetItem(&name, &weight, &durability, &value, &model, &child, &icon, item);
+    Ilib_GetItem(&child, &durability, &icon, &model, &name, &value, &weight, item);
     
     if(Ilib_GetItemArmor(child, &child) == MR_YES){
         MR_Integer defense;
         MR_Word type;
-        Ilib_GetArmor(&defense, &type, child);
+        Ilib_GetArmor(&type, &defense, child);
         if(in_type)
             type = *in_type;
         if(in_defense)
@@ -410,7 +410,7 @@ static void CinEdit_SetItemArmorData(unsigned i,
         return;
     }
     
-    Ilib_CreateItem(name, weight, durability, value, model, child, icon, &item);    
+    Ilib_CreateItem(child, durability, icon, model, name, value, weight, &item);
     try_replace_push(i, item);
 }
 
@@ -557,7 +557,7 @@ void CinEdit_RebuildItemInfoFrame(MR_Word item){
     {
         MR_String name, model, icon;
         MR_Integer weight, durability, value;
-        Ilib_GetItem(&name, &weight, &durability, &value, &model, &child, &icon, item);
+        Ilib_GetItem(&child, &durability, &icon, &model, &name, &value, &weight, item);
         CinEdit_SetItemAttributes(value, durability, weight, icon, model);
         item_name_input->value(name);
         item_name_input->redraw();

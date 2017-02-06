@@ -307,7 +307,6 @@ Fl_Double_Window* make_editor_window() {
       editor_tabs->when(FL_WHEN_CHANGED);
       { cell_tab = new Fl_Group(0, 45, 680, 485, "Cell");
         cell_tab->selection_color((Fl_Color)133);
-        cell_tab->hide();
         { cell_tabs = new Fl_Tabs(5, 50, 300, 470);
           cell_tabs->selection_color((Fl_Color)133);
           { heightmap_tab = new Fl_Group(5, 75, 300, 445, "Heightmap");
@@ -393,6 +392,7 @@ Fl_Double_Window* make_editor_window() {
         cell_tab->end();
       } // Fl_Group* cell_tab
       { item_tab = new Fl_Group(0, 50, 680, 475, "Item Library");
+        item_tab->hide();
         { Fl_Tile* o = new Fl_Tile(5, 55, 670, 465);
           { item_browser = new Fl_Browser(5, 55, 235, 465);
             item_browser->type(2);

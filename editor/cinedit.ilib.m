@@ -53,9 +53,9 @@ save_error(io.error(Err), io.error_message(Err)).
 
 % Use consumable just because it is the easiest to initialize.
 create_item(Name) =
-    ilib.item(Name, 1, 0, 10, "", ilib.consumable(ilib.consumable), "").
+    ilib.item(ilib.consumable(ilib.consumable), 100, "", "", Name, 1, 1).
 
-item_name(ilib.item(Name, _, _, _, _, _, _)) = Name.
+item_name(ilib.item(_, _, _, _, Name, _, _)) = Name.
 
 add_item(Item, List, list.reverse([Item|List])).
 

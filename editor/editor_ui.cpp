@@ -37,6 +37,35 @@ void CinEdit_SetSaveInactiveUI() {
   save_as_menu_item->deactivate();
 }
 
+static void cb_Open(Fl_Menu_*, void*) {
+  Fl_File_Chooser chooser("", "", Fl_File_Chooser::SINGLE, "");
+
+const char *(*callback)(const char *) = NULL;
+
+if(editor_tabs->value() == item_tab){
+    chooser.filter("*.ilib");
+    chooser.label("Open Item Library");
+    callback = CinEdit_LoadItemLib;
+}
+
+chooser.show();
+while(chooser.shown())
+    Fl::wait();
+
+if(chooser.count()){
+    const char *const err = callback(chooser.value());
+    if(err != NULL){
+        fl_alert("Could not open file:\n%s", err);
+    }
+};
+}
+
+static void cb_save_menu_item(Fl_Menu_*, void*) {
+  if(editor_tabs->value() == item_tab){
+    CinEdit_SaveItemLib(CinEdit_GetItemLibraryPath());
+};
+}
+
 static void cb_save_as_menu_item(Fl_Menu_*, void*) {
   Fl_File_Chooser chooser("", "", Fl_File_Chooser::CREATE, "");
 
@@ -85,8 +114,8 @@ Fl_Menu_Item menu_[] = {
  {"New &Cell", FL_COMMAND|0x10063,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"New &Item Lib", FL_COMMAND|0x10069,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
- {"&Open", FL_COMMAND|0x6f,  0, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"&Save", FL_COMMAND|0x73,  0, 0, 1, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"&Open", FL_COMMAND|0x6f,  (Fl_Callback*)cb_Open, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"&Save", FL_COMMAND|0x73,  (Fl_Callback*)cb_save_menu_item, 0, 1, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Save As", FL_COMMAND|0x10073,  (Fl_Callback*)cb_save_as_menu_item, 0, 129, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"&Export...", FL_COMMAND|0x10065,  0, 0, 1, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"&Import...", FL_COMMAND|0x10069,  0, 0, 129, (uchar)FL_NORMAL_LABEL, 0, 14, 0},

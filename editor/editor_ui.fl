@@ -60,7 +60,7 @@ Function {make_editor_window()} {open
 } {
   Fl_Window {} {
     label {Cinnabar Editor} open
-    xywh {87 155 680 525} type Double box THIN_UP_BOX align 80 visible
+    xywh {536 81 680 525} type Double box THIN_UP_BOX align 80 visible
   } {
     Fl_Menu_Bar {} {open
       xywh {-5 0 710 25} selection_color 133
@@ -88,10 +88,33 @@ Function {make_editor_window()} {open
         }
         MenuItem {} {
           label {&Open}
+          callback {Fl_File_Chooser chooser("", "", Fl_File_Chooser::SINGLE, "");
+
+const char *(*callback)(const char *) = NULL;
+
+if(editor_tabs->value() == item_tab){
+    chooser.filter("*.ilib");
+    chooser.label("Open Item Library");
+    callback = CinEdit_LoadItemLib;
+}
+
+chooser.show();
+while(chooser.shown())
+    Fl::wait();
+
+if(chooser.count()){
+    const char *const err = callback(chooser.value());
+    if(err != NULL){
+        fl_alert("Could not open file:\\n%s", err);
+    }
+}} selected
           xywh {10 10 36 20} shortcut 0x4006f
         }
         MenuItem save_menu_item {
           label {&Save}
+          callback {if(editor_tabs->value() == item_tab){
+    CinEdit_SaveItemLib(CinEdit_GetItemLibraryPath());
+}}
           private xywh {20 20 36 20} shortcut 0x40073 deactivate
         }
         MenuItem save_as_menu_item {
@@ -117,7 +140,7 @@ if(chooser.count()){
     if(err != NULL){
    //     fl_alert("Could not save file:\\n%s", err);
     }
-}} selected
+}}
           private xywh {30 30 36 20} shortcut 0x50073 deactivate divider
         }
         MenuItem {} {

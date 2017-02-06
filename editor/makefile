@@ -55,7 +55,7 @@ ilib.mh: ilib.m
 
 EXTRAMMCFLAGS=--cflag -Wno-strict-prototypes --ld-flags="-L${PWD}/lib -lcineditui $(FLTKFLAGS)" --link-executable-command g++
 
-cinedit: lib/libcineditui.a cinedit.m cinedit.ilib.m cinedit.clib.m cinedit.cell.m
+cinedit: lib/libcineditui.a cinedit.m cinedit.ilib.m cinedit.clib.m cinedit.cell.m buffer.m bufferfile.m ilib.m
 	$(MMCIN) cinedit $(EXTRAMMCFLAGS) -l aimg -l bufferfile
 
 .PHONY: clean

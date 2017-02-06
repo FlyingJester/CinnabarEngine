@@ -171,12 +171,12 @@ MR_Word CinEdit_GetIlib(){
 #undef DIRTY_CHECK
 
 static std::string s_path;
-void CinEdit_SetItemLibPath(const char *path){
+void CinEdit_SetItemLibraryPath(const char *path){
     assert(path != NULL);
     s_path = path;
 }
 
-const char *CinEdit_GetItemLibPath(){
+const char *CinEdit_GetItemLibraryPath(){
     return s_path.c_str();
 }
 
@@ -449,9 +449,7 @@ const char *CinEdit_SaveItemLib(const char *path){
         path = s_path.c_str();
 
     MR_Word err;
-    const unsigned len = strlen(path);
-    char *mutable_path = (char*)MR_GC_malloc_atomic(len + 1);
-    memcpy(mutable_path, path, len+1);
+    char *mutable_path = create_mr_string(path);
     CinEdit_M_SaveIlib(mutable_path, s_ilib, &err);
     
     MR_String error_string;
@@ -461,6 +459,32 @@ const char *CinEdit_SaveItemLib(const char *path){
     fprintf(stderr, "%p\n", (void*)error_string);
     fprintf(stderr, "%s\n", error_string);
     return error_string;
+}
+
+const char *CinEdit_LoadItemLib(const char *path){
+    char *mutable_path = create_mr_string(path);
+    MR_Word result, lib;
+    CinEdit_M_LoadIlib(mutable_path, &result);
+    mutable_path = NULL;
+    
+    if(CinEdit_M_GetLoadedIlib(result, &lib) == MR_NO){
+        MR_String str;
+        CinEdit_M_GetLoadError(result, &str);
+        return str;
+    }
+    
+    s_ilib = lib;
+    
+    while(!s_ilib_redo_stack.empty())
+        s_ilib_redo_stack.pop();
+
+    while(!s_ilib_undo_stack.empty())
+        s_ilib_undo_stack.pop();
+    
+    do_dirty_all();
+    
+    s_path = path;
+    return NULL;
 }
 
 void CinEdit_AppendItemView(const char *name, MR_Word data){

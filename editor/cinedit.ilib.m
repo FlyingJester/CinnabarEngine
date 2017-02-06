@@ -42,7 +42,10 @@
 
 :- pred lib_ok(io.res(item_library)::in, item_library::out) is semidet.
 lib_ok(io.ok(Lib), Lib).
+:- pred lib_err(io.res(item_library)::in, string::out) is semidet.
+lib_err(io.error(Err), io.error_message(Err)).
 :- pragma foreign_export("C", lib_ok(in, out), "CinEdit_M_GetLoadedIlib").
+:- pragma foreign_export("C", lib_err(in, out), "CinEdit_M_GetLoadError").
 
 :- pred save_error(io.res::in, string::out) is semidet.
 save_error(io.error(Err), io.error_message(Err)).

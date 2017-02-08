@@ -11,8 +11,7 @@ GRADE?=asm_fast.gc.debug.stseg
 
 MMC?=mmc
 
-MMCFLAGS?=--cflags -g  --ld-flag -g
-#  --mercury-linkage static --opt-level 7 --intermodule-optimization 
+MMCFLAGS?=--cflags -g  --ld-flag -g --mercury-linkage static --opt-level 7 --intermodule-optimization 
 MMCCALL=$(MMC) $(MMCFLAGS) -L./ --mld lib/mercury --grade=$(GRADE)
 MMCIN=$(MMCCALL) -E -j4 --make
 
@@ -73,6 +72,9 @@ sinetest: sinetest.m sinegen.m mopenal.m $(CHRONO)
 	$(MMCIN) sinetest -L lib -l openal -l chrono
 	touch -c sinetest
 
+perlintest: perlintest.m perlin.m xorshift.m $(AIMG) $(BUFFERFILE)
+	$(MMCIN) perlintest -L lib -l aimg -l png -l bufferfile
+
 EDITLIBS=libwavefront.so 
 
 libwavefront.so:
@@ -115,6 +117,7 @@ clean: cinedit_clean
 	$(MAKE) -C aimage clean
 	$(MMCIN) cinnabar.clean
 	$(MMCIN) test.clean
+	$(MMCIN) perlintest.clean
 	rm -f lib/*.$(LIBSX) lib/*.$(LIBSA) *.mh *.err cinnabar test
 
 libclean: clean

@@ -246,8 +246,8 @@ else
           xywh {5 50 300 470} selection_color 133
         } {
           Fl_Group heightmap_tab {
-            label Heightmap open
-            private xywh {5 70 300 450} hide resizable
+            label Heightmap open selected
+            private xywh {5 70 300 450} resizable
           } {
             Fl_File_Input {} {
               label {File:}
@@ -267,10 +267,10 @@ else
           }
           Fl_Group statics_tab {
             label Statics open
-            private xywh {5 70 300 450}
+            private xywh {5 70 300 450} hide
           } {
             Fl_Browser {} {
-              label Statics selected
+              label Statics
               xywh {10 95 290 395} selection_color 133 align 1 resizable
             }
             Fl_Button {} {

@@ -7,6 +7,9 @@
 :- use_module mglow.
 %------------------------------------------------------------------------------%
 
+% TODO: Ideally, a renderer would also be dependant on the window type. This
+% would much more easily allow something like a software renderer, or a GL2
+% renderer that can use FLTK or Glow, for instance.
 :- typeclass render(T) where [
     pred frustum(T,
         float, float, float, float, float, float,

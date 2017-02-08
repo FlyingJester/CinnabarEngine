@@ -52,23 +52,27 @@
 %------------------------------------------------------------------------------%
 
 seed(!State, X, Y, TargetX, TargetY, W, OutV0, OutV1) :-
-    xorshift.next(I, !State),
     ( X >= TargetX, Y >= TargetY ->
-        OutV0 = I,
+        xorshift.next(OutV0, !State),
         xorshift.next(OutV1, !State)
     ; X >= W ->
         seed(!State, 0, Y+1, TargetX, TargetY, W, OutV0, OutV1)
     ;
+        xorshift.next(_, !State),
         seed(!State, X+1, Y, TargetX, TargetY, W, OutV0, OutV1)
     ).
 
 %------------------------------------------------------------------------------%
 
 val(Seed, X, Y, W, angle(I0), angle(I1), angle(I2), angle(I3)) :-
-    State = xorshift.init(Seed, Seed, Seed, Seed),
-    xorshift.copy(State, State0, State1),
-    seed(State0, _, 0, 0, X, Y, W, I0, I1),
-    seed(State1, _, 0, 0, X, Y+1, W, I2, I3).
+    State0 = xorshift.init(Seed, Seed, Seed, Seed),
+    seed(State0, State1, 0, 0, X, Y, W, I0, I1),
+    ( X + 1 < W ->
+        seed(State1, _, X+2, Y, X, Y+1, W, I2, I3)
+    ;
+        State2 = xorshift.init(Seed, Seed, Seed, Seed),
+        seed(State2, _, 0, 0, X, Y+1, W, I2, I3)
+    ).
 
 %------------------------------------------------------------------------------%
 

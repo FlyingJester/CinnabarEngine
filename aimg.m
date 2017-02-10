@@ -4,6 +4,7 @@
 %==============================================================================%
 
 :- use_module io.
+
 %------------------------------------------------------------------------------%
 
 :- type texture.
@@ -15,6 +16,19 @@
 
 :- pred load(io.io::di, io.io::uo, string::in, result::out) is det.
 :- func empty = (texture::uo) is det.
+
+:- type color.
+:- pred pixel(texture::in, int::in, int::in, color::out) is semidet.
+
+:- func r(color) = int.
+:- func g(color) = int.
+:- func b(color) = int.
+:- func a(color) = int.
+
+:- func rf(color) = float.
+:- func gf(color) = float.
+:- func bf(color) = float.
+:- func af(color) = float.
 
 %==============================================================================%
 :- implementation.
@@ -36,6 +50,7 @@ create_ok(I) = ok(I).
 void AImg_Finalizer(void *image, void *unused);
 ").
 :- pragma foreign_type("C", texture, "struct AImg_Image*").
+:- pragma foreign_type("C", color, "uint32_t").
 
 :- pragma foreign_code("C", "
 void AImg_Finalizer(void *image, void *unused){
@@ -90,4 +105,54 @@ void AImg_Finalizer(void *image, void *unused){
         image->pixels = NULL;
         Image = image;
     ").
+
+:- pragma foreign_proc("C", pixel(Image::in, X::in, Y::in, Color::out), 
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        SUCCESS_INDICATOR = X >= 0 && X < Image->w && Y >= 0 && Y < Image->h;
+        if(SUCCESS_INDICATOR){
+            Color = AImg_GetPixel(Image, X, Y);
+        }
+    ").
+
+:- pragma foreign_proc("C", r(Color::in) = (R::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " R = AImg_RawToR(Color); ").
+
+:- pragma foreign_proc("C", g(Color::in) = (G::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " G = AImg_RawToG(Color); ").
+
+:- pragma foreign_proc("C", b(Color::in) = (B::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " B = AImg_RawToB(Color); ").
+
+:- pragma foreign_proc("C", a(Color::in) = (A::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " A = AImg_RawToA(Color); ").
+
+:- pragma foreign_proc("C", rf(Color::in) = (R::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " R = ((float)AImg_RawToR(Color)) / 255.0f; ").
+
+:- pragma foreign_proc("C", gf(Color::in) = (G::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " G = ((float)AImg_RawToG(Color)) / 255.0f; ").
+
+:- pragma foreign_proc("C", bf(Color::in) = (B::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " B = ((float)AImg_RawToB(Color)) / 255.0f; ").
+
+:- pragma foreign_proc("C", af(Color::in) = (A::out),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " A = ((float)AImg_RawToA(Color)) / 255.0f; ").
 

@@ -42,6 +42,9 @@
         mglow.window, mglow.window),
     mode rotate_about(in, in, in, in, in, di, uo) is det,
 
+    pred scale(T, float, float, float, mglow.window, mglow.window),
+    mode scale(in, in, in, in, di, uo) is det,
+
     % Draws a given 32-bit RGBA image at X, Y. This may be somewhat slow, so it
     % is recommended only for bridging some software rendering with the
     % hardware renderer.
@@ -62,6 +65,11 @@
     % draw(Renderer, Pitch, Yaw, Tex, !Window)
     pred draw_skybox(Renderer, float, float, Texture, mglow.window, mglow.window),
     mode draw_skybox(in, in, in, in, di, uo) is det
+].
+
+:- typeclass heightmap(Renderer, Heightmap, Texture) <= render(Renderer) where[
+    pred draw_heightmap(Renderer, Heightmap, Texture, mglow.window, mglow.window),
+    mode draw_heightmap(in, in, in, di, uo) is det
 ].
 
 %==============================================================================%

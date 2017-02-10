@@ -14,6 +14,7 @@
 :- import_module list.
 
 :- include_module skybox.
+:- include_module heightmap.
 
 :- type gl2.
 
@@ -72,6 +73,8 @@
 :- pred translate(float::in, float::in, float::in, mglow.window::di, mglow.window::uo) is det.
 :- pred rotate(float::in, float::in, float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
+:- pred scale(float::in, float::in, float::in,
+    mglow.window::di, mglow.window::uo) is det.
 
 
 % Translates to glBegin()
@@ -118,6 +121,7 @@
 
 :- instance vertex(softshape.vertex2d).
 :- instance vertex(softshape.vertex3d).
+:- instance vertex(model.vertex).
 
 :- instance render.model(gl2, wavefront.shape).
 :- instance render.model(gl2, wavefront_shape).
@@ -323,6 +327,15 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
         glRotatef(ADegrees, X, Y, Z);
     ").
 
+:- pragma foreign_proc("C",
+    scale(X::in, Y::in, Z::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+        Win1 = Win0;
+        glScalef(X, Y, Z);
+    ").
+
 draw(Shape, !Window) :- Shape ^ wavefront.faces = [].
 draw(wavefront.shape(Vertices, TexCoords, N, [Face|List]), !Window) :-
     draw(Face, Vertices, TexCoords, !Window),
@@ -419,6 +432,11 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
         tex_coord(U, V, !Window), vertex3(X, Y, Z, !Window))
 ].
 
+:- instance vertex(model.vertex) where [
+    (draw_vertex(model.vertex(model.point(X, Y, Z), model.tex(U, V), _), !Window) :-
+        tex_coord(U, V, !Window), vertex3(X, Y, Z, !Window))
+].
+
 :- pred use_element(pred(T, mglow.window, mglow.window), list(T), int, mglow.window, mglow.window).
 :- mode use_element(pred(in, di, uo) is det, in, in, di, uo) is det.
 
@@ -456,5 +474,6 @@ draw(wavefront.vertex(V, T), !Points, !TexCoords, !Window) :-
     (render.rotate_x(_, X, !Win) :- rotate(X, 1.0, 0.0, 0.0, !Win)),
     (render.rotate_y(_, Y, !Win) :- rotate(Y, 0.0, 1.0, 0.0, !Win)),
     (render.rotate_z(_, Z, !Win) :- rotate(Z, 0.0, 0.0, 1.0, !Win)),
+    (render.scale(_, X, Y, Z, !Win) :- scale(X, Y, Z, !Win)),
     (render.rotate_about(_, A, X, Y, Z, !Win) :- rotate(A, X, Y, Z, !Win))
 ].

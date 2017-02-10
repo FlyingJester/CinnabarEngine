@@ -5,6 +5,7 @@
 :- interface.
 %==============================================================================%
 
+:- use_module vector.
 :- import_module list.
 
 :- type point ---> point(x::float, y::float, z::float).
@@ -17,22 +18,18 @@
     model(vertices::list.list(vertex), indices::list.list(int), texture::Texture).
 
 :- typeclass loadable(Model) where [
-    pred next(Model, Model, vertex),
-    mode next(in, out, out) is semidet
+    pred next(vertex, Model, Model),
+    mode next(in, in, out) is det
 ].
 
-% :- pred load(Model::in, Texture::in, model(Texture)::out) is det <= loadable(Model).
+:- func point(vector.vector3) = point.
+:- func normal(vector.vector3) = normal.
+:- func tex(vector.vector2) = tex.
 
 %==============================================================================%
 :- implementation.
 %==============================================================================%
 
-%:- pred load_inner(Model::in,
-%    list(vertex)::in, list(vertex)::out,
-%    list(int)::in, list(int)::out) is det
-%    <= loadable(Model).
-
-%load(In, Tex, model(OutList, OutIndices, Tex)) :-
-%    load_inner(In, [], List, [], Indices),
-%    list.reverse(List, OutList),
-%    list.reverse(Indices, OutIndices).
+point(vector.vector(X, Y, Z)) = point(X, Y, Z).
+normal(vector.vector(X, Y, Z)) = normal(X, Y, Z).
+tex(vector.vector(U, V)) = tex(U, V).

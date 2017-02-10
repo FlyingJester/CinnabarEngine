@@ -7,7 +7,7 @@ LIBSX?=so
 LIBSA?=a
 LIBPA?=$(LIBPX)
 INSTALL?=install
-GRADE?=asm_fast.gc.debug.stseg
+GRADE?=hlc.par.gc
 
 MMC?=mmc
 
@@ -56,9 +56,9 @@ $(FJOGG): fjogg/fjogg.m
 
 LIBS=-l glow -l openal -l opus -l chrono -l spherefonts -l aimg -l bufferfile -l GL -l png
 
-MERCURY_SRC=camera.m gl2.m gl2.skybox.m matrix.m model.m opengl.m render.m \
-scene.m scene.matrix_tree.m scene.node_tree.m softshape.m vector.m \
-wavefront.m mopus.m mopenal.m audio_loader.m
+MERCURY_SRC=camera.m gl2.m gl2.skybox.m gl2.heightmap.m matrix.m model.m opengl.m render.m \
+scene.m scene.matrix_tree.m scene.node_tree.m softshape.m vector.m wavefront.m mopus.m \
+mopenal.m audio_loader.m aimg.m heightmap.m
 
 cinnabar: $(LIBTARGETS) $(WRAPPERS_SRC) $(MERCURY_SRC) cinnabar.m
 	$(MMCIN) cinnabar -L lib $(LIBS) --ml fjogg

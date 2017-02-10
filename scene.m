@@ -15,10 +15,11 @@
 :- use_module scene.node_tree.
 %------------------------------------------------------------------------------%
 
-:- type scene(Model, Texture) --->
+:- type scene(Model, Heightmap, Texture) --->
     scene(scene.matrix_tree.matrix_tree,
         scene.node_tree.node(Model),
-        camera.camera, skybox::Texture).
+        camera.camera, skybox::Texture,
+        heightmap::Heightmap, ground::Texture).
 %------------------------------------------------------------------------------%
 
 % Recursively draws all nodes in the tree.
@@ -28,9 +29,11 @@
     Render::in, mglow.window::di, mglow.window::uo) is det
       <= (render.model(Render, Model)).
 
-:- pred draw(scene(Model, Texture)::in, Render::in,
+:- pred draw(scene(Model, Heightmap, Texture)::in, Render::in,
     mglow.window::di, mglow.window::uo) is det <=
-        (render.model(Render, Model), render.skybox(Render, Texture)).
+        (render.model(Render, Model),
+         render.skybox(Render, Texture),
+         render.heightmap(Render, Heightmap, Texture)).
 
 % Similar to draw. First applies the given transformation without pushing
 % matrices on the renderer, and will pass any further transfom nodes into 
@@ -71,7 +74,8 @@ draw(Tree, scene.node_tree.group(NodeA, NodeB), Render, !Window) :-
     draw(Tree, NodeA, Render, !Window),
     draw(Tree, NodeB, Render, !Window).
 
-draw(scene(MatrixTree, NodeTree, Camera, Skybox), Render, !Window) :-
+draw(Scene, Render, !Window) :-
+    Scene = scene(MatrixTree, NodeTree, Camera, Skybox, Heightmap, Ground),
     Pitch = Camera ^ camera.pitch,
     Yaw = Camera ^ camera.yaw,
     render.draw_skybox(Render, Pitch, Yaw, Skybox, !Window),
@@ -80,6 +84,10 @@ draw(scene(MatrixTree, NodeTree, Camera, Skybox), Render, !Window) :-
     render.rotate_y(Render, Yaw,   !Window),
     X = Camera ^ camera.x, Y = Camera ^ camera.y, Z = Camera ^ camera.z,
     render.translate(Render, X, Y, Z, !Window),
+    
+    render.scale(Render, 1.0, 100.0, 1.0, !Window),
+%    render.draw_heightmap(Render, Heightmap, Ground, !Window),
+    render.scale(Render, 1.0, 0.01, 1.0, !Window),
     
     % If the first node is a transformation, we can avoid another matrix stack
     % manipulation and just ride on the push and pop in this outer function.

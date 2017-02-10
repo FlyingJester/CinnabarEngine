@@ -8,6 +8,7 @@
 :- use_module render.
 %------------------------------------------------------------------------------%
 
+% draw(Pitch, Yaw, Texture, !Window)
 :- pred draw(float, float, opengl.texture, mglow.window, mglow.window).
 :- mode draw(in, in, in, di, uo) is det.
 

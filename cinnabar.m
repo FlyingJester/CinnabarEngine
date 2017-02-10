@@ -4,6 +4,7 @@
 %==============================================================================%
 
 :- use_module io.
+
 %------------------------------------------------------------------------------%
 
 :- pred main(io.io::di, io.io::uo) is det.
@@ -20,6 +21,9 @@
 :- use_module opengl.
 :- use_module gl2.
 :- use_module gl2.skybox.
+:- use_module gl2.heightmap.
+:- use_module aimg.
+:- use_module heightmap.
 :- use_module render.
 
 :- use_module vector.
@@ -36,11 +40,23 @@
 :- import_module int.
 :- use_module string.
 :- use_module maybe.
- 
+
+:- instance heightmap.heightmap(aimg.texture) where [
+    (heightmap.get(Texture, X, Y, Value) :-
+        aimg.pixel(Texture, X, Y, Color),
+        aimg.rf(Color) + aimg.bf(Color) + aimg.gf(Color) = Value
+    ),
+    func(heightmap.w/1) is (aimg.width),
+    func(heightmap.h/1) is (aimg.height)
+].
+
 %------------------------------------------------------------------------------%
-:- pred frame(scene.scene(Model, Skybox)::in, Renderer::in,
+:- pred frame(scene.scene(Model, Heightmap, Texture)::in, Renderer::in,
     mglow.window::di, mglow.window::uo, io.io::di, io.io::uo) is det
-    <= (render.render(Renderer), render.model(Renderer, Model), render.skybox(Renderer, Skybox)).
+    <= (render.render(Renderer),
+        render.model(Renderer, Model),
+        render.skybox(Renderer, Texture),
+        render.heightmap(Renderer, Heightmap, Texture)).
 
 :- func w = int.
 w = 480.
@@ -149,18 +165,26 @@ main(!IO) :-
     
     load_texture(tex_path, !IO, Win2, Win3, MaybeTexture),
     load_texture(skybox_path, !IO, Win3, Win4, MaybeSkybox),
-    ( MaybeTexture = maybe.yes(Tex), MaybeSkybox = maybe.yes(Skybox) ->
+    load_texture("moldy.tga", !IO, Win4, Win5, MaybeGround),
+    Win6 = Win5,
+    aimg.load(!IO, "perlin.png", MaybeHeightmap),
+    ( MaybeTexture = maybe.yes(Tex),
+      MaybeGround = maybe.yes(Ground),
+      MaybeHeightmap = aimg.ok(HeightmapIn),
+      MaybeSkybox = maybe.yes(Skybox) ->
         
         MatrixTree = scene.matrix_tree.init,
         NodeTree = scene.node_tree.model(gl2.wavefront_shape(Shape, Tex)),
         Camera = camera.camera(3.0, -2.0, -10.0, 0.0, 0.0),
-        
-        frame(scene.scene(MatrixTree, NodeTree, Camera, Skybox), GL2, Win4, Win5, !IO)
+        heightmap.load(HeightmapIn, gl2.heightmap.init, HeightmapRaw),
+        Heightmap = gl2.heightmap.heightmap(HeightmapRaw),
+        Scene = scene.scene(MatrixTree, NodeTree, Camera, Skybox, Heightmap, Ground),
+        frame(Scene, GL2, Win6, Win7, !IO)
     ;
-        Win4 = Win5,
+        Win6 = Win7,
         true % Pass, load_texture already reported errors.
     ),
-    mglow.destroy_window(!IO, Win5).
+    mglow.destroy_window(!IO, Win7).
 
 :- func pitch_control(float) = float.
 :- func yaw_control(float) = float.
@@ -199,7 +223,9 @@ eat_others(Out, !Window) :-
     ).
 
 %------------------------------------------------------------------------------%
-frame(scene.scene(MatrixTree, NodeTree, Cam, Skybox), Renderer, !Window, !IO) :-
+frame(Scene, Renderer, !Window, !IO) :-
+    
+    Scene = scene.scene(MatrixTree, NodeTree, Cam, Skybox, Heightmap, Ground),
     mchrono.micro_ticks(!IO, FrameStart),
     
     eat_others(MaybeEvent, !Window),
@@ -210,7 +236,7 @@ frame(scene.scene(MatrixTree, NodeTree, Cam, Skybox), Renderer, !Window, !IO) :-
             Event = mglow.quit
         ;
             Event = mglow.other,
-            frame(scene.scene(MatrixTree, NodeTree, Cam, Skybox), Renderer, !Window, !IO)
+            frame(Scene, Renderer, !Window, !IO)
         )
     ;
         MaybeEvent = maybe.no,
@@ -254,7 +280,7 @@ frame(scene.scene(MatrixTree, NodeTree, Cam, Skybox), Renderer, !Window, !IO) :-
             mglow.center_mouse(!Window)
         ),
         NewCam = camera.camera(CamX, CamY, CamZ, Pitch, Yaw),
-        Scene = scene.scene(MatrixTree, NodeTree, NewCam, Skybox),
+        NewScene = scene.scene(MatrixTree, NodeTree, NewCam, Skybox, Heightmap, Ground),
 
         scene.draw(Scene, Renderer, !Window),
         mglow.flip_screen(!Window),
@@ -264,5 +290,5 @@ frame(scene.scene(MatrixTree, NodeTree, Cam, Skybox), Renderer, !Window, !IO) :-
         mchrono.subtract(!IO, FrameStart, FrameEnd),
         mchrono.micro_sleep(!IO, FrameEnd),
 
-        frame(Scene, Renderer, !Window, !IO)
+        frame(NewScene, Renderer, !Window, !IO)
     ).

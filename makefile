@@ -7,7 +7,7 @@ LIBSX?=so
 LIBSA?=a
 LIBPA?=$(LIBPX)
 INSTALL?=install
-GRADE?=hlc.par.gc
+GRADE?=asm_fast.par.gc.stseg
 
 MMC?=mmc
 
@@ -20,10 +20,9 @@ CHRONO=lib/$(LIBPA)chrono.$(LIBSA)
 SPHEREFONTS=lib/$(LIBPA)spherefonts.$(LIBSA)
 AIMG=lib/$(LIBPA)aimg.$(LIBSA)
 BUFFERFILE=lib/$(LIBPA)bufferfile.$(LIBSA)
-FJOGG=lib/mercury/lib/$(GRADE)/$(LIBPX)fjogg.$(LIBSX)
+FJOGG=fjogg/$(LIBPA)fjogg.$(LIBSA)
 
-echo_fjogg:
-	echo $(FJOGG)
+FJOGGFLAGS=--search-lib-files-dir fjogg --init-file fjogg/fjogg.init --link-object $(FJOGG)
 
 LIBTARGETS=$(GLOW) $(CHRONO) $(SPHEREFONTS) $(AIMG) $(BUFFERFILE) $(FJOGG)
 
@@ -48,7 +47,7 @@ $(AIMG): aimage bufferfile
 	$(INSTALL) aimage/$(LIBPA)aimg.$(LIBSA) lib/$(LIBPA)aimg.$(LIBSA)
 
 $(FJOGG): fjogg/fjogg.m
-	cd fjogg && $(MMCIN) --make libfjogg.install --install-prefix=../
+	cd fjogg && $(MMCIN) --make libfjogg
 
 #libopenglextra: openglextra
 #	$(MAKE) -C openglextra
@@ -61,7 +60,7 @@ scene.m scene.matrix_tree.m scene.node_tree.m softshape.m vector.m wavefront.m m
 mopenal.m audio_loader.m aimg.m heightmap.m
 
 cinnabar: $(LIBTARGETS) $(WRAPPERS_SRC) $(MERCURY_SRC) cinnabar.m
-	$(MMCIN) cinnabar -L lib $(LIBS) --ml fjogg
+	$(MMCIN) cinnabar -L lib $(LIBS) $(FJOGGFLAGS)
 	touch -c cinnabar
 
 test: test.m test.wavefront.m wavefront.m test.buffer.m buffer.m
@@ -128,6 +127,6 @@ libclean: clean
 	cd fjogg && $(MMCIN) fjogg.clean
 	cd fjogg && rm -rf Mercury || true
 
-PHONY: all cinedit_clean clean $(LIBTARGETS)
-IGNORE: clean cinedit_clean libclean
-SILENT: clean cinedit_clean libclean
+.PHONY: all cinedit_clean clean $(LIBTARGETS)
+.IGNORE: clean cinedit_clean libclean
+.SILENT: clean cinedit_clean libclean

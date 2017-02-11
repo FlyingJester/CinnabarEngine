@@ -85,9 +85,9 @@ draw(Scene, Render, !Window) :-
     X = Camera ^ camera.x, Y = Camera ^ camera.y, Z = Camera ^ camera.z,
     render.translate(Render, X, Y, Z, !Window),
     
-    render.scale(Render, 1.0, 100.0, 1.0, !Window),
-%    render.draw_heightmap(Render, Heightmap, Ground, !Window),
-    render.scale(Render, 1.0, 0.01, 1.0, !Window),
+    render.scale(Render, 1.0, 10.0, 1.0, !Window),
+    render.draw_heightmap(Render, Heightmap, Ground, !Window),
+    render.scale(Render, 1.0, 0.1, 1.0, !Window),
     
     % If the first node is a transformation, we can avoid another matrix stack
     % manipulation and just ride on the push and pop in this outer function.

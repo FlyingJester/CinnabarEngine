@@ -248,6 +248,8 @@ frame(Scene, Renderer, !Window, !IO) :-
         mglow.key_pressed("a", Left, !Window),
         mglow.key_pressed("s", Backward, !Window),
         mglow.key_pressed("d", Right, !Window),
+        mglow.key_pressed("q", Up, !Window),
+        mglow.key_pressed("e", Down, !Window),
         ( not Forward = Backward ->
             ( Forward = mglow.press ->
                 CamZ = Cam ^ camera.z + 0.1
@@ -270,8 +272,17 @@ frame(Scene, Renderer, !Window, !IO) :-
         ;
             CamX = Cam ^ camera.x
         ),
-        CamY = Cam ^ camera.y,
-
+        (not Up = Down ->
+            ( Up = mglow.press ->
+                CamY = Cam ^ camera.y - 0.1
+            ; Down = mglow.press ->
+                CamY = Cam ^ camera.y + 0.1
+            ;
+                CamY = Cam ^ camera.y
+            )
+        ;
+            CamY = Cam ^ camera.y
+        ),
         ( ( MouseX > w / 2 ; MouseX < -w / 2 ; MouseY > h / 2 ; MouseY < -h / 2 ) -> 
             Pitch = Cam ^ camera.pitch, Yaw = Cam ^ camera.yaw
         ;

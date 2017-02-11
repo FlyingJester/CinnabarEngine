@@ -248,11 +248,11 @@ init(Input, Len, MaybeDecoder, !IO) :-
     "
         struct M_Buffer buffer;
         buffer.size = Size;
-        buffer.data = (Size < 8192) ? malloc(Size) : alloca(Size);
+        buffer.data = (1 || Size < 8192) ? malloc(Size) : alloca(Size);
         MercuryFile *const stream = mercury_current_binary_input();
         buffer.size = MR_READ(*stream, buffer.data, Size);
         MOpus_Decode16(&buffer, &Out, Decoder0, &Decoder1);
-        if(Size < 8192)
+        if(1 || Size < 8192)
             free(buffer.data);
         IO1 = IO0;
     ").

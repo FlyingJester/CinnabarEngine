@@ -262,21 +262,22 @@ get_ascii_string(Buffer, Length, String) :- get_ascii_string(Buffer, 0, Length, 
 :- pragma foreign_proc("C", get_ascii_string(Buf::in, Index::in, Len::in, Out::uo),
     [will_not_throw_exception, promise_pure, thread_safe],
     "
-        if((SUCCESS_INDICATOR = Buf->size >= Index + Len)){
-            unsigned i;
-            for(i = 0; i < Len; i++){
-                const char c = ((char*)Buf->data)[i + Index];
-                if(!((c >= ' ' || c == '\\n' || c == '\\r' ||
-                    c == '\\t') && !(c & 0x80))){
-                    SUCCESS_INDICATOR = 0;
-                    goto m_buffer_failure_not_ascii;
+        do{
+            if((SUCCESS_INDICATOR = Buf->size >= Index + Len)){
+                unsigned i;
+                for(i = 0; i < Len; i++){
+                    const char c = ((char*)Buf->data)[i + Index];
+                    if(!((c >= ' ' || c == '\\n' || c == '\\r' ||
+                        c == '\\t') && !(c & 0x80))){
+                        SUCCESS_INDICATOR = 0;
+                        break;
+                    }
                 }
+                Out = MR_GC_malloc_atomic(Len+1);
+                memcpy(Out, ((char*)Buf->data) + Index, Len);
+                Out[Len] = '\\0';
             }
-            Out = MR_GC_malloc_atomic(Len+1);
-            memcpy(Out, ((char*)Buf->data) + Index, Len);
-            Out[Len] = '\\0';
-        }
-        m_buffer_failure_not_ascii: 
+        }while(0);
     ").
 
 :- pragma foreign_proc("C", get_native_8(Buf::in, I::in, O::uo),

@@ -108,7 +108,9 @@ main(!IO) :-
     
     gl2.init(Win0, Win1, GL2),
     setup_gl2(GL2, Win1, Win2),
-
+    
+    io.write_string("[Cinnabar] Created Window\n", !IO),
+    
     io.see(string.append("res/", shape_path), SeeResult, !IO),
     ( 
         SeeResult = io.ok,
@@ -129,6 +131,7 @@ main(!IO) :-
         Shape = wavefront.init_shape
     ),
     
+    io.write_string("[Cinnabar] Loaded Shape\n", !IO),
     mopenal.open_device(DevResult, !IO),
     (
         DevResult = io.ok(Dev),
@@ -162,7 +165,7 @@ main(!IO) :-
         io.write_string("Could not open OpenAL device: ", !IO),
         io.write_string(ErrMsg, !IO), io.nl(!IO)
     ),
-    
+    io.write_string("[Cinnabar] Loaded Sound\n", !IO),
     load_texture(tex_path, !IO, Win2, Win3, MaybeTexture),
     load_texture(skybox_path, !IO, Win3, Win4, MaybeSkybox),
     load_texture("moldy.tga", !IO, Win4, Win5, MaybeGround),
@@ -179,6 +182,7 @@ main(!IO) :-
         heightmap.load(HeightmapIn, gl2.heightmap.init, HeightmapRaw),
         Heightmap = gl2.heightmap.heightmap(HeightmapRaw),
         Scene = scene.scene(MatrixTree, NodeTree, Camera, Skybox, Heightmap, Ground),
+        io.write_string("[Cinnabar] Beginning Render\n", !IO),
         frame(Scene, GL2, Win6, Win7, !IO)
     ;
         Win6 = Win7,
@@ -292,10 +296,11 @@ frame(Scene, Renderer, !Window, !IO) :-
         ),
         NewCam = camera.camera(CamX, CamY, CamZ, Pitch, Yaw),
         NewScene = scene.scene(MatrixTree, NodeTree, NewCam, Skybox, Heightmap, Ground),
-
+%        io.write_string("[Cinnabar] Drawing Scene\n", !IO),
         scene.draw(Scene, Renderer, !Window),
+%        io.write_string("[Cinnabar] Flip Screen\n", !IO),
         mglow.flip_screen(!Window),
-
+%        io.write_string("[Cinnabar] Cleanup\n", !IO),
         render.pop_matrix(Renderer, !Window),
 
         mchrono.subtract(!IO, FrameStart, FrameEnd),

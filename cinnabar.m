@@ -296,11 +296,8 @@ frame(Scene, Renderer, !Window, !IO) :-
         ),
         NewCam = camera.camera(CamX, CamY, CamZ, Pitch, Yaw),
         NewScene = scene.scene(MatrixTree, NodeTree, NewCam, Skybox, Heightmap, Ground),
-%        io.write_string("[Cinnabar] Drawing Scene\n", !IO),
         scene.draw(Scene, Renderer, !Window),
-%        io.write_string("[Cinnabar] Flip Screen\n", !IO),
         mglow.flip_screen(!Window),
-%        io.write_string("[Cinnabar] Cleanup\n", !IO),
         render.pop_matrix(Renderer, !Window),
 
         mchrono.subtract(!IO, FrameStart, FrameEnd),

@@ -21,6 +21,14 @@
 % Raw OpenGL 2 wrapping
 :- type matrix_mode ---> modelview ; projection.
 
+:- type face_type ---> front ; back ; front_and_back.
+
+:- type material_parameter --->
+    ambient ;
+    diffuse ;
+    specular ;
+    emission.
+
 :- pred matrix_mode(matrix_mode::in, mglow.window::di, mglow.window::uo) is det.
 
 :- pred load_identity(mglow.window::di, mglow.window::uo) is det.
@@ -33,6 +41,12 @@
 % orth(NearZ, FarZ, Left, Right, Top, Bottom, !Window)
 :- pred ortho(float, float, float, float, float, float, mglow.window, mglow.window).
 :- mode ortho(in, in, in, in, in, in, di, uo) is det.
+
+:- pred material(face_type, material_parameter,
+    float, float, float, float,
+    mglow.window, mglow.window).
+
+:- mode material(in, in, in, in, in, in, di, uo) is det.
 
 % Translates to glVertex(X, Y)
 % vertex2(X, Y, !Window)
@@ -59,10 +73,18 @@
 :- pred color(float::in, float::in, float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
 
+% Translates to glNormal3f(R, G, B, A)
+% normal(X, Y, Z, !Window)
+:- pred normal(float::in, float::in, float::in,
+    mglow.window::di, mglow.window::uo) is det.
+
 :- pred unbind_texture(mglow.window::di, mglow.window::uo) is det.
 
 :- pred enable_texture(mglow.window::di, mglow.window::uo) is det.
 :- pred disable_texture(mglow.window::di, mglow.window::uo) is det.
+
+:- pred enable_lighting(mglow.window::di, mglow.window::uo) is det.
+:- pred disable_lighting(mglow.window::di, mglow.window::uo) is det.
 
 :- pred load_matrix(matrix.matrix::in, mglow.window::di, mglow.window::uo) is det.
 :- pred store_matrix(matrix.matrix::out, matrix_mode::in,
@@ -75,7 +97,6 @@
     mglow.window::di, mglow.window::uo) is det.
 :- pred scale(float::in, float::in, float::in,
     mglow.window::di, mglow.window::uo) is det.
-
 
 % Translates to glBegin()
 % begin(Type, !Window)
@@ -139,7 +160,10 @@
 
 :- type gl2 ---> gl2(w::int, h::int).
 
-init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), opengl.enable_depth(!Window).
+init(!Window, gl2(W, H)) :-
+    mglow.size(!Window, W, H),
+    enable_texture(!Window),
+    opengl.enable_depth(!Window).
 
 :- pragma foreign_decl("C", "#include <assert.h>").
 :- pragma foreign_decl("C", "#include ""matrix.mh"" ").
@@ -159,6 +183,21 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
     [
         modelview - "GL_MODELVIEW",
         projection - "GL_PROJECTION"
+    ]).
+
+:- pragma foreign_enum("C", face_type/0,
+    [
+        front - "GL_FRONT",
+        back - "GL_BACK",
+        front_and_back - "GL_FRONT_AND_BACK"
+    ]).
+
+:- pragma foreign_enum("C", material_parameter/0,
+    [
+        ambient - "GL_AMBIENT",
+        diffuse - "GL_DIFFUSE",
+        specular - "GL_SPECULAR",
+        emission - "GL_EMISSION"
     ]).
 
 :- pragma foreign_proc("C", matrix_mode(Mode::in, Win0::di, Win1::uo),
@@ -195,6 +234,11 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glColor4f(R, G, B, A); ").
+
+:- pragma foreign_proc("C", normal(X::in, Y::in, Z::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glNormal3f(X, Y, Z); ").
     
 :- pragma foreign_proc("C", unbind_texture(Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -210,6 +254,16 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glDisable(GL_TEXTURE_2D); ").
+  
+:- pragma foreign_proc("C", enable_lighting(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glEnable(GL_LIGHTING); ").
+    
+:- pragma foreign_proc("C", disable_lighting(Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    " Win1 = Win0; glDisable(GL_LIGHTING); ").
 
 :- pragma foreign_proc("C", begin(Type::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -261,6 +315,25 @@ init(!Window, gl2(W, H)) :- mglow.size(!Window, W, H), enable_texture(!Window), 
     [will_not_call_mercury, will_not_throw_exception,
      thread_safe, promise_pure, does_not_affect_liveness],
     " Win1 = Win0; glFrustum(Left, Right, Bottom, Top, NearZ, FarZ); ").
+
+:- pragma foreign_proc("C", material(Face::in, Which::in, R::in, G::in, B::in, A::in, Win0::di, Win1::uo),
+    [will_not_call_mercury, will_not_throw_exception,
+     thread_safe, promise_pure, does_not_affect_liveness],
+    "
+    Win1 = Win0;
+    {
+#if (defined __STDC_VERSION__) && (__STDC_VERSION__ > 199409L)
+        const float mat[4] = {R, G, B, A};
+#else
+        float mat[4];
+        mat[0] = R;
+        mat[1] = G;
+        mat[2] = B;
+        mat[3] = A;
+#endif
+        glMaterialfv(Face, Which, mat);
+    }
+    ").
 
 :- pragma foreign_proc("C", load_matrix(Mat::in, Win0::di, Win1::uo),
     [will_not_call_mercury, will_not_throw_exception,
@@ -352,6 +425,7 @@ mode([_|[_|[_|[_|[_|_]]]]], opengl.triangle_strip).
 draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
     ( mode(F, Mode) ->
         begin(Mode, !Window),
+        normal(0.0, 1.0, 0.0, !Window),
         list.foldl3(draw, F, Vertices, _, TexCoords, _, !Window),
         end(!Window)
     ;
@@ -366,7 +440,6 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
     (render.draw(_, wavefront_shape(Model, Tex), !Window) :-
         opengl.bind_texture(Tex, !Window), draw(Model, !Window))
 ].
-
 
 :- instance render.model(gl2, shape2d) where [
     (render.draw(_, Shape, !Window) :-
@@ -385,6 +458,7 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
         ),
         ( mode(Vertices, Mode) ->
             begin(Mode, !Window),
+            normal(0.0, 1.0, 0.0, !Window),
             color(R, G, B, 1.0, !Window),
             list.foldl(draw_vertex, Vertices, !Window),
             end(!Window),
@@ -414,6 +488,7 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
             color(R, G, B, 1.0, !Window),
             Binder(!Window),
             begin(Mode, !Window),
+            normal(0.0, 1.0, 0.0, !Window),
             list.foldl(draw_vertex, Vertices, !Window),
             end(!Window)
         ;
@@ -433,8 +508,13 @@ draw(wavefront.face(F), Vertices, TexCoords, !Window) :-
 ].
 
 :- instance vertex(model.vertex) where [
-    (draw_vertex(model.vertex(model.point(X, Y, Z), model.tex(U, V), _), !Window) :-
-        tex_coord(U, V, !Window), vertex3(X, Y, Z, !Window))
+    (draw_vertex(model.vertex(Vertex, Tex, Normal), !Window) :-
+        Vertex = model.point(X, Y, Z),
+        Tex = model.tex(U, V),
+        Normal = model.normal(NX, NY, NZ),
+        tex_coord(U, V, !Window),
+        normal(NX, NY, NZ, !Window),
+        vertex3(X, Y, Z, !Window))
 ].
 
 :- pred use_element(pred(T, mglow.window, mglow.window), list(T), int, mglow.window, mglow.window).

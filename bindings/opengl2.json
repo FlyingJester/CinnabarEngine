@@ -1,0 +1,52 @@
+{
+  "name":"opengl2",
+  "windows_includes":[
+    "<Windows.h>",
+    "<GL/gl.h>"
+  ],
+  "apple_includes":[
+     "<OpenGL/gl.h>"
+  ],
+  "other_includes":[
+    "<GL/gl.h>"
+  ],
+  "imports":["opengl"],
+  "prefixes":["GL_", "gl"],
+  "suffixes":["fv", "2f", "3f", "4f", "f", "_2D"],
+  "enums":{
+    "matrix_mode":[
+      "GL_MODELVIEW",
+      "GL_PROJECTION"
+    ],
+    "face":[
+      "GL_FRONT",
+      "GL_BACK",
+      "GL_FRONT_AND_BACK"
+    ],
+    "material":[
+      "GL_AMBIENT",
+      "GL_DIFFUSE",
+      "GL_SPECULAR",
+      "GL_EMISSION"
+    ]
+  },
+  "destructive_update_preds":{
+    "Window":{
+      "glMatrixMode":["matrix_mode"],
+      "glLoadIdentity":[],
+      "glOrtho":["float", "float", "float", "float", "float", "float"],
+      "glMaterialfv":["face", "material", "_Array4float"],
+      "glVertex3f":["float", "float", "float"],
+      "glVertex2f":["float", "float"],
+      "glColor3f":["float", "float", "float"],
+      "glColor4f":["float", "float", "float", "float"],
+      "glNormal3f":["float", "float", "float"],
+      "glTexCoord2f":["float", "float"],
+      "glBegin":["opengl.shape_type"],
+      "glEnd":[],
+      "glEnable":["_GL_TEXTURE_2D"],
+      "glDisable":["_GL_TEXTURE_2D"],
+      "glDrawPixels":["int", "int", "__GL_RGBA", "__GL_UNSIGNED_BYTE", "c_pointer"]
+    }
+  }
+}

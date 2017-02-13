@@ -1,5 +1,5 @@
 [submodule "fjogg"]
-	path = fjogg
+	path = audio/fjogg
 	url = https://github.com/FlyingJester/fjogg
 [submodule "bottlegen"]
 	path = bottlegen

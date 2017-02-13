@@ -1,0 +1,58 @@
+-----
+Modules to the Cinnabar Engine:
+ * render
+ * scene
+ * model
+ * audio
+ * util
+ * math
+ * perlin
+ * opengl
+
+-----
+Other projects depending on Cinnabar Engine:
+ * test
+ * editor
+
+Test projects:
+ * perlin
+ * audio
+
+-----
+Top level libraries:
+ * Glow
+ * Chrono
+ * Aimg
+ * SphereFonts
+ * Bufferfile
+
+System libraries needed:
+ * OpenAL for audio
+ * PNG for Aimg
+ * OpenGL for render
+ * X11/Cocoa/Win32 for Glow
+
+-----
+Module dependencies:
+In general, any module can depend on the top level libraries.
+
+Intermodule dependencies:
+ * render ---> model, math, opengl
+ * scene ---> render, math
+ * model ---> util, math
+ * audio ---> math
+ * util ---> 0
+ * math ---> 0
+ * perlin ---> util, math
+ * opengl ---> 0
+
+Some of the important takeaways:
+ - The render module knows about models, but not scenes.
+ - The utils must each be totally independant of any other module.
+ - The model module has no render or scene specific dependencies,
+    as the render modules each define an optmized format for their
+    own backends.
+ - Any combinations of otherwise pure modules must take place in
+    the root, such as using aimg for heightmaps or to upload
+    textures, or bindings between bufferfile and the buffer util.
+

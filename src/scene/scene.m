@@ -5,7 +5,6 @@
 
 :- use_module render.
 :- use_module camera.
-:- use_module mglow.
 
 %------------------------------------------------------------------------------%
 
@@ -29,14 +28,14 @@
 :- pred draw(
     scene.matrix_tree.matrix_tree::in,
     scene.node_tree.node(Model)::in,
-    Render::in, mglow.window::di, mglow.window::uo) is det
-      <= (render.model(Render, Model)).
+    Render::in, Window::di, Window::uo) is det
+      <= (render.model(Render, Model, Window)).
 
 :- pred draw(scene(Model, Heightmap, Texture)::in, Render::in,
-    mglow.window::di, mglow.window::uo) is det <=
-        (render.model(Render, Model),
-         render.skybox(Render, Texture),
-         render.heightmap(Render, Heightmap, Texture)).
+    Window::di, Window::uo) is det <=
+        (render.model(Render, Model, Window),
+         render.skybox(Render, Texture, Window),
+         render.heightmap(Render, Heightmap, Texture, Window)).
 
 % Similar to draw. First applies the given transformation without pushing
 % matrices on the renderer, and will pass any further transfom nodes into 
@@ -44,13 +43,13 @@
 % single matrix stack entry to handle multiple transformations in a row.
 :- pred apply_transformation_and_draw(scene.matrix_tree.matrix_tree::in,
     Render::in, scene.matrix_tree.transformation::in,
-    scene.node_tree.node(Model)::in, mglow.window::di, mglow.window::uo) is det
-      <= render.model(Render, Model).
+    scene.node_tree.node(Model)::in, Window::di, Window::uo) is det
+      <= render.model(Render, Model, Window).
 
 % Translates scene.matrix_tree.transformation types into calls to render
 % typeclass predicates.
 :- pred apply_transformation(scene.matrix_tree.transformation::in, Render::in,
-    mglow.window::di, mglow.window::uo) is det <= render.render(Render).
+    Window::di, Window::uo) is det <= render.render(Render, Window).
 
 %==============================================================================%
 :- implementation.

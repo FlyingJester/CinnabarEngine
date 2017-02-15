@@ -14,6 +14,8 @@
 :- implementation.
 %==============================================================================%
 
+:- import_module float.
+
 :- instance heightmap.heightmap(aimg.texture) where [
     (heightmap.get(Texture, X, Y, Value) :-
         aimg.pixel(Texture, X, Y, Color),

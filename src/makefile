@@ -12,6 +12,7 @@ run_genmk: build_genmk
 clean:
 	$(MAKE) -f modules.mk clean
 	$(MAKE) -C genmk clean
+	rm *.err
 
 .IGNORE: clean run_genmk build_genmk
 .PHONY: clean

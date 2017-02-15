@@ -12,6 +12,8 @@
 :- use_module render.
 :- use_module mglow.
 
+:- include_module gl2_render.heightmap.
+
 %------------------------------------------------------------------------------%
 
 % The compiled model for the OpenGL2 renderer can be either a wavefront or a

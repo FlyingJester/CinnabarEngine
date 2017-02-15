@@ -1,3 +1,1 @@
-
-MATH_SRC=math/vector.m math/matrix.m
-.export MATH_SRC
+MATH_SRC= math/matrix.m math/vector.m 

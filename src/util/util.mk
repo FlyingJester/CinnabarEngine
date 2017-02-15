@@ -1,3 +1,1 @@
-
-UTIL_SRC=util/buffer.m util/cinparser.m util/color.m util/xorshift.m
-.export UTIL_SRC
+UTIL_SRC= util/cinparser.m util/buffer.m util/xorshift.m util/color.m 

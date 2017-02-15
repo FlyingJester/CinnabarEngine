@@ -1,3 +1,1 @@
-
-AUDIO_SRC=audio/audio_loader.m audio/mopenal.m audio/mopus.m audio/sawgen.m audio/sinegen.m
-.export AUDIO_SRC
+AUDIO_SRC= audio/sawgen.m audio/mopenal.m audio/audio_loader.m audio/sinetest.m audio/mopus.m audio/sinegen.m 

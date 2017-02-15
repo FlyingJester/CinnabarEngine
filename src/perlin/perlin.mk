@@ -1,3 +1,1 @@
-
-PERLIN_SRC=perlin/perlin.m
-.export PERLIN_SRC
+PERLIN_SRC= perlin/perlin.m perlin/perlintest.m 

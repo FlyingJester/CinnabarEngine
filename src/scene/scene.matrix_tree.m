@@ -11,8 +11,9 @@
     translate(float, float, float) ;
     rotate_x(float) ;
     rotate_y(float) ;
-    rotate_z(float) ;
-    matrix(matrix.matrix).
+    rotate_z(float).
+
+%    matrix(matrix.matrix).
 
 :- type matrix_tree.
 :- type id == int.

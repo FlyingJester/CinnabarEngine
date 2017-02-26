@@ -6,7 +6,9 @@ extern "C" {
 
 /* Windowing interface */
 struct Glow_Window;
-struct Glow_Window *Glow_CreateWindow(unsigned w, unsigned h, const char *title, unsigned gl_maj, unsigned gl_min);
+unsigned Glow_WindowStructSize();
+unsigned Glow_CreateWindow(struct Glow_Window *to,
+    unsigned w, unsigned h, const char *title, unsigned gl_maj, unsigned gl_min);
 
 void Glow_DestroyWindow(struct Glow_Window *w);
 
@@ -22,10 +24,10 @@ unsigned Glow_WindowHeight(const struct Glow_Window *);
 
 /* Input interface */
 enum Glow_EventType {
-	eGlowUnknown,
 	eGlowKeyboardPressed,
 	eGlowKeyboardReleased,
-	eGlowMouseClick,
+	eGlowMousePressed,
+	eGlowMouseReleased,
 	eGlowResized,
 	eGlowQuit = 0xFF
 };
@@ -67,8 +69,13 @@ struct Glow_Event{
 #define GLOW_RETURN      GLOW_ENTER
 #define GLOW_TAB         "tab"
 
+#define GLOW_BLOCK_FOR_EVENT 1
+#define GLOW_NO_BLOCK_FOR_EVENT 0
+
 /* Returns 1 if there is an even, 0 otherwise */
-unsigned Glow_GetEvent(struct Glow_Window *w, struct Glow_Event *out_event);
+unsigned Glow_GetEvent(struct Glow_Window *w, unsigned block, struct Glow_Event *out_event);
+
+void Glow_GetWindowGLVersion(const struct Glow_Window *w, unsigned *maj, unsigned *min);
 
 unsigned Glow_GetKeyPressed(struct Glow_Window *w, char out_key[16]);
 void Glow_GetMousePosition(struct Glow_Window *w, glow_pixel_coords_t out_pos);
@@ -76,15 +83,6 @@ void Glow_GetMousePosition(struct Glow_Window *w, glow_pixel_coords_t out_pos);
  * functionality to handle this which could easily be emulated using Win32. */
 void Glow_SetMousePosition(struct Glow_Window *w, const glow_pixel_coords_t pos);
 void Glow_CenterMouse(struct Glow_Window *w);
-
-/* Returns 1 if the key is pressed, 0 otherwise.
- * Key must be null-terminated. */
-unsigned Glow_IsKeyPressed(struct Glow_Window *w, const char *key);
-/* Returns 1 if the key is pressed, 0 otherwise. Key must be lowercase. */
-unsigned Glow_IsKeyCharPressed(struct Glow_Window *w, char key);
-
-/* Define your main as this. */
-int glow_main(int argc, char *argv[]);
 
 #ifdef __cplusplus
 }

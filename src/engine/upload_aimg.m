@@ -7,38 +7,37 @@
 :- use_module io.
 :- use_module opengl.
 :- use_module opengl.texture.
-:- use_module mglow.
 :- use_module aimg.
 %------------------------------------------------------------------------------%
 
 :- type result ---> ok(opengl.texture.texture) ; nofile ; badfile.
 
 :- pred load(io.io::di, io.io::uo, string::in, result::out,
-    mglow.window::di, mglow.window::uo) is det.
+    io.io::di, io.io::uo) is det.
 
 :- pred upload(aimg.texture::in, opengl.texture.texture::out,
-    mglow.window::di, mglow.window::uo) is det.
+    io.io::di, io.io::uo) is det.
 
 :- pred load(aimg.result::in, result::out,
-    mglow.window::di, mglow.window::uo) is det.
+    io.io::di, io.io::uo) is det.
 
 %==============================================================================%
 :- implementation.
 %==============================================================================%
 
-load(aimg.nofile, nofile, !Window).
-load(aimg.badfile, badfile, !Window).
-load(aimg.ok(AImgTex), ok(GLTex), !Window) :- upload(AImgTex, GLTex, !Window).
+load(aimg.nofile, nofile, !IO).
+load(aimg.badfile, badfile, !IO).
+load(aimg.ok(AImgTex), ok(GLTex), !IO) :- upload(AImgTex, GLTex, !IO).
 
-load(!IO, Path, Result, !Window) :-
+load(!IO, Path, Result, !IO) :-
     aimg.load(!IO, Path, AImgResult),
-    load(AImgResult, Result, !Window).
+    load(AImgResult, Result, !IO).
 
-upload(AImgTex, Tex, !Window) :-
+upload(AImgTex, Tex, !IO) :-
     Pix = aimg.pixels(AImgTex),
     W = aimg.width(AImgTex),
     H = aimg.height(AImgTex),
-    opengl.texture.upload_texture(Tex, Pix, W, H, !Window),
-    opengl.texture.bind_texture(Tex, !Window),
-    opengl.tex_parameter(opengl.texture_min_filter, opengl.nearest, !Window),
-    opengl.tex_parameter(opengl.texture_mag_filter, opengl.linear, !Window).
+    opengl.texture.upload_texture(Tex, Pix, W, H, !IO),
+    opengl.texture.bind_texture(Tex, !IO),
+    opengl.tex_parameter(opengl.texture_min_filter, opengl.nearest, !IO),
+    opengl.tex_parameter(opengl.texture_mag_filter, opengl.linear, !IO).

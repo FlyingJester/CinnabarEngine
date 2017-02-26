@@ -6,7 +6,11 @@
 :- use_module io.
 :- use_module buffer.
 
+%------------------------------------------------------------------------------%
+
 :- type file.
+
+%------------------------------------------------------------------------------%
 
 :- pred bufferfile(string::in, io.res(buffer.buffer)::out, io.io::di, io.io::uo) is det.
 
@@ -27,6 +31,8 @@ create_ok_file(File) = io.ok(File).
 :- func create_error_file(string) = io.res(file).
 create_error_file(Str) = io.error(io.make_io_error(Str)).
 :- pragma foreign_export("C", create_error_file(in) = out, "MerBufferFile_ErrorFile").
+
+%------------------------------------------------------------------------------%
 
 :- pragma foreign_decl("C",
     "
@@ -83,7 +89,11 @@ void MerBufferFile_FileFinalizer(void *data, void *unused){
 #endif
     ").
 
+%------------------------------------------------------------------------------%
+
 :- pragma foreign_type("C", file, "MerBufferFile_File").
+
+%------------------------------------------------------------------------------%
 
 :- pragma foreign_proc("C", open(Path::in, MaybeFile::uo, IO0::di, IO1::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception,
@@ -127,6 +137,8 @@ void MerBufferFile_FileFinalizer(void *data, void *unused){
     }
 #endif
     ").
+
+%------------------------------------------------------------------------------%
 
 :- pragma foreign_proc("C", map(File::in, Len::in, Buffer::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception,

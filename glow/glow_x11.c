@@ -28,6 +28,7 @@
 
 
 struct Glow_Window {
+    unsigned char gl[2];
     Display *dpy;
     Screen *scr;
     int scr_id;
@@ -38,97 +39,7 @@ struct Glow_Window {
     XVisualInfo *vis;
     
     unsigned w, h;
-
-    unsigned char keys[100];
 };
-
-static unsigned short glow_keystr_number(const char *str);
-static unsigned short glow_key_number(char key){
-    if(key >= '0' && key <= '9')
-        return 16 + key - '0';
-    if(key >= 'a' && key <= 'z')
-        return 26 + key - 'a';
-    if(key >= 'A' && key <= 'Z')
-        return 26 + key - 'A';
-    if(key == '!')
-        return glow_key_number('1');
-    if(key == '@')
-        return glow_key_number('2');
-    if(key == '#')
-        return glow_key_number('3');
-    if(key == '$')
-        return glow_key_number('4');
-    if(key == '%')
-        return glow_key_number('5');
-    if(key == '^')
-        return glow_key_number('6');
-    if(key == '&')
-        return glow_key_number('7');
-    if(key == '*')
-        return glow_key_number('8');
-    if(key == '(')
-        return glow_key_number('9');
-    if(key == ')')
-        return glow_key_number('0');
-    if(key == '[' || key == '{')
-        return 13;
-    if(key == ']' || key == '}')
-        return 14;
-    if(key == '|' || key == '\\')
-        return 15;
-
-    if(key == '`' || key == '~')
-        return 90;
-    if(key == '-' || key == '_')
-        return 91;
-    if(key == '=' || key == '+')
-        return 92;
-    if(key == '<' || key == ',')
-        return 93;
-    if(key == '>' || key == '.')
-        return 94;
-    if(key == '/' || key == '?')
-        return 95;
-
-    if(key == '\t')
-        return glow_keystr_number(GLOW_TAB);
-
-    if(key == ' ')
-        return 98;
-
-    return 99;
-}
-
-static unsigned short glow_keystr_number(const char *str){
-    if(str == NULL)
-        return 0;
-
-    if(str[0] == '\0')
-        return 0;
-    if(str[1] == '\0')
-        return glow_key_number(*str);
-    {
-        unsigned n = 0;
-    #define KEY(WHAT)\
-        if(str == GLOW_ ## WHAT || strcmp(GLOW_ ## WHAT, str) == 0)\
-            return n;\
-        n++
-        
-        KEY(ESCAPE);
-        KEY(CONTROL);
-        KEY(BACKSPACE);
-        KEY(DELETE);
-        KEY(UP_ARROW);
-        KEY(DOWN_ARROW);
-        KEY(LEFT_ARROW);
-        KEY(RIGHT_ARROW);
-        KEY(ENTER);
-        KEY(TAB);
-        
-    #undef KEY
-    }
-    return 99;
-}
 
 /* Gets a display, first using the DISPLAY environment variable, then using the
  * X default (which may be different than the env variable depending on the DE),
@@ -164,17 +75,19 @@ void Glow_MakeCurrent(struct Glow_Window *win){
     glXMakeCurrent(win->dpy, win->wnd, win->ctx);
 }
 
-struct Glow_Window *Glow_CreateWindow(unsigned aW, unsigned aH,
-    const char *title, unsigned gl_maj, unsigned gl_min){
+unsigned Glow_WindowStructSize(){
+    return sizeof(struct Glow_Window);
+}
+
+void Glow_CreateWindow(struct Glow_Window *out,
+    unsigned aW, unsigned aH, const char *title, unsigned gl_maj, unsigned gl_min){
 
     int context_attribs[] = {
         GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
         GLX_CONTEXT_MINOR_VERSION_ARB, 2,
         None, None
     };
-   
-    struct Glow_Window *const out =
-        (struct Glow_Window *)malloc(sizeof(struct Glow_Window));
+
     GLXFBConfig fbconfig;
 
     context_attribs[1] = gl_maj;
@@ -283,19 +196,21 @@ struct Glow_Window *Glow_CreateWindow(unsigned aW, unsigned aH,
                 GLint n;
                 fputs("Using OpenGL ", stdout);
                 glGetIntegerv(GL_MAJOR_VERSION, &n);
+                out->gl[0] = n;
                 printf("%i", n); putchar('.');
                 glGetIntegerv(GL_MINOR_VERSION, &n);
                 printf("%i", n); putchar('\n');
+                out->gl[1] = n;
             }
 
-            return out;
+            return 1;
         }
     }
 
 xclose_err:
     free((void*)out);
     XCloseDisplay(out->dpy);
-    return NULL;
+    return 0;
 }
 
 void Glow_FlipScreen(struct Glow_Window *that){
@@ -325,8 +240,8 @@ void Glow_ShowWindow(struct Glow_Window *that){
     }
 }
 
-unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
-    if(XPending(that->dpy) > 0){
+unsigned Glow_GetEvent(struct Glow_Window *that, unsigned block, struct Glow_Event *out){
+    if(block || XPending(that->dpy) > 0){
         XEvent event;
         unsigned char press = 0u;
         XNextEvent(that->dpy, &event);
@@ -341,26 +256,23 @@ unsigned Glow_GetEvent(struct Glow_Window *that, struct Glow_Event *out){
                     XLookupString(&event.xkey, out->value.key,
                         GLOW_MAX_KEY_NAME_SIZE, &sym, &compose);
                 }
-                {
-                    const unsigned n = glow_keystr_number(out->value.key);
-
-                    if(press)
-                        out->type = eGlowKeyboardPressed;
-                    else
-                        out->type = eGlowKeyboardReleased;
-
-                    that->keys[n] = press;
-                }
+                out->type = press ?
+                    eGlowKeyboardPressed : eGlowKeyboardReleased;
                 return 1;
             case UnmapNotify:
             case DestroyNotify:
                 out->type = eGlowQuit;
                 return 1;
             default:
-                return 0;
+                return block ? Glow_GetEvent(that, block, out) : 0;
         }
     }
     return 0;
+}
+
+void Glow_GetWindowGLVersion(const struct Glow_Window *w, unsigned *out_maj, unsigned *out_min){
+    out_maj[0] = w->gl[0];
+    out_min[0] = w->gl[1];
 }
 
 unsigned Glow_WindowWidth(const struct Glow_Window *w) { return w->w; }
@@ -397,16 +309,3 @@ void Glow_CenterMouse(struct Glow_Window *win){
         win->w >> 1, win->h >> 1);
     XFlush(win->dpy);
 }
-
-unsigned Glow_IsKeyPressed(struct Glow_Window *win, const char *key){
-    const unsigned n = glow_keystr_number(key);
-    return win->keys[n];
-}
-
-unsigned Glow_IsKeyCharPressed(struct Glow_Window *win, char key){
-    return win->keys[glow_key_number(key)];
-}
-
-/* int main(int argc, char **argv){ return glow_main(argc, argv); } */
-
-

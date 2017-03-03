@@ -1,0 +1,18 @@
+{
+  "name":"glx",
+  "includes":[
+    "<X11/Xlib.h>",
+    "<X11/Xutil.h>"
+  ],
+  "apple_includes":[
+    "<OpenGL/gl.h>",
+    "<OpenGL/glx.h>"
+  ],
+  "other_includes":[
+    "<GL/gl.h>",
+    "<GL/glx.h>"
+  ],
+  "types":[
+    "GLXContext"
+  ]
+}

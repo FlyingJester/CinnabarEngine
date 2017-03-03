@@ -1,0 +1,21 @@
+{
+  "name":"x11",
+  "includes":[
+    "<X11/Xlib.h>",
+    "<X11/Xutil.h>"
+  ],
+  "imports":["io"],
+  "prefixes":["X"],
+  "types":[
+    "Window",
+    "Screen",
+    "Display*",
+    "Colormap",
+    "XVisualInfo"
+  ],
+  "destructive_update_ptr_funcs":{
+    "io.io":{
+      "XOpenDisplay":["display::uo", "string"]
+    }
+  }
+}

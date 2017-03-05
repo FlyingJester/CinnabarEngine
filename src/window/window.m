@@ -27,24 +27,40 @@
 %------------------------------------------------------------------------------%
 
 :- typeclass window(Window) where [
-    pred gl_version(gl_version, Window, Window),
-    mode gl_version(uo, di, uo) is det,
     
     pred wait(window_event, Window, Window),
     mode wait(uo, di, uo) is det,
     
     pred check(maybe.maybe(window_event), Window, Window),
-    mode check(uo, di, uo) is det,
+    mode check(uo, di, uo) is det
+].
 
-    % run(Render, Frame, !Window, !IO)    
+:- typeclass gl_context(Ctx) where [
+    func gl_version(Ctx) = (gl_version),
+    pred make_current(Ctx::in, io.io::di, io.io::uo) is det
+].
+
+%------------------------------------------------------------------------------%
+
+:- typeclass gl_window(Window, Ctx) <= (gl_context(Ctx), window(Window)) where [
+
+    % The context passed to Frame is only capable of creating new OpenGL objects
+    % which can be used by Render.
+    % run(Render, Frame, !Window, !IO)
     pred run(pred(io.io, io.io),
-        pred(list.list(string), list.list(window_event), io.io, io.io),
+        pred(list.list(string), list.list(window_event), Ctx, io.io, io.io),
         Window, Window,
         io.io, io.io),
     mode run(pred(di, uo) is det,
-        pred(in, in, di, uo) is det,
+        pred(in, in, in, di, uo) is det,
         di, uo,
         di, uo) is det
+].
+
+%------------------------------------------------------------------------------%
+
+:- typeclass graphics_window(Window, Ctx) where [
+    func context(Window) = Ctx
 ].
 
 %------------------------------------------------------------------------------%
@@ -58,17 +74,19 @@
     di, uo,
     di, uo) is det.
 
-% run_threaded(MakeCurrent, Render, Frame, !Window, !IO)
+% run_threaded(Render, Frame, MakeCurrent, RenderCtx, FrameCtx, !Window, !IO)
 :- pred run_threaded(pred(io.io, io.io),
-    pred(io.io, io.io),
     pred(list.list(string), list.list(window_event), io.io, io.io),
+    pred(Ctx, io.io, io.io),
+    Ctx, Ctx,
     Window, Window,
-    io.io, io.io) <= window(Window).
+    io.io, io.io) <= gl_window(Window, Ctx).
 :- mode run_threaded(pred(di, uo) is det,
-    pred(di, uo) is det,
     pred(in, in, di, uo) is det,
+    pred(in, di, uo) is det,
+    in, in,
     di, uo,
-    di, uo) is cc_multi.
+    di, uo) is det.
 
 %==============================================================================%
 :- implementation.
@@ -120,20 +138,20 @@ create_no_event = maybe.no.
 :- pragma foreign_export("C", create_no_event = uo, "MW_No").
 
 :- pragma foreign_export("C",
-    run_threaded(pred(di, uo) is det, pred(di, uo) is det, pred(in, in, di, uo) is det, di, uo, di, uo),
+    run_threaded(pred(di, uo) is det,
+        pred(in, in, di, uo) is det,
+        pred(in, di, uo) is det,
+        in, in,
+        di, uo, di, uo),
     "MW_RunThreaded").
 
 :- pragma foreign_export("C", 
-    run_basic(pred(di, uo) is det, pred(in, in, di, uo) is det, di, uo, di, uo),
+    run_basic(pred(di, uo) is det,
+        pred(in, in, di, uo) is det,
+        di, uo, di, uo),
     "MW_RunBasic").
 
 %------------------------------------------------------------------------------%
-
-:- pred run(pred(io.io, io.io), thread.thread, io.io, io.io).
-:- mode run(pred(di, uo) is det, in, di, uo) is cc_multi.
-
-run(Run, _, !IO) :- Run(!IO).
-run(Run, _, !IO) :- Run(!IO). % Silence warnings about stricter determinism.
 
 :- pred get_events(Window, Window,
     list.list(string), list.list(string),
@@ -203,8 +221,6 @@ render_runner(DieMVar, Render, MakeCurrent, Thr, !IO) :-
     thread.mvar.try_take(DieMVar, MaybeDie, !IO),
     (
         MaybeDie = maybe.yes(unit.unit)
-    ; % Second arm of the disjunction silences warnings about determinism strictness.
-        MaybeDie = maybe.yes(unit.unit)
     ;
         MaybeDie = maybe.no,
         MakeCurrent(!IO),
@@ -229,26 +245,28 @@ collect_events_from_channel(Channel, In, Out, !IO) :-
     ).
 
 :- pred frame_runner(thread.mvar.mvar(unit.unit),
-    pred(list.list(string), list.list(window_event),
-    io.io, io.io),
+    pred(list.list(string), list.list(window_event), io.io, io.io),
+    pred(io.io, io.io),
     thread.mvar.mvar(list(string)),
     thread.channel.channel(window_event),
     io.io, io.io).
 :- mode frame_runner(in,
     pred(in, in, di, uo) is det,
+    pred(di, uo) is det,
     in, in, di, uo) is cc_multi.
-frame_runner(DieMVar, Frame, KeyMVar, EventChannel, !IO) :-
+frame_runner(DieMVar, Frame, MakeCurrent, KeyMVar, EventChannel, !IO) :-
     thread.mvar.try_take(DieMVar, MaybeDie, !IO),
     (
         MaybeDie = maybe.yes(unit.unit)
-    ; % Second arm of the disjunction silences warnings about determinism strictness.
+    ; % Duplicate disjunction branch to silence cc_multi warnings.
         MaybeDie = maybe.yes(unit.unit)
     ;
         MaybeDie = maybe.no,
+        MakeCurrent(!IO),
         thread.mvar.read(KeyMVar, Keys, !IO),
         collect_events_from_channel(EventChannel, [], Events, !IO),
         Frame(Keys, Events, !IO),
-        frame_runner(DieMVar, Frame, KeyMVar, EventChannel, !IO)
+        frame_runner(DieMVar, Frame, MakeCurrent, KeyMVar, EventChannel, !IO)
     ).
 
 :- pred run_threaded_event(
@@ -277,14 +295,24 @@ run_threaded_event(DieMVar0, DieMVar1, KeysMVar, EventChannel, !Window, !IO) :-
     ).
 
 
-run_threaded(MakeCurrent, Render, Frame, !Window, !IO) :-
-    thread.mvar.init(RenderDieMVar, !IO),
-    thread.mvar.init(FrameDieMVar, !IO),
-    thread.mvar.init(KeysMVar, !IO),
-    thread.channel.init(EventChannel, !IO),
-    thread.spawn_native(render_runner(RenderDieMVar, Render, MakeCurrent), _, !IO),
-    FrameRunner = frame_runner(FrameDieMVar, Frame, KeysMVar, EventChannel),
-    thread.spawn(FrameRunner, !IO),
-    thread.mvar.put(KeysMVar, [], !IO),
-    run_threaded_event(RenderDieMVar, FrameDieMVar, KeysMVar, EventChannel, !Window, !IO).
+run_threaded(Render, Frame, MakeCurrent, RenderCtx, FrameCtx, !Window, IOi, IOo) :-
+    IO0 = IOi,
+    thread.mvar.init(RenderDieMVar, IO0, IO1),
+    thread.mvar.init(FrameDieMVar, IO1, IO2),
+    thread.mvar.init(KeysMVar, IO2, IO3),
+    thread.channel.init(EventChannel, IO3, IO4),
+    
+    promise_equivalent_solutions [IO5] (
+        RenderMakeCurrent = (pred(IOn0::di, IOn1::uo) is det :- MakeCurrent(RenderCtx, IOn0, IOn1)),
+        RenderRunner = render_runner(RenderDieMVar, Render, RenderMakeCurrent),
+        thread.spawn_native(RenderRunner, _, IO4, IO5)
+    ),
+    promise_equivalent_solutions [IO6] (
+        FrameMakeCurrent = (pred(IOn0::di, IOn1::uo) is det :- MakeCurrent(FrameCtx, IOn0, IOn1)),
+        FrameRunner = frame_runner(FrameDieMVar, Frame, FrameMakeCurrent, KeysMVar, EventChannel),
+        thread.spawn(FrameRunner, IO5, IO6)
+    ),
+    thread.mvar.put(KeysMVar, [], IO6, IO7),
+    run_threaded_event(RenderDieMVar, FrameDieMVar, KeysMVar, EventChannel, !Window, IO7, IOo).
+%    IOo = IO8.
     

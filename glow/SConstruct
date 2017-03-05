@@ -1,14 +1,25 @@
 import os
 import sys
+import string
 
 environment = Environment(ENV = os.environ)
 
+def is_unix():
+    if sys.platform.startswith("linux"):
+        return True
+    platform = string.lower(sys.platform)
+    for plat in ["bsd", "solaris", "sun", "aix", "irix"]:
+        if plat in platform:
+            return True
+    return False
+
 if os.name == "nt" or sys.platform == "msys":
-	src = ["glow_win32.c"]
-	libglow = environment.SharedLibrary("glow", ["glow_win32.c"], LIBS = ["OpenGL32", "gdi32"])
+    libglow = environment.SharedLibrary("glow", ["glow_win32.c"], LIBS = ["OpenGL32", "gdi32"])
 elif "be" in sys.platform or sys.platform.startswith("haiku"):
-	libglow = environment.SharedLibrary("glow", ["glow_haiku.cpp"], LIBS = ["be", "gl"])
+    libglow = environment.SharedLibrary("glow", ["glow_haiku.cpp"], LIBS = ["be", "gl"])
+elif is_unix():
+    libglow = environment.SharedLibrary("glow", ["glow_x11.c"], LIBS = ["X11", "Xext", "GL"])
 else:
-	libglow = environment.SharedLibrary("glow", ["glow_x11.c"], LIBS = ["X11", "Xext", "GL"])
+    libglow = environment.SharedLibrary("glow", ["glow_sdl2.c"], LIBS = ["SDL2"])
 
 Return("libglow")

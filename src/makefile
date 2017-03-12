@@ -1,6 +1,6 @@
 # Makefile to wrangle dependencies between engine components
 
-BINDINGS=gl_bindings gl2_bindings
+BINDINGS=gl_bindings gl2_bindings x11_bindings
 
 all: run_genmk $(BINDINGS)
 	$(MAKE) -f modules.mk
@@ -21,6 +21,10 @@ gl_bindings: bindings/opengl.json
 gl2_bindings: bindings/opengl2.json
 	python bindings/mgenbind.py bindings/opengl2.json
 	mv opengl2.m opengl
+
+x11_bindings: bindings/x11.json
+	python bindings/mgenbind.py bindings/x11.json
+	mv x11.m window
 
 clean:
 	$(MAKE) -f modules.mk clean

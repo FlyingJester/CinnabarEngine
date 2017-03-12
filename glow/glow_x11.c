@@ -221,6 +221,46 @@ void Glow_FlipScreen(struct Glow_Window *window){
     glXSwapBuffers(window->dpy, window->wnd);
 }
 
+static unsigned glow_get_event(struct Glow_Window *window,
+    unsigned block, struct Glow_Event *out){
+glow_get_event_start:
+    if(block || XPending(window->dpy) > 0){
+        XEvent event;
+        unsigned char press = 0u;
+        XNextEvent(window->dpy, &event);
+        switch(event.type){
+            case KeyPress:
+                press = 1u;
+            case KeyRelease:
+                {
+                    KeySym sym;
+                    XComposeStatus compose;
+                    XLookupString(&event.xkey, out->value.key,
+                        GLOW_MAX_KEY_NAME_SIZE, &sym, &compose);
+                }
+                out->type = press ?
+                    eGlowKeyboardPressed : eGlowKeyboardReleased;
+                return 1;
+            case UnmapNotify:
+            case DestroyNotify:
+                out->type = eGlowQuit;
+                return 1;
+            default:
+                if(block) /* TCO doesn't work here for all compilers :( */
+                    goto glow_get_event_start;
+        }
+    }
+    return 0;
+}
+
+unsigned Glow_GetEvent(struct Glow_Window *window,
+    struct Glow_Event *out_event){
+    return glow_get_event(window, 0, out_event);
+}
+void Glow_WaitEvent(struct Glow_Window *window, struct Glow_Event *out_event){
+    glow_get_event(window, 1, out_event);
+}
+
 unsigned Glow_ContextStructSize(){
     return sizeof(struct Glow_Context);
 }
@@ -259,6 +299,8 @@ int Glow_CreateContext(struct Glow_Window *window,
     if(window->ctx != NULL)
         return -1;
     
+    window->ctx = out;
+    
     return 0;
 }
 
@@ -268,5 +310,18 @@ void Glow_CreateLegacyContext(struct Glow_Window *window,
 }
 
 void Glow_MakeCurrent(struct Glow_Context *ctx){
-    
+    glXMakeCurrent(ctx->dpy, ctx->wnd, ctx->ctx);
+}
+
+struct Glow_Window *Glow_CreateLegacyWindow(unsigned w, unsigned h,
+    const char *title){
+
+    /* Put the window and CTX in one location so that free() will get them both. */
+    struct Glow_Window *const window =
+        malloc(Glow_WindowStructSize() + Glow_ContextStructSize());
+    struct Glow_Context *const ctx = (struct Glow_Context *)(window + 1);
+    Glow_CreateWindow(window, w, h, title, 0);
+    Glow_CreateContext(window, NULL, 2, 1, ctx);
+    Glow_MakeCurrent(ctx);
+    return window;
 }

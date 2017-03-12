@@ -15,6 +15,8 @@
 
 :- pred subtract(io::di, io::uo, microseconds::in, microseconds::uo) is det.
 
+:- pred duration(microseconds::in, microseconds::in, int::uo) is det.
+
 :- implementation.
 
 :- import_module int.
@@ -46,3 +48,5 @@ subtract(!IO, microseconds(Min), microseconds(Mout)) :-
     ;
         Mout = Min - Mmid
     ).
+
+duration(microseconds(Int0), microseconds(Int1), Int1 - Int0). 

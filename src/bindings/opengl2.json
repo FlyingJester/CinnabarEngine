@@ -10,9 +10,9 @@
   "other_includes":[
     "<GL/gl.h>"
   ],
-  "imports":["opengl"],
+  "imports":["opengl", "io"],
   "prefixes":["GL_", "gl"],
-  "suffixes":["fv", "2f", "3f", "4f", "f", "_2D"],
+  "suffixes":["fv", "2f", "3f", "4f", "f", "i", "_2D"],
   "enums":{
     "matrix_mode":[
       "GL_MODELVIEW",
@@ -41,7 +41,7 @@
     ]
   },
   "destructive_update_preds":{
-    "Window":{
+    "io.io":{
       "glMatrixMode":["matrix_mode"],
       "glLoadIdentity":[],
       "glPopMatrix":[],
@@ -63,7 +63,11 @@
       "glEnable":["_GL_TEXTURE_2D"],
       "glDisable":["_GL_TEXTURE_2D"],
       "glRasterPos2f":["float", "float"],
-      "glDrawPixels":["int", "int", "__GL_RGBA", "__GL_UNSIGNED_BYTE", "c_pointer"]
+      "glDrawPixels":["int", "int", "__GL_RGBA", "__GL_UNSIGNED_BYTE", "c_pointer"],
+      "glLightf":["light", "material", "_Array4float"]
+    },
+    "Io":{
+      "glLightf":["light", "_GL_POSITION", "_Array4float"]
     }
   }
 }

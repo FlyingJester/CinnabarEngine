@@ -20,11 +20,23 @@
         ambient_intensity::float) ;
     directional(
         dir_color::color.color,
-        dir_pos::vector.vector3,
         dir_dir::vector.vector3,
         dir_intensity::float).
 
 %------------------------------------------------------------------------------%
+
+:- func light_color(light) = color.color.
+
+%------------------------------------------------------------------------------%
+
+:- func light_position(light) = vector.vector3.
+
+%------------------------------------------------------------------------------%
+
+:- func light_intensity(light) = float.
+
+%------------------------------------------------------------------------------%
+
 :- typeclass render(Ctx) where [
 
     % frustum(Ctx, NearZ, FarZ, Left, Right, Top, Bottom, !IO)
@@ -60,17 +72,10 @@
     func max_lights(Ctx) = int,
     pred light(Ctx, int, light, io.io, io.io),
     mode light(in, in, in, di, uo) is det
-    
-    % Draws a given 32-bit RGBA image at X, Y. This may be somewhat slow, so it
-    % is recommended only for bridging some software rendering with the
-    % hardware renderer.
-    % draw_image(Ctx, X, Y, W, H, Pixels, !IO)
-%    pred draw_image(int, int, int, int, c_pointer, Ctx, Ctx),
-%    mode draw_image(in, in, in, in, in, di, uo) is det
-%    pred matrix(matrix.matrix, Ctx, Ctx),
-%    mode matrix(in, di, uo) is det
 
 ].
+
+%------------------------------------------------------------------------------%
 
 :- typeclass model_compiler(Ctx, Model) where [
     pred compile_wavefront(wavefront.shape, Ctx, Model),
@@ -79,10 +84,14 @@
     mode compile_softshape(in, in, out) is det
 ].
 
+%------------------------------------------------------------------------------%
+
 :- typeclass model(Ctx, Model) where [
     pred draw(Ctx, Model, io.io, io.io),
     mode draw(in, in, di, uo) is det
 ].
+
+%------------------------------------------------------------------------------%
 
 % Texture is also called Skybox in other places.
 :- typeclass skybox(Ctx, Texture) <= render(Ctx) where [
@@ -90,6 +99,8 @@
     pred draw_skybox(Ctx, float, float, Texture, io.io, io.io),
     mode draw_skybox(in, in, in, in, di, uo) is det
 ].
+
+%------------------------------------------------------------------------------%
 
 :- typeclass heightmap(Ctx, Heightmap, Texture) <= render(Ctx) where[
     pred draw_heightmap(Ctx, Heightmap, Texture, io.io, io.io),
@@ -99,3 +110,21 @@
 %==============================================================================%
 :- implementation.
 %==============================================================================%
+
+%------------------------------------------------------------------------------%
+
+light_color(diffuse(C, _, _)) = C.
+light_color(ambient(C, _, _)) = C.
+light_color(directional(C, _, _)) = C.
+
+%------------------------------------------------------------------------------%
+
+light_position(diffuse(_, P, _)) = P.
+light_position(ambient(_, P, _)) = P.
+light_position(directional(_, P, _)) = P.
+
+%------------------------------------------------------------------------------%
+
+light_intensity(diffuse(_, _, I)) = I.
+light_intensity(ambient(_, _, I)) = I.
+light_intensity(directional(_,  _, I)) = I.

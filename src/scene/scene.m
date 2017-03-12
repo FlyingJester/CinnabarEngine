@@ -5,6 +5,7 @@
 %==============================================================================%
 
 :- import_module list.
+:- use_module maybe.
 :- use_module io.
 :- use_module render.
 
@@ -21,7 +22,7 @@
 
 % scene(Scene, Skybox, Lights, Heightmaps)
 :- type scene(Model, Texture, Heightmap) --->
-    scene(node(Model), Texture, list(scene_light), list({Heightmap, Texture})).
+    scene(node(Model), maybe.maybe(Texture), list(scene_light), list({Heightmap, Texture})).
 
 % Draws the skybox, applies all light data, draws all heightmaps, then
 % recursively draws the scene.
@@ -87,8 +88,13 @@ lights(Render, N, [{Light, _}|List], !IO) :-
         true % Pass.
     ).
 
-draw(Render, scene(Scene, Skybox, Lights, Heightmaps), Tree, Pitch, Yaw, !IO) :-
-    render.draw_skybox(Render, Pitch, Yaw, Skybox, !IO),
+draw(Render, scene(Scene, MaybeSkybox, Lights, Heightmaps), Tree, Pitch, Yaw, !IO) :-
+    (
+        MaybeSkybox = maybe.no
+    ;
+        MaybeSkybox = maybe.yes(Skybox),
+        render.draw_skybox(Render, Pitch, Yaw, Skybox, !IO)
+    ),
     lights(Render, Lights, !IO),
     foldl(draw_heightmap(Render), Heightmaps, !IO),
     draw(Render, Scene, Tree, !IO).

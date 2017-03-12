@@ -13,6 +13,7 @@
 :- use_module io.
 
 :- include_module gl2_render.heightmap.
+:- include_module gl2_render.skybox.
 
 %------------------------------------------------------------------------------%
 
@@ -64,10 +65,25 @@
 :- implementation.
 %==============================================================================%
 
+:- import_module list.
+:- import_module float.
+
 :- use_module opengl2.
 :- use_module upload_aimg.
-:- use_module list.
-:- use_module float.
+:- use_module vector.
+:- use_module color.
+
+:- pred light_number(opengl2.light, int).
+:- mode light_number(in, uo) is det.
+:- mode light_number(uo, in) is semidet.
+light_number(opengl2.light0, 0).
+light_number(opengl2.light1, 1).
+light_number(opengl2.light2, 2).
+light_number(opengl2.light3, 3).
+light_number(opengl2.light4, 4).
+light_number(opengl2.light5, 5).
+light_number(opengl2.light6, 6).
+light_number(opengl2.light7, 7).
 
 :- instance render.render(gl2_render) where [
     ( frustum(gl2_render, Nz, Fz, L, R, T, B, !IO) :- 
@@ -88,15 +104,37 @@
         opengl2.rotate(A, 0.0, 1.0, 0.0, !IO) ),
     ( rotate_z(gl2_render, A, !IO) :-
         opengl2.rotate(A, 0.0, 0.0, 1.0, !IO) ),
-    ( rotate_about(gl2_render, X, Y, Z, A, !IO) :-
-        opengl2.rotate(A, X, Y, Z, !IO) ),
 
     ( scale(gl2_render, X, Y, Z, !IO) :- opengl2.scale(X, Y, Z, !IO) ),
 
-    ( draw_image(gl2_render, X, Y, W, H, Pix, !IO) :-
-        opengl2.raster_pos(float.float(X), float.float(Y), !IO),
-        opengl2.draw_pixels(W, H, Pix, !IO),
-        opengl2.raster_pos(0.0, 0.0, !IO) )
+    ( max_lights(gl2_render) = 8 ),
+    ( light(gl2_render, Num, Light, !IO) :-
+        ( light_number(LM, Num) -> L = LM ; L = opengl2.light0 ),
+        render.light_position(Light) = vector.vector(X, Y, Z),
+        render.light_color(Light) = color.color(R, G, B, _),
+        LP = opengl2.light(L),
+        (
+            Light = render.directional(_, _, _),
+            opengl2.light_position(L, X, Y, Z, 0.0, !IO),
+            LP(opengl2.ambient, R, G, B, 1.0, !IO),
+            LP(opengl2.diffuse, 0.0, 0.0, 0.0, 1.0, !IO),
+            LP(opengl2.specular, 1.0, 1.0, 1.0, 1.0, !IO)
+        ;
+            Light = render.diffuse(_, _, _),
+            LP(opengl2.diffuse, R, G, B, 1.0, !IO),
+            opengl2.light_position(L, X, Y, Z, 0.0, !IO),
+            LP(opengl2.ambient, 0.0, 0.0, 0.0, 1.0, !IO),
+            LP(opengl2.specular, 0.0, 0.0, 0.0, 1.0, !IO)
+        ;
+            Light = render.ambient(_, _, _),
+            opengl2.translate(X, Y, Z, !IO),
+            opengl2.light_position(L, 0.0, 0.0, 0.0, 1.0, !IO),
+            opengl2.translate(-X, -Y, -Z, !IO),
+            LP(opengl2.ambient, R, G, B, 1.0, !IO),
+            LP(opengl2.diffuse, 0.0, 0.0, 0.0, 1.0, !IO),
+            LP(opengl2.specular, 1.0, 1.0, 1.0, 1.0, !IO)
+        )
+    )
 ].
 
 :- instance render.model_compiler(gl2_render, model) where [
@@ -112,16 +150,16 @@
         opengl.texture.bind_texture(Tex, !IO),
         draw_wave(Shape, !IO) ),
     
-    (render.draw(gl2_render, soft(Shape), !Window) :- draw_soft(Shape, !IO))
+    (render.draw(gl2_render, soft(Shape), !IO) :- draw_soft(Shape, !IO))
 ].
 
 draw_wave(Shape, !IO) :-
     list.foldl2(draw_wave_face, Shape ^ wavefront.faces, Shape, _, !IO).
 
 draw_wave_face(wavefront.face(Vertices), !Shape, !IO) :-
-    opengl2.begin(opengl.triangle_fan, !Window),
+    opengl2.begin(opengl.triangle_fan, !IO),
     list.foldl2(draw_wave_vertex, Vertices, !Shape, !IO),
-    opengl2.end(!Window).
+    opengl2.end(!IO).
 
 draw_wave_vertex(Vertex, !Shape, !IO) :-
     Vertex = wavefront.vertex(PointIndex, TexIndex, NormalIndex),

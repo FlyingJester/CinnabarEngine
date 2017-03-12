@@ -28,15 +28,28 @@
 
 :- typeclass window(Window) where [
     
-    pred wait(window_event, Window, Window),
-    mode wait(uo, di, uo) is det,
+    pred wait(Window, window_event, io.io, io.io),
+    mode wait(in, uo, di, uo) is det,
     
-    pred check(maybe.maybe(window_event), Window, Window),
-    mode check(uo, di, uo) is det
+    pred check(Window, maybe.maybe(window_event), io.io, io.io),
+    mode check(in, uo, di, uo) is det,
+
+    pred hide(Window, io.io, io.io),
+    mode hide(in, di, uo) is det,
+
+    pred show(Window, io.io, io.io),
+    mode show(in, di, uo) is det,
+
+    pred title(Window, string, io.io, io.io),
+    mode title(in, in, di, uo) is det,
+
+    pred size(Window, int, int, io.io, io.io),
+    mode size(in, uo, uo, di, uo) is det
+
 ].
 
 :- typeclass gl_context(Ctx) where [
-    func gl_version(Ctx) = (gl_version),
+%    func gl_version(Ctx) = (gl_version),
     pred make_current(Ctx::in, io.io::di, io.io::uo) is det
 ].
 
@@ -49,11 +62,11 @@
     % run(Render, Frame, !Window, !IO)
     pred run(pred(io.io, io.io),
         pred(list.list(string), list.list(window_event), Ctx, io.io, io.io),
-        Window, Window,
+        Window,
         io.io, io.io),
     mode run(pred(di, uo) is det,
         pred(in, in, in, di, uo) is det,
-        di, uo,
+        in,
         di, uo) is det
 ].
 
@@ -67,11 +80,11 @@
 
 :- pred run_basic(pred(io.io, io.io),
     pred(list.list(string), list.list(window_event), io.io, io.io),
-    Window, Window,
+    Window,
     io.io, io.io) <= window(Window).
 :- mode run_basic(pred(di, uo) is det,
     pred(in, in, di, uo) is det,
-    di, uo,
+    in,
     di, uo) is det.
 
 % run_threaded(Render, Frame, MakeCurrent, RenderCtx, FrameCtx, !Window, !IO)
@@ -79,13 +92,13 @@
     pred(list.list(string), list.list(window_event), io.io, io.io),
     pred(Ctx, io.io, io.io),
     Ctx, Ctx,
-    Window, Window,
+    Window,
     io.io, io.io) <= gl_window(Window, Ctx).
 :- mode run_threaded(pred(di, uo) is det,
     pred(in, in, di, uo) is det,
     pred(in, di, uo) is det,
     in, in,
-    di, uo,
+    in,
     di, uo) is det.
 
 %==============================================================================%
@@ -142,22 +155,25 @@ create_no_event = maybe.no.
         pred(in, in, di, uo) is det,
         pred(in, di, uo) is det,
         in, in,
-        di, uo, di, uo),
+        in,
+        di, uo),
     "MW_RunThreaded").
 
 :- pragma foreign_export("C", 
     run_basic(pred(di, uo) is det,
         pred(in, in, di, uo) is det,
-        di, uo, di, uo),
+        in,
+        in,
+        di, uo),
     "MW_RunBasic").
 
 %------------------------------------------------------------------------------%
 
-:- pred get_events(Window, Window,
+:- pred get_events(Window,
     list.list(string), list.list(string),
     list.list(window_event), list.list(window_event),
-    bool.bool) <= window(Window).
-:- mode get_events(di, uo, in, out, in, out, out) is det.
+    bool.bool, io.io, io.io) <= window(Window).
+:- mode get_events(in, in, out, in, out, in, di, uo) is det.
 
 :- pred remove(string::in, list(string)::in, list(string)::out) is det.
 remove(Name, ListIn, ListOut) :- list.delete_all(ListIn, Name, ListOut).
@@ -168,8 +184,8 @@ handle_keys(key_up, Name, !Keys) :-
 handle_keys(key_down, Name, !Keys) :-
     list.merge_and_remove_dups([Name|[]], !Keys).
 
-get_events(!Window, !Keys, In, Out, Q) :-
-    check(MaybeEvent, !Window),
+get_events(Window, !Keys, In, Out, Q, !IO) :-
+    check(Window, MaybeEvent, !IO),
     (
         MaybeEvent = maybe.yes(Event),
         ( Event = quit ->
@@ -178,7 +194,7 @@ get_events(!Window, !Keys, In, Out, Q) :-
         ;
             ( Event = key(Press, Name) -> handle_keys(Press, Name, !Keys) ; true ),
             list.append(In, [Event|[]], Events),
-            get_events(!Window, !Keys, Events, Out, Q)
+            get_events(Window, !Keys, Events, Out, Q, !IO)
         )
     ;
         MaybeEvent = maybe.no,
@@ -189,27 +205,27 @@ get_events(!Window, !Keys, In, Out, Q) :-
 :- pred run_basic(pred(io.io, io.io),
     pred(list.list(string), list.list(window_event), io.io, io.io),
     list.list(string),
-    Window, Window,
+    Window,
     io.io, io.io) <= window(Window).
 :- mode run_basic(pred(di, uo) is det,
     pred(in, in, di, uo) is det,
     in,
-    di, uo,
+    in,
     di, uo) is det.
 
-run_basic(Render, Frame, Keys, !Window, !IO) :-
+run_basic(Render, Frame, Keys, Window, !IO) :-
     Render(!IO),
-    get_events(!Window, Keys, NewKeys, [], Events, Die),
+    get_events(Window, Keys, NewKeys, [], Events, Die, !IO),
     (
         Die = bool.yes
     ;
         Die = bool.no,
         Frame(NewKeys, Events, !IO),
-        run_basic(Render, Frame, NewKeys, !Window, !IO)
+        run_basic(Render, Frame, NewKeys, Window, !IO)
     ).
 
-run_basic(Render, Frame, !Window, !IO) :-
-    run_basic(Render, Frame, [], !Window, !IO).
+run_basic(Render, Frame, Window, !IO) :-
+    run_basic(Render, Frame, [], Window, !IO).
 
 :- pred render_runner(thread.mvar.mvar(unit.unit),
     pred(io.io, io.io),
@@ -274,11 +290,11 @@ frame_runner(DieMVar, Frame, MakeCurrent, KeyMVar, EventChannel, !IO) :-
     thread.mvar.mvar(unit.unit)::in,
     thread.mvar.mvar(list(string))::in,
     thread.channel.channel(window_event)::in,
-    Window::di, Window::uo,
+    Window::in,
     io.io::di, io.io::uo) is det <= window(Window).
 
-run_threaded_event(DieMVar0, DieMVar1, KeysMVar, EventChannel, !Window, !IO) :-
-    wait(Event, !Window),
+run_threaded_event(DieMVar0, DieMVar1, KeysMVar, EventChannel, Window, !IO) :-
+    wait(Window, Event, !IO),
     ( Event = quit ->
         thread.mvar.put(DieMVar0, unit.unit, !IO),
         thread.mvar.put(DieMVar1, unit.unit, !IO)
@@ -291,11 +307,11 @@ run_threaded_event(DieMVar0, DieMVar1, KeysMVar, EventChannel, !Window, !IO) :-
             true
         ),
         thread.channel.put(EventChannel, Event, !IO),
-        run_threaded_event(DieMVar0, DieMVar1, KeysMVar, EventChannel, !Window, !IO)
+        run_threaded_event(DieMVar0, DieMVar1, KeysMVar, EventChannel, Window, !IO)
     ).
 
 
-run_threaded(Render, Frame, MakeCurrent, RenderCtx, FrameCtx, !Window, IOi, IOo) :-
+run_threaded(Render, Frame, MakeCurrent, RenderCtx, FrameCtx, Window, IOi, IOo) :-
     IO0 = IOi,
     thread.mvar.init(RenderDieMVar, IO0, IO1),
     thread.mvar.init(FrameDieMVar, IO1, IO2),
@@ -307,12 +323,14 @@ run_threaded(Render, Frame, MakeCurrent, RenderCtx, FrameCtx, !Window, IOi, IOo)
         RenderRunner = render_runner(RenderDieMVar, Render, RenderMakeCurrent),
         thread.spawn_native(RenderRunner, _, IO4, IO5)
     ),
+    
     promise_equivalent_solutions [IO6] (
         FrameMakeCurrent = (pred(IOn0::di, IOn1::uo) is det :- MakeCurrent(FrameCtx, IOn0, IOn1)),
         FrameRunner = frame_runner(FrameDieMVar, Frame, FrameMakeCurrent, KeysMVar, EventChannel),
         thread.spawn(FrameRunner, IO5, IO6)
     ),
+    
     thread.mvar.put(KeysMVar, [], IO6, IO7),
-    run_threaded_event(RenderDieMVar, FrameDieMVar, KeysMVar, EventChannel, !Window, IO7, IOo).
+    run_threaded_event(RenderDieMVar, FrameDieMVar, KeysMVar, EventChannel, Window, IO7, IOo).
 %    IOo = IO8.
     

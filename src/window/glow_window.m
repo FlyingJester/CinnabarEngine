@@ -10,37 +10,47 @@
 %------------------------------------------------------------------------------%
 
 :- type window.
+:- type context.
 
 %------------------------------------------------------------------------------%
 
-:- pred create_window(io.io::di, io.io::uo,
-    int::in, int::in, window.gl_version::in, string::in,
-    window::uo) is det.
+% Creates a base window.
+% create_window(W, H, Title, Version, Out, !IO)
+:- pred create_window(int, int, string, window.gl_version, window, io.io, io.io).
+:- mode create_window(in, in, in, in, uo, di, uo) is det.
+:- mode create_window(in, in, in, di, uo, di, uo) is det.
+:- mode create_window(di, di, in, in, uo, di, uo) is det.
+:- mode create_window(di, di, in, di, uo, di, uo) is det.
 
-:- pred create_window(io.io::di, io.io::uo,
-    int::in, int::in, int::in, int::in, string::in, window::uo) is det.
+% create_window(W, H, Title, GLMajor, GLMinor, Out, !IO)
+:- pred create_window(int, int, string, int, int, window, io.io, io.io).
+:- mode create_window(in, in, in, in, in, uo, di, uo) is det.
 
-:- pred width(window::di, window::uo, int::uo) is det.
-:- pred height(window::di, window::uo, int::uo) is det.
-:- pred size(window::di, window::uo, int::uo, int::uo) is det.
+:- func context(window) = context.
 
-:- pred destroy_window(io.io::di, io.io::uo, window::di) is det.
+:- pred hide(window, io.io, io.io).
+:- mode hide(in, di, uo) is det.
 
-:- pred make_window_current(io.io::di, io.io::uo, window::di, window::uo) is det.
+:- pred show(window, io.io, io.io).
+:- mode show(in, di, uo) is det.
 
-:- pred flip_screen(window::di, window::uo) is det.
+:- pred title(window, string, io.io, io.io).
+:- mode title(in, in, di, uo) is det.
 
-:- pred check(maybe.maybe(window.window_event)::uo, window::di, window::uo) is det.
-:- pred wait(window.window_event::uo, window::di, window::uo) is det.
-:- pred get_mouse_location(int::uo, int::uo, window::di, window::uo) is det.
+:- pred size(window, int, int, io.io, io.io).
+:- mode size(in, uo, uo, di, uo) is det.
 
-:- pred center_mouse(window::di, window::uo) is det.
+:- pred wait(window, window.window_event, io.io, io.io).
+:- mode wait(uo, in, di, uo) is det.
 
-:- pred gl_version(int::uo, int::uo, window::di, window::uo) is det.
+:- pred check(window, maybe.maybe(window.window_event), io.io, io.io).
+:- mode check(uo, in, di, uo) is det.
 
 %------------------------------------------------------------------------------%
 
 :- instance window.window(window).
+:- instance window.gl_context(context).
+:- instance window.gl_window(window, context).
 
 %==============================================================================%
 :- implementation.
@@ -48,16 +58,26 @@
 
 :- pragma foreign_import_module("C", window).
 :- pragma foreign_decl("C", "#include ""glow/glow.h"" ").
-:- pragma foreign_type("C", window, "struct Glow_Window *").
 
-:- pragma foreign_decl("C", "void MGlow_FinalizeWindow(void *window, void*);").
+:- pragma foreign_decl("C", "
+
+#define MGLOW_GET_WINDOW(THAT) ((struct Glow_Window*)THAT)
+#define MGLOW_GET_CONTEXT(THAT)\
+    ((struct Glow_Context*)(MGLOW_GET_WINDOW(THAT)+1))
+
+").
+
+:- pragma foreign_type("C", window, "void*").
+:- pragma foreign_type("C", context, "void*").
+
+:- pragma foreign_decl("C", "void MGlow_FinalizeWindow(void *data, void*);").
 :- pragma foreign_decl("C", "MR_Word MGlow_ConvertEvent(const struct Glow_Event *event);").
 
 :- pragma foreign_code("C",
     "
-    void MGlow_FinalizeWindow(void *window, void *_){
+    void MGlow_FinalizeWindow(void *data, void *_){
+        struct Glow_Window *const window = MGLOW_GET_WINDOW(data);
         Glow_DestroyWindow(window);
-        (void)_;
     }
     ").
 
@@ -86,119 +106,88 @@
     }
     ").
 
-create_window(!IO, W, H, window.gl_version(Maj, Min), Title, Window) :-
-    create_window(!IO, W, H, Maj, Min, Title, Window).
+create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
+    create_window(W, H, Title, Maj, Min, Window, !IO).
 
 :- pragma foreign_proc("C",
-    create_window(IOin::di, IOout::uo,
-        W::in, H::in,
-        Maj::in, Min::in,
-        Title::in, Window::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    create_window(W::in, H::in, Title::in, Maj::in, Min::in, Window::uo, IOin::di, IOout::uo),
+    [promise_pure, will_not_throw_exception, thread_safe, tabled_for_io],
     "
-        Window = MR_GC_malloc_atomic(Glow_WindowStructSize());
-        Glow_CreateWindow(Window, W, H, Title, Maj, Min);
-        Glow_ShowWindow(Window);
+        const unsigned size = Glow_WindowStructSize() + Glow_WindowContextSize();
+        Window = MR_GC_malloc_atomic(size);
+        Glow_CreateWindow(MGLOW_GET_WINDOW(Window), W, H, Title, 0);
+        Glow_CreateContext(MGLOW_GET_WINDOW(Window), NULL, Maj, Min,
+            MGLOW_GET_CONTEXT(Window));
         MR_GC_register_finalizer(Window, MGlowFinalizeWindow, NULL);
         IOout = IOin;
     ").
 
-destroy_window(!IO, _).
-
 :- pragma foreign_proc("C",
-    width(Window::di, WindowOut::uo, W::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
+    wait(Window::in, Event::uo, IOin::di, IOout::uo),
+    [promise_pure, will_not_throw_exception, thread_safe, tabled_for_io],
     "
-        W = Glow_WindowWidth((WindowOut = Window));
+        struct Glow_Event event;
+        Glow_WaitEvent(MGLOW_GET_WINDOW(Window), &event);
+        Event = MGlow_ConvertEvent(&event);
+        IOout = IOin;
     ").
 
 :- pragma foreign_proc("C",
-    height(Window::di, WindowOut::uo, H::uo),
+    check(Window::in, MaybeEvent::uo, IOin::di, IOout::uo),
+    [promise_pure, will_not_throw_exception, thread_safe, tabled_for_io],
+    "
+        struct Glow_Event event;
+        if(Glow_GetEvent(MGLOW_GET_WINDOW(Window), &event)){
+            Event = MW_Yes(MGlow_ConvertEvent(&event));
+        }
+        else{
+            Event = MW_No();
+        }
+        IOout = IOin;
+    ").
+
+:- pragma foreign_proc("C",
+    hide(Window::in, IOin::di, IOout::uo),
     [will_not_call_mercury, promise_pure, will_not_throw_exception,
      thread_safe, does_not_affect_liveness],
     "
-        H = Glow_WindowHeight((WindowOut = Window));
+        Glow_HideWindow(MGLOW_GET_WINDOW(Window));
+        IOout = IOin;
     ").
 
 :- pragma foreign_proc("C",
-    size(Window::di, WindowOut::uo, W::uo, H::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+    show(Window::in, IOin::di, IOout::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
      thread_safe, does_not_affect_liveness],
     "
-        W = Glow_WindowWidth((WindowOut = Window));
-        H = Glow_WindowHeight((WindowOut = Window));
+        Glow_ShowWindow(MGLOW_GET_WINDOW(Window));
+        IOout = IOin;
     ").
 
 :- pragma foreign_proc("C",
-    flip_screen(Window::di, WindowOut::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+    title(Window::in, Title::in, IOin::di, IOout::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
      thread_safe, does_not_affect_liveness],
     "
-        WindowOut = Window;
-        Glow_FlipScreen(Window);
+        Glow_SetTitle(MGLOW_GET_WINDOW(Window), Title);
+        IOout = IOin;
     ").
 
 :- pragma foreign_proc("C",
-    make_window_current(IO0::di, IO1::uo, Window::di, WindowOut::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception, 
+    size(Window::in, W::uo, H::uo, IOin::di, IOout::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
      thread_safe, does_not_affect_liveness],
     "
-        IO1 = IO0;
-        Glow_MakeCurrent((WindowOut = Window));
-    ").
-
-:- pragma foreign_proc("C",
-    check(EventOut::uo, Window::di, WindowOut::uo),
-    [promise_pure, thread_safe, will_not_throw_exception, does_not_affect_liveness],
-    "
-        struct Glow_Event event;
-        if(Glow_GetEvent((WindowOut = Window), 0, &event) == 1)
-            EventOut = MW_Yes(MGlow_ConvertEvent(&event));
-        else
-            EventOut = MW_No();
-    ").
-
-:- pragma foreign_proc("C",
-    wait(EventOut::uo, Window::di, WindowOut::uo),
-    [promise_pure, thread_safe, will_not_throw_exception, does_not_affect_liveness],
-    "
-        struct Glow_Event event;
-        Glow_GetEvent((WindowOut = Window), 1, &event);
-        EventOut = MGlow_ConvertEvent(&event));
-    ").
-
-:- pragma foreign_proc("C",
-    get_mouse_location(X::uo, Y::uo, Win0::di, Win1::uo),
-    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
-     does_not_affect_liveness],
-    "
-        {
-            glow_pixel_coords_t coords;
-            Glow_GetMousePosition((Win1 = Win0), coords);
-            X = coords[0];
-            Y = coords[1];
-        }
-    ").
-
-:- pragma foreign_proc("C",
-    center_mouse(Win0::di, Win1::uo),
-    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
-     does_not_affect_liveness],
-    " Glow_CenterMouse((Win1 = Win0));").
-
-:- pragma foreign_proc("C", gl_version(Maj::uo, Min::uo, Win0::di, Win1::uo),
-    [will_not_call_mercury, promise_pure, thread_safe, will_not_throw_exception,
-     does_not_affect_liveness],
-    "
-        unsigned M, m;
-        Glow_GetWindowGLVersion((Win1 = Win0), &M, &m);
-        Maj = M;
-        Min = m;
+        unsigned lw, lh;
+        Glow_GetWindowSize(MGLOW_GET_WINDOW(Window), &lw, &lh);
+        W = lw;
+        H = lh;
+        IOout = IOin;
     ").
 
 :- instance window.window(window) where [
-    ( window.gl_version(window.gl_version(Maj, Min), !Window) :-
-        glow_window.gl_version(Maj, Min, !Window) ),
+%    ( window.gl_version(window.gl_version(Maj, Min), !Window) :-
+%        glow_window.gl_version(Maj, Min, !Window) ),
     pred(window.wait/3) is glow_window.wait,
     pred(window.check/3) is glow_window.check,
     pred(window.run/6) is window.run_basic

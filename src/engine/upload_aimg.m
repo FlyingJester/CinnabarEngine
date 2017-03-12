@@ -12,7 +12,7 @@
 
 :- type result ---> ok(opengl.texture.texture) ; nofile ; badfile.
 
-:- pred load(io.io::di, io.io::uo, string::in, result::out,
+:- pred load_path(string::in, result::out,
     io.io::di, io.io::uo) is det.
 
 :- pred upload(aimg.texture::in, opengl.texture.texture::out,
@@ -29,7 +29,7 @@ load(aimg.nofile, nofile, !IO).
 load(aimg.badfile, badfile, !IO).
 load(aimg.ok(AImgTex), ok(GLTex), !IO) :- upload(AImgTex, GLTex, !IO).
 
-load(!IO, Path, Result, !IO) :-
+load_path(Path, Result, !IO) :-
     aimg.load(!IO, Path, AImgResult),
     load(AImgResult, Result, !IO).
 

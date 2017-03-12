@@ -9,12 +9,53 @@ extern "C" {
 
 #ifdef __GNUC__
 #define GLOW_CONST __attribute__((const))
+#define GLOW_PURE __attribute__((pure))
+#define GLOW_RETURNS_NOT_NULL __attribute__((returns_nonnull))
 #else
 #define GLOW_CONST
+#define GLOW_PURE
+#define GLOW_RETURNS_NOT_NULL
 #endif
 
 #define GLOW_RESIZABLE   (1<<0)
 #define GLOW_UNDECORATED (1<<1)
+
+enum Glow_EventType {
+	eGlowKeyboardPressed,
+	eGlowKeyboardReleased,
+	eGlowMousePressed,
+	eGlowMouseReleased,
+	eGlowResized,
+	eGlowQuit = 0xFF
+};
+
+enum Glow_MouseButton{
+	eGlowLeft,
+	eGlowRight,
+	eGlowMiddle
+};
+
+#define GLOW_COORD_X 0
+#define GLOW_COORD_Y 1
+
+#define GLOW_GET_X(THAT) (THAT[0])
+#define GLOW_GET_Y(THAT) (THAT[1])
+
+typedef unsigned short glow_pixel_coords_t[2];
+
+#define GLOW_MAX_KEY_NAME_SIZE 16
+struct Glow_Event{
+	enum Glow_EventType type;
+	union {
+                /* String representing a key. Always null-terminated */
+		char key[GLOW_MAX_KEY_NAME_SIZE];
+                struct {
+			glow_pixel_coords_t xy;
+			enum Glow_MouseButton button;
+		} mouse;
+		glow_pixel_coords_t resize;
+	} value;
+};
 
 /******************************************************************************/
 /**
@@ -46,6 +87,9 @@ void Glow_CreateWindow(struct Glow_Window *out,
  * @brief Destroys a Window
  *
  * This will also destroy the Context (if it exists) for the Window.
+ *
+ * It is safe to free the memory for the window and the associated context
+ * (if one exists) after calling this.
  */
 void Glow_DestroyWindow(struct Glow_Window *window);
 
@@ -73,6 +117,10 @@ void Glow_GetWindowSize(const struct Glow_Window *window,
     unsigned *out_w, unsigned *out_h);
 
 void Glow_FlipScreen(struct Glow_Window *window);
+
+unsigned Glow_GetEvent(struct Glow_Window *window,
+    struct Glow_Event *out_event);
+void Glow_WaitEvent(struct Glow_Window *window, struct Glow_Event *out_event);
 
 /**
  * @brief OpenGL Context
@@ -121,7 +169,8 @@ int Glow_CreateContext(struct Glow_Window *window,
  * @brief Creates a context for a Window
  *
  * The context will not share with any other context, and will be version
- * 2.1 or lower.
+ * 2.1 or lower. This is useful just for bringing up a window and a context
+ * quickly without worrying about more advanced or unneeded features.
  *
  * The Context will be destroyed with the attached Window is destroyed.
  *
@@ -135,12 +184,25 @@ void Glow_CreateLegacyContext(struct Glow_Window *window,
  *
  * May return NULL if no context exists for the Window yet.
  */
-struct Glow_Context *Glow_GetContext(struct Glow_Window *window);
+GLOW_PURE struct Glow_Context *Glow_GetContext(struct Glow_Window *window);
 
 /**
  * @brief Makes the context current for this thread
  */
 void Glow_MakeCurrent(struct Glow_Context *ctx);
+
+/**
+ * @brief Creates a Window and an associated legacy GL Context for it.
+ *
+ * @warning Unlike all the other calls for Glow, this one uses malloc to
+ * allocate memory. You must call Glow_DestroyWindow and then free on the
+ * returned Window to properly free the memory.
+ * 
+ * @sa Glow_CreateLegacyContext
+ * @sa Glow_CreateWindow
+ */
+GLOW_RETURNS_NOT_NULL struct Glow_Window *Glow_CreateLegacyWindow(
+    unsigned w, unsigned h, const char *title);
 
 #ifdef __cplusplus
 }

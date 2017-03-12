@@ -40,8 +40,8 @@ draw(panel(Vertices), !IO) :-
     list.foldl(gl2_render.draw_model_vertex, Vertices, !IO),
     opengl2.end(!IO).
 
-:- instance render.heightmap(gl2_render.gl2_render, heightmap, opengl.texture.texture, mglow.window) where [
-    (draw_heightmap(gl2_render.gl2_render, heightmap(Faces), Tex, !IO) :-
+:- instance render.heightmap(gl2_render, heightmap, opengl.texture.texture) where [
+    (draw_heightmap(gl2_render, heightmap(Faces), Tex, !IO) :-
         opengl.texture.bind_texture(Tex, !IO),
         list.foldl(draw, Faces, !IO)
     )

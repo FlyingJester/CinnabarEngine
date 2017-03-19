@@ -41,10 +41,12 @@
 :- mode size(in, uo, uo, di, uo) is det.
 
 :- pred wait(window, window.window_event, io.io, io.io).
-:- mode wait(uo, in, di, uo) is det.
+:- mode wait(in, uo, di, uo) is det.
 
 :- pred check(window, maybe.maybe(window.window_event), io.io, io.io).
-:- mode check(uo, in, di, uo) is det.
+:- mode check(in, uo, di, uo) is det.
+
+:- pred make_current(context::in, io.io::di, io.io::uo) is det.
 
 %------------------------------------------------------------------------------%
 
@@ -138,10 +140,10 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
     "
         struct Glow_Event event;
         if(Glow_GetEvent(MGLOW_GET_WINDOW(Window), &event)){
-            Event = MW_Yes(MGlow_ConvertEvent(&event));
+            MaybeEvent = MW_Yes(MGlow_ConvertEvent(&event));
         }
         else{
-            Event = MW_No();
+            MaybeEvent = MW_No();
         }
         IOout = IOin;
     ").
@@ -185,10 +187,27 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
         IOout = IOin;
     ").
 
+:- pragma foreign_proc("C", make_current(Ctx::in, IOin::di, IOout::uo),
+    [will_not_call_mercury, promise_pure, will_not_throw_exception,
+     thread_safe, does_not_affect_liveness],
+    "
+        Glow_MakeCurrent(MGLOW_GET_CONTEXT(Ctx));
+        IOout = IOin;
+    ").
+
 :- instance window.window(window) where [
-%    ( window.gl_version(window.gl_version(Maj, Min), !Window) :-
-%        glow_window.gl_version(Maj, Min, !Window) ),
-    pred(window.wait/3) is glow_window.wait,
-    pred(window.check/3) is glow_window.check,
-    pred(window.run/6) is window.run_basic
+    pred(window.show/3) is glow_window.show,
+    pred(window.hide/3) is glow_window.hide,
+    pred(window.title/4) is glow_window.title,
+    pred(window.size/5) is glow_window.size,
+    pred(window.wait/4) is glow_window.wait,
+    pred(window.check/4) is glow_window.check
+].
+
+:- instance window.gl_context(context) where [
+    pred(window.make_current/3) is glow_window.make_current
+].
+
+:- instance window.gl_window(window, context) where [
+    pred(window.run/5) is window.run_basic
 ].

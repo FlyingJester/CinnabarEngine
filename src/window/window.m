@@ -48,8 +48,9 @@
 
 ].
 
+%------------------------------------------------------------------------------%
+
 :- typeclass gl_context(Ctx) where [
-%    func gl_version(Ctx) = (gl_version),
     pred make_current(Ctx::in, io.io::di, io.io::uo) is det
 ].
 
@@ -61,20 +62,20 @@
     % which can be used by Render.
     % run(Render, Frame, !Window, !IO)
     pred run(pred(io.io, io.io),
-        pred(list.list(string), list.list(window_event), Ctx, io.io, io.io),
+        pred(list.list(string), list.list(window_event), io.io, io.io),
         Window,
         io.io, io.io),
     mode run(pred(di, uo) is det,
-        pred(in, in, in, di, uo) is det,
+        pred(in, in, di, uo) is det,
         in,
         di, uo) is det
 ].
 
 %------------------------------------------------------------------------------%
 
-:- typeclass graphics_window(Window, Ctx) where [
-    func context(Window) = Ctx
-].
+%:- typeclass graphics_window(Window, Ctx) where [
+%    func context(Window) = Ctx
+%].
 
 %------------------------------------------------------------------------------%
 
@@ -95,7 +96,7 @@
     Window,
     io.io, io.io) <= gl_window(Window, Ctx).
 :- mode run_threaded(pred(di, uo) is det,
-    pred(in, in, di, uo) is det,
+    pred(in, in, in, di, uo) is det,
     pred(in, di, uo) is det,
     in, in,
     in,

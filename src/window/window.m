@@ -73,12 +73,6 @@
 
 %------------------------------------------------------------------------------%
 
-%:- typeclass graphics_window(Window, Ctx) where [
-%    func context(Window) = Ctx
-%].
-
-%------------------------------------------------------------------------------%
-
 :- pred run_basic(pred(io.io, io.io),
     pred(list.list(string), list.list(window_event), io.io, io.io),
     Window,

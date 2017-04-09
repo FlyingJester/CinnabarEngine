@@ -1,1 +1,1 @@
-PERLIN_SRC= perlin/perlin.m perlin/perlintest.m 
+PERLIN_SRC= perlin/perlintest.m perlin/perlin.m 

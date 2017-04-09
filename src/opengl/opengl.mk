@@ -1,1 +1,1 @@
-OPENGL_SRC= opengl/opengl2.m opengl/opengl.texture.m opengl/opengl.m opengl/opengl.texture.thread.m 
+OPENGL_SRC= opengl/opengl2.m opengl/opengl.texture.m opengl/opengl.m 

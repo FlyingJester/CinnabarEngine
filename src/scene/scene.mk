@@ -1,1 +1,1 @@
-SCENE_SRC= scene/scene.m scene/scene.matrix_tree.m 
+SCENE_SRC= scene/scene.matrix_tree.m scene/scene.m 

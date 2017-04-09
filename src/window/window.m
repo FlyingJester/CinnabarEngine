@@ -44,22 +44,8 @@
     mode title(in, in, di, uo) is det,
 
     pred size(Window, int, int, io.io, io.io),
-    mode size(in, uo, uo, di, uo) is det
+    mode size(in, uo, uo, di, uo) is det,
 
-].
-
-%------------------------------------------------------------------------------%
-
-:- typeclass gl_context(Ctx) where [
-    pred make_current(Ctx::in, io.io::di, io.io::uo) is det
-].
-
-%------------------------------------------------------------------------------%
-
-:- typeclass gl_window(Window, Ctx) <= (gl_context(Ctx), window(Window)) where [
-
-    % The context passed to Frame is only capable of creating new OpenGL objects
-    % which can be used by Render.
     % run(Render, Frame, !Window, !IO)
     pred run(pred(io.io, io.io),
         pred(list.list(string), list.list(window_event), io.io, io.io),
@@ -69,6 +55,13 @@
         pred(in, in, di, uo) is det,
         in,
         di, uo) is det
+
+].
+
+%------------------------------------------------------------------------------%
+
+:- typeclass gl_context(Ctx) where [
+    pred make_current(Ctx::in, io.io::di, io.io::uo) is det
 ].
 
 %------------------------------------------------------------------------------%
@@ -88,9 +81,9 @@
     pred(Ctx, io.io, io.io),
     Ctx, Ctx,
     Window,
-    io.io, io.io) <= gl_window(Window, Ctx).
+    io.io, io.io) <= (window(Window), gl_context(Ctx)).
 :- mode run_threaded(pred(di, uo) is det,
-    pred(in, in, in, di, uo) is det,
+    pred(in, in, di, uo) is det,
     pred(in, di, uo) is det,
     in, in,
     in,
@@ -168,7 +161,7 @@ create_no_event = maybe.no.
     list.list(string), list.list(string),
     list.list(window_event), list.list(window_event),
     bool.bool, io.io, io.io) <= window(Window).
-:- mode get_events(in, in, out, in, out, in, di, uo) is det.
+:- mode get_events(in, in, out, in, out, out, di, uo) is det.
 
 :- pred remove(string::in, list(string)::in, list(string)::out) is det.
 remove(Name, ListIn, ListOut) :- list.delete_all(ListIn, Name, ListOut).
@@ -327,5 +320,4 @@ run_threaded(Render, Frame, MakeCurrent, RenderCtx, FrameCtx, Window, IOi, IOo) 
     
     thread.mvar.put(KeysMVar, [], IO6, IO7),
     run_threaded_event(RenderDieMVar, FrameDieMVar, KeysMVar, EventChannel, Window, IO7, IOo).
-%    IOo = IO8.
     

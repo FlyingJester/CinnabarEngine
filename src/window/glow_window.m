@@ -52,7 +52,6 @@
 
 :- instance window.window(window).
 :- instance window.gl_context(context).
-:- instance window.gl_window(window, context).
 
 %==============================================================================%
 :- implementation.
@@ -122,6 +121,12 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
             MGLOW_GET_CONTEXT(Window));
         MR_GC_register_finalizer(Window, MGlowFinalizeWindow, NULL);
         IOout = IOin;
+    ").
+:- pragma foreign_proc("C",
+    context(Window::in) = (Context::out),
+    [promise_pure, will_not_throw_exception, thread_safe, will_not_call_mercury],
+    "
+        Context = MGLOW_GET_CONTEXT(Window);
     ").
 
 :- pragma foreign_proc("C",
@@ -201,13 +206,10 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
     pred(window.title/4) is glow_window.title,
     pred(window.size/5) is glow_window.size,
     pred(window.wait/4) is glow_window.wait,
-    pred(window.check/4) is glow_window.check
+    pred(window.check/4) is glow_window.check,
+    pred(window.run/5) is window.run_basic
 ].
 
 :- instance window.gl_context(context) where [
     pred(window.make_current/3) is glow_window.make_current
-].
-
-:- instance window.gl_window(window, context) where [
-    pred(window.run/5) is window.run_basic
 ].

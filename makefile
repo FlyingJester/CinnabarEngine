@@ -3,7 +3,10 @@ PARALLEL?=2
 all: cinnabar
 
 LIBDIR=${PWD}/lib
+ROOTDIR=${PWD}
+
 .export LIBDIR
+.export ROOTDIR
 
 .include "lib.mk"
 
@@ -12,7 +15,6 @@ cinnabar: $(CINLIBS)
 
 clean:
 	$(MAKE) -C src clean
-
 
 libclean: clean $(CINLIBSCLEAN)
 	rm $(CINLIBS)

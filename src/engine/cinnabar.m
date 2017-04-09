@@ -47,9 +47,8 @@
 :- pred engine(Render,
     thread.mvar.mvar(int),
     thread.mvar.mvar(scene_frame(Model, Texture, Heightmap)),
-    list.list(string), list.list(window.window_event), Ctx,
-    io.io, io.io) <= (window.gl_context(Ctx),
-            render.render(Render),
+    list.list(string), list.list(window.window_event),
+    io.io, io.io) <= (render.render(Render),
             render.skybox(Render, Texture),
             render.model(Render, Model),
             render.heightmap(Render, Heightmap, Texture)).
@@ -57,7 +56,7 @@
 :- mode engine(in,
     in,
     in,
-    in, in, in,
+    in, in,
     di, uo) is det.
 
 :- pred render(Render,
@@ -88,7 +87,7 @@ main(!IO) :-
             "Graphics other than OpenGL 2 are not supported yet!"
         ))
     ), % TODO: This will need to be made into a separate pred when different backends are supported!
-    ( Config ^ config.backend = config.glow ->
+    ( Config ^ config.back = config.glow ->
         W = Config ^ config.w, H = Config ^ config.h,
         Title = "Cinnabar Game Engine",
         glow_window.create_window(W, H, Title, Maj, Min, Window, !IO)
@@ -100,13 +99,11 @@ main(!IO) :-
     window.show(Window, !IO),
     window.run(Renderer, Engine, Window, !IO).
 
-
-engine(_, TimeMVar, SceneMVar, Keys, Events, GLCtx, !IO) :-
+engine(_, TimeMVar, SceneMVar, Keys, Events, !IO) :-
     thread.mvar.take(TimeMVar,OldTime, !IO),
     mchrono.micro_ticks(!IO, mchrono.microseconds(Time)),
     Duration = Time - OldTime,
-    thread.mvar.put(TimeMVar, Duration, !IO),
-    true.
+    thread.mvar.put(TimeMVar, Duration, !IO).
 
 render(Render, SceneMVar, !IO) :-
     thread.mvar.take(SceneMVar, SceneFrame, !IO),

@@ -47,13 +47,13 @@ create_ok(I) = ok(I).
 :- pragma foreign_export("C", create_ok(in) = (out), "Aimg_Mercury_CreateOK").
 
 :- pragma foreign_decl("C", "#include ""aimage/image.h""
-void AImg_Finalizer(void *image, void *unused);
+void AImg_ImageFinalizer(void *image, void *unused);
 ").
 :- pragma foreign_type("C", texture, "struct AImg_Image*").
 :- pragma foreign_type("C", color, "uint32_t").
 
 :- pragma foreign_code("C", "
-void AImg_Finalizer(void *image, void *unused){
+void AImg_ImageFinalizer(void *image, void *unused){
     AImg_DestroyImage(image);
     (void)image;
 }
@@ -83,7 +83,7 @@ void AImg_Finalizer(void *image, void *unused){
         const unsigned err = AImg_LoadAuto(&im, Path);
         if(err == AIMG_LOADPNG_SUCCESS){
             struct AImg_Image *const image = MR_GC_malloc_atomic(sizeof(struct AImg_Image));
-            MR_GC_register_finalizer(image, AImg_Finalizer, NULL);
+            MR_GC_register_finalizer(image, AImg_ImageFinalizer, NULL);
             image->pixels = im.pixels;
             image->w = im.w;
             image->h = im.h;

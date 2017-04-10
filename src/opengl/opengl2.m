@@ -16,11 +16,11 @@
 :- pred begin(opengl.shape_type::in, io.io::di, io.io::uo) is det.
 :- pred color(float::in, float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred enable_texture(io.io::di, io.io::uo) is det.
+:- pred light(light::in, material::in, float::in, float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred scale(float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred raster_pos(float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred rotate(float::in, float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred normal(float::in, float::in, float::in, io.io::di, io.io::uo) is det.
-:- pred light(light::in, material::in, float::in, float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred translate(float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred color(float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred vertex(float::in, float::in, float::in, io.io::di, io.io::uo) is det.
@@ -48,7 +48,7 @@
 :- pragma foreign_enum("C", face/0, [front - "GL_FRONT",back - "GL_BACK",front_and_back - "GL_FRONT_AND_BACK"]).
 :- pragma foreign_proc("C", light_position(LIGHT0::in, FLOAT1::in, FLOAT2::in, FLOAT3::in, FLOAT4::in, IO5::di, IO6::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"float Array2[4];Array2[0] = FLOAT1;Array2[1] = FLOAT2;Array2[2] = FLOAT3;Array2[3] = FLOAT4;
 	IO6=IO5;
-glLightf(LIGHT0, GL_POSITION, Array2);").
+glLightfv(LIGHT0, GL_POSITION, Array2);").
 :- pragma foreign_proc("C", vertex(FLOAT0::in, FLOAT1::in, IO2::di, IO3::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO3=IO2;
 glVertex2f(FLOAT0, FLOAT1);").
 :- pragma foreign_proc("C", pop_matrix(IO0::di, IO1::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO1=IO0;
@@ -65,6 +65,9 @@ glBegin(SHAPE_TYPE0);").
 glColor4f(FLOAT0, FLOAT1, FLOAT2, FLOAT3);").
 :- pragma foreign_proc("C", enable_texture(IO0::di, IO1::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO1=IO0;
 glEnable(GL_TEXTURE_2D);").
+:- pragma foreign_proc("C", light(LIGHT0::in, MATERIAL1::in, FLOAT2::in, FLOAT3::in, FLOAT4::in, FLOAT5::in, IO6::di, IO7::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"float Array2[4];Array2[0] = FLOAT2;Array2[1] = FLOAT3;Array2[2] = FLOAT4;Array2[3] = FLOAT5;
+	IO7=IO6;
+glLightfv(LIGHT0, MATERIAL1, Array2);").
 :- pragma foreign_proc("C", scale(FLOAT0::in, FLOAT1::in, FLOAT2::in, IO3::di, IO4::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO4=IO3;
 glScalef(FLOAT0, FLOAT1, FLOAT2);").
 :- pragma foreign_proc("C", raster_pos(FLOAT0::in, FLOAT1::in, IO2::di, IO3::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO3=IO2;
@@ -73,9 +76,6 @@ glRasterPos2f(FLOAT0, FLOAT1);").
 glRotatef(FLOAT0, FLOAT1, FLOAT2, FLOAT3);").
 :- pragma foreign_proc("C", normal(FLOAT0::in, FLOAT1::in, FLOAT2::in, IO3::di, IO4::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO4=IO3;
 glNormal3f(FLOAT0, FLOAT1, FLOAT2);").
-:- pragma foreign_proc("C", light(LIGHT0::in, MATERIAL1::in, FLOAT2::in, FLOAT3::in, FLOAT4::in, FLOAT5::in, IO6::di, IO7::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"float Array2[4];Array2[0] = FLOAT2;Array2[1] = FLOAT3;Array2[2] = FLOAT4;Array2[3] = FLOAT5;
-	IO7=IO6;
-glLightf(LIGHT0, MATERIAL1, Array2);").
 :- pragma foreign_proc("C", translate(FLOAT0::in, FLOAT1::in, FLOAT2::in, IO3::di, IO4::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO4=IO3;
 glTranslatef(FLOAT0, FLOAT1, FLOAT2);").
 :- pragma foreign_proc("C", color(FLOAT0::in, FLOAT1::in, FLOAT2::in, IO3::di, IO4::uo),[will_not_call_mercury, will_not_throw_exception,thread_safe, promise_pure, does_not_affect_liveness],"	IO4=IO3;

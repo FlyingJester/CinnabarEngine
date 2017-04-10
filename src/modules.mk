@@ -28,7 +28,7 @@ clean:
 	rm $(INCLUDES)
 
 cinnabar: Mercury.modules
-	$(MMCIN) cinnabar
+	$(MMCIN) cinnabar -lglow -lGL -lchrono -laimg -lpng -lbufferfile
 
 cinlaunch:
 	$(MAKE) -C launcher

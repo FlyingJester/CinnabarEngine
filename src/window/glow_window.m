@@ -64,7 +64,7 @@
 
 #define MGLOW_GET_WINDOW(THAT) ((struct Glow_Window*)THAT)
 #define MGLOW_GET_CONTEXT(THAT)\
-    ((struct Glow_Context*)(MGLOW_GET_WINDOW(THAT)+1))
+    ((struct Glow_Context*)(((unsigned char*)THAT)+Glow_WindowStructSize()))
 
 ").
 
@@ -101,9 +101,11 @@
             case eGlowMouseReleased:
                 return MW_CreateMouseEvent(p ? MW_mouse_down : MW_mouse_up,
                     event->value.mouse.xy[0], event->value.mouse.xy[1]);
+            case eGlowResized:
             case eGlowQuit:
                 return MW_CreateQuitEvent();
         }
+        return MW_CreateQuitEvent();
     }
     ").
 
@@ -114,14 +116,15 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
     create_window(W::in, H::in, Title::in, Maj::in, Min::in, Window::uo, IOin::di, IOout::uo),
     [promise_pure, will_not_throw_exception, thread_safe, tabled_for_io],
     "
-        const unsigned size = Glow_WindowStructSize() + Glow_WindowContextSize();
+        const unsigned size = Glow_WindowStructSize() + Glow_ContextStructSize();
         Window = MR_GC_malloc_atomic(size);
         Glow_CreateWindow(MGLOW_GET_WINDOW(Window), W, H, Title, 0);
         Glow_CreateContext(MGLOW_GET_WINDOW(Window), NULL, Maj, Min,
             MGLOW_GET_CONTEXT(Window));
-        MR_GC_register_finalizer(Window, MGlowFinalizeWindow, NULL);
+        MR_GC_register_finalizer(Window, MGlow_FinalizeWindow, NULL);
         IOout = IOin;
     ").
+    
 :- pragma foreign_proc("C",
     context(Window::in) = (Context::out),
     [promise_pure, will_not_throw_exception, thread_safe, will_not_call_mercury],

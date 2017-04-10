@@ -64,10 +64,10 @@
       "glDisable":["_GL_TEXTURE_2D"],
       "glRasterPos2f":["float", "float"],
       "glDrawPixels":["int", "int", "__GL_RGBA", "__GL_UNSIGNED_BYTE", "c_pointer"],
-      "glLightf":["light", "material", "_Array4float"]
+      "glLightfv":["light", "material", "_Array4float"]
     },
     "Io":{
-      "glLightf":["light", "_GL_POSITION", "_Array4float"]
+      "glLightfv":["light", "_GL_POSITION", "_Array4float"]
     }
   }
 }

@@ -103,7 +103,9 @@ engine(_, TimeMVar, SceneMVar, Keys, Events, !IO) :-
     thread.mvar.take(TimeMVar,OldTime, !IO),
     mchrono.micro_ticks(!IO, mchrono.microseconds(Time)),
     Duration = Time - OldTime,
-    thread.mvar.put(TimeMVar, Duration, !IO).
+    thread.mvar.put(TimeMVar, Duration, !IO),
+    % Dummy empty frame for now.
+    thread.mvar.try_put(SceneMVar, quit, _, !IO).
 
 render(Render, SceneMVar, !IO) :-
     thread.mvar.take(SceneMVar, SceneFrame, !IO),

@@ -275,7 +275,6 @@ int Glow_CreateContext(struct Glow_Window *window,
         GLX_CONTEXT_MINOR_VERSION_ARB, 0,
         None, None
     };
-    puts("LOL00");
     
     context_attribs[1] = major;
     context_attribs[3] = minor;
@@ -298,7 +297,6 @@ int Glow_CreateContext(struct Glow_Window *window,
         out->ctx = glXCreateNewContext(out->dpy, window->fbconfig, GLX_RGBA_TYPE, share_ctx, True);
     }
     else{
-        puts("LOL13");
         out->ctx = glXCreateContextAttribsARB(out->dpy, window->fbconfig, share_ctx, True, context_attribs);
     }
     

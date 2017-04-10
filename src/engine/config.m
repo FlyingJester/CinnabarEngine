@@ -162,7 +162,7 @@ load(Config, !IO) :-
     home_directory(Home, !IO),
     string.append(Home, ".cinnabar/cinnabar.ini", IniPath),
     io.open_input(IniPath, StreamResult, !IO),
-    DefaultConfig = config(window.gl_version(4, 0), glow, -1, -1),
+    DefaultConfig = config(window.gl_version(2, 0), glow, -1, -1),
     (
         StreamResult = io.ok(Stream),
         read_file_as_lines(Stream, [], Lines, !IO),
@@ -187,7 +187,7 @@ load(Config, !IO) :-
         StreamResult = io.error(Error),
         io.write_string("Could not open config file: ", !IO),
         io.write_string(io.error_message(Error), !IO), io.nl(!IO),
-        Config = config(window.gl_version(4, 0), glow, 640, 480)
+        Config = config(window.gl_version(2, 0), glow, 640, 480)
     ).
 
 %------------------------------------------------------------------------------%

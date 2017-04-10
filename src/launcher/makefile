@@ -6,7 +6,7 @@ CCFLAGS?=-Wall -Wextra -Werror -pedantic -Os -g
 CFLAGS?=$(CCFLAGS) -ansi
 CXXFLAGS?=$(CCFLAGS) -fno-rtti -fno-exceptions -std=c++98
 LINKFLAGS?=-g
-FLTKFLAGS!=fltk-config --ldstaticflags --use-images
+FLTKFLAGS!=fltk-config --ldflags --use-images
 
 all: cinlauncher
 

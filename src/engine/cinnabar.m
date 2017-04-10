@@ -111,6 +111,5 @@ render(Render, SceneMVar, !IO) :-
         SceneFrame = quit
     ;
         SceneFrame = scene(Scene, Matrices),
-        scene.draw(Render, Scene, Matrices, 0.0, 0.0, !IO),
-        render(Render, SceneMVar, !IO)
+        scene.draw(Render, Scene, Matrices, 0.0, 0.0, !IO)
     ).

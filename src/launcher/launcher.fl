@@ -1,0 +1,206 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0304
+use_FL_COMMAND
+header_name {.hpp}
+code_name {.cpp}
+decl {\#include <stdio.h>} {private global
+}
+
+decl {\#include <string>} {private global
+}
+
+declblock {\#ifndef _WIN32} {open after {\#endif}
+} {
+  decl {\#include <unistd.h>} {private global
+  }
+  decl {\#include <pwd.h>} {private global
+  }
+  decl {\#include <sys/types.h>} {private global
+  }
+  decl {\#include <sys/stat.h>} {private global
+  }
+  decl {\#include <fcntl.h>} {private global
+  }
+}
+
+widget_class CinnabarLauncher {
+  label {Cinnabar Engine} open
+  xywh {35 268 600 200} type Double color 32 selection_color 72 align 80
+  class Fl_Window noborder visible
+} {
+  Function {save()} {
+    comment {Saves current options.} open return_type void
+  } {
+    code {\#ifdef _WIN32
+HANDLE file__;
+\#define BUFFER_SIZE__ 0x400
+{
+	TCHAR *const filename__ = TEXT("cinnabar.ini");
+	const unsigned short filename_len__ = _tcslen(filename__);
+	TCHAR buffer__[BUFFER_SIZE];
+	GetModuleFileName(NULL, buffer__, BUFFER_SIZE - filename_len__);
+
+	{
+		short last_slash = -1;
+		const TCHAR slash = (TEXT("/"))[0];
+		unsigned short i;
+		for(i = 0; i < BUFFER_SIZE && buffer__[i] != 0; i++){
+			if(buffer__[i] == slash)
+				last_slash = i;
+		}
+
+		if(last_slash != -1)
+			i = last_slash;
+		unsigned short n = 0;
+		for(unsigned short n = 0; n <= filename_len__; n++){
+			buffer__[i+n] = filename__[n];
+		}
+	}
+		
+	file__ = CreateFile(buffer, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL);
+}
+\#define CIN_WRITE(DATA, LEN) WriteFile(file__, DATA, LEN, NULL, NULL)
+\#undef BUFFER_SIZE__
+\#else
+int file__;
+{
+	const char *home_dir__ = getenv("HOME");
+	if(home_dir__ == NULL){
+		const struct passwd *const pw__ = getpwuid(getuid());
+		home_dir__ = pw__->pw_dir;
+	}
+	std::string path = home_dir__;
+	if(path.back() != '/')
+		path += '/';
+	path += ".cinnabar/";
+	mkdir(path.c_str(), 0777);
+	path += "cinnabar.ini";
+	file__ = open(path.c_str(), O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+}
+\#define CIN_WRITE(DATA, LEN) (void)write(file__, DATA, LEN)
+\#endif
+\#define CIN_WRITE_STR(STR) CIN_WRITE(STR, sizeof(STR)-1)
+\#define CIN_WRITE_STRLEN(STR) do{ const char *const STR_ = STR; CIN_WRITE(STR_, strlen(STR_)); } while(false)
+
+if(en_fltk->value())
+	CIN_WRITE_STR("window=fltk\\n");
+else
+	CIN_WRITE_STR("window=glow\\n");
+
+if(en_gl4->value())
+	CIN_WRITE_STR("opengl=gl4\\n");
+else
+	CIN_WRITE_STR("opengl=gl2\\n");
+
+if(en_windowed->value())
+	CIN_WRITE_STR("windowed=true\\n");
+else
+	CIN_WRITE_STR("windowed=false\\n");
+
+CIN_WRITE_STR("width=");
+CIN_WRITE_STRLEN(win_w->value());
+CIN_WRITE("\\n", 1);
+
+CIN_WRITE_STR("height=");
+CIN_WRITE_STRLEN(win_h->value());
+CIN_WRITE("\\n", 1);
+
+\#ifdef _WIN32
+CloseHandle(file__);
+\#else
+close(file__);
+\#endif} {}
+  }
+  Fl_Button play_button {
+    label Play
+    callback {save();
+// TODO!
+exit(EXIT_SUCCESS);}
+    xywh {520 10 70 20} box THIN_UP_BOX color 64 selection_color 72 labelfont 13 labelcolor 28
+  }
+  Fl_Button options_button {
+    label Options
+    callback {wiz->value(options_group);
+o->deactivate();
+play_button->deactivate();}
+    xywh {520 35 70 20} box THIN_UP_BOX color 64 selection_color 72 labelfont 13 labelcolor 28
+  }
+  Fl_Button {} {
+    label Exit
+    callback {save();
+exit(EXIT_SUCCESS);}
+    xywh {520 60 70 20} box THIN_UP_BOX color 64 selection_color 72 labelfont 13 labelcolor 28
+  }
+  Fl_Wizard wiz {open
+    xywh {0 0 510 200} box FLAT_BOX color 0
+  } {
+    Fl_Group logo_group {open
+      xywh {0 0 510 200} color 0
+    } {
+      Fl_Box {} {
+        label Cinnabar selected
+        xywh {5 8 355 92} color 0 labelfont 14 labelsize 63 labelcolor 64
+      }
+    }
+    Fl_Group options_group {open
+      xywh {0 0 510 200} box FLAT_BOX color 0 hide
+    } {
+      Fl_Round_Button en_fltk {
+        label {FLTK OpenGL}
+        xywh {10 15 125 20} type Radio down_box ROUND_DOWN_BOX value 1 color 56 labelfont 14 labelcolor 72
+      }
+      Fl_Round_Button en_glow {
+        label {Glow OpenGL}
+        xywh {10 50 125 20} type Radio down_box ROUND_DOWN_BOX color 56 labelfont 14 labelcolor 72
+      }
+      Fl_Check_Button en_gl4 {
+        label {Use OpenGL 4}
+        xywh {10 85 125 20} down_box DOWN_BOX labelfont 14 labelcolor 72 deactivate
+      }
+      Fl_Check_Button en_windowed {
+        label Windowed
+        xywh {10 120 125 20} down_box DOWN_BOX value 1 labelfont 14 labelcolor 72
+      }
+      Fl_Input win_w {
+        label W
+        xywh {195 12 90 23} type Int color 64 selection_color 48 labelfont 14 labelcolor 72 textfont 13 textcolor 28
+      }
+      Fl_Input win_h {
+        label H
+        xywh {305 12 90 23} type Int color 64 selection_color 48 labelfont 14 labelcolor 72 textfont 13 textcolor 28
+      }
+      Fl_Button {} {
+        label Default
+        xywh {195 50 90 20} box THIN_UP_BOX color 64 selection_color 72 labelfont 13 labelcolor 28
+      }
+      Fl_Button {} {
+        label {+}
+        xywh {305 50 20 20} box THIN_UP_BOX color 64 selection_color 72 labelfont 13 labelcolor 28
+      }
+      Fl_Button {} {
+        label {-}
+        xywh {330 50 20 20} box THIN_UP_BOX color 64 selection_color 72 labelfont 13 labelcolor 28
+      }
+      Fl_Button {} {
+        label Wide
+        xywh {355 50 40 20} box THIN_UP_BOX color 64 selection_color 72 labelfont 13 labelcolor 28
+      }
+      Fl_Button {} {
+        label Save
+        callback {save();
+wiz->value(logo_group);
+options_button->activate();
+play_button->activate();}
+        xywh {325 120 70 20} box THIN_UP_BOX color 64 labelfont 14 labelcolor 28
+      }
+    }
+  }
+}
+
+Function {main(int argc, char **argv)} {open return_type int
+} {
+  code {CinnabarLauncher launcher;
+launcher.show();
+launcher.wiz->value(launcher.logo_group);
+return Fl::run();} {}
+}

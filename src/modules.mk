@@ -26,6 +26,7 @@ Mercury.modules: $(INCLUDES)
 clean:
 	rm Mercury.modules
 	rm $(INCLUDES)
+	mmc --make cinnabar.clean
 
 cinnabar: Mercury.modules
 	$(MMCIN) cinnabar -lglow -lGL -lchrono -laimg -lpng -lbufferfile

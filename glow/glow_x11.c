@@ -74,6 +74,8 @@ struct Glow_Window{
     struct Glow_Context *ctx;
     XVisualInfo *vis;
     
+    GLXFBConfig fbconfig;
+    
     unsigned w, h;
     int mouse_x, mouse_y;
 };
@@ -84,8 +86,6 @@ unsigned Glow_WindowStructSize(){
 
 void Glow_CreateWindow(struct Glow_Window *window,
     unsigned w, unsigned h, const char *title, int flags){
-    
-    GLXFBConfig fbconfig;
     
     window->w = w;
     window->h = h;
@@ -135,13 +135,13 @@ void Glow_CreateWindow(struct Glow_Window *window,
         assert(best != -1);
         assert(best < num);
         
-        fbconfig = config[best];
+        window->fbconfig = config[best];
 
         XFree(config);
     }
 
     /* Get a glX visual info for the fbconfig */
-    window->vis = glXGetVisualFromFBConfig(window->dpy, fbconfig);
+    window->vis = glXGetVisualFromFBConfig(window->dpy, window->fbconfig);
     if(window->vis == NULL){
         fputs("Could not create a glX visual\n", stderr);
         XCloseDisplay(window->dpy);
@@ -275,25 +275,31 @@ int Glow_CreateContext(struct Glow_Window *window,
         GLX_CONTEXT_MINOR_VERSION_ARB, 0,
         None, None
     };
-    
-    GLXFBConfig fbconfig;
+    puts("LOL00");
     
     context_attribs[1] = major;
     context_attribs[3] = minor;
     
+    out->gl[0] = major;
+    out->gl[1] = minor;
+    
+    out->dpy = window->dpy;
+    out->wnd = window->wnd;
+    
     typedef GLXContext (*glXCreateContextAttribsARB_t)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
     const glXCreateContextAttribsARB_t glXCreateContextAttribsARB =
         (glXCreateContextAttribsARB_t)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-    const GLXContext share_ctx = opt_share ? opt_share->ctx : 0;
-    
+    const GLXContext share_ctx = opt_share != NULL ? opt_share->ctx : 0;
+
     if(glXCreateContextAttribsARB == NULL){
-        fputs("Could not use glXCreateContextAttribsARB, expect the wrong version of OpenGL", stderr);
+        fputs("Could not use glXCreateContextAttribsARB, expect the wrong version of OpenGL\n", stderr);
         if(major > 2)
             return -1;
-        out->ctx = glXCreateNewContext(out->dpy, fbconfig, GLX_RGBA_TYPE, share_ctx, True);
+        out->ctx = glXCreateNewContext(out->dpy, window->fbconfig, GLX_RGBA_TYPE, share_ctx, True);
     }
     else{
-        out->ctx = glXCreateContextAttribsARB(out->dpy, fbconfig, share_ctx, True, context_attribs);
+        puts("LOL13");
+        out->ctx = glXCreateContextAttribsARB(out->dpy, window->fbconfig, share_ctx, True, context_attribs);
     }
     
     if(window->ctx != NULL)

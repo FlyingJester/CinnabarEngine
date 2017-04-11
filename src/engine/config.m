@@ -9,7 +9,7 @@
 
 %------------------------------------------------------------------------------%
 
-:- type backend ---> fltk ; glow.
+:- type backend ---> fltk ; glow ; null.
 :- type config ---> config(gl_version::window.gl_version,
     back::backend,
     w::int,
@@ -99,6 +99,10 @@
 #endif
     ").
 
+
+:- func default_backend = (backend::uo) is det.
+default_backend = null.
+
 :- pred config_fold(string::in, config::di, config::uo) is det.
 config_fold(Line, !Config) :-
     string.split_at_char(('='), Line) = Strings,
@@ -112,8 +116,12 @@ config_fold(Line, !Config) :-
         ( Key = "window" ->
             ( Value = "fltk" -> 
                 !Config ^ back := fltk
-            ;
+            ; Value = "null" ->
+                !Config ^ back := null
+            ; Value = "glow" ->
                 !Config ^ back := glow
+            ;
+                true
             )
         ; Key = "opengl" ->
             ( ( Value = "gl4" ; Value = "4") ->
@@ -155,6 +163,8 @@ copy_config(Config, W+0, H+0) = config(window.gl_version(Maj, Min), Back, W, H) 
     (
         Config ^ back = fltk, Back = fltk
     ;
+        Config ^ back = null, Back = null
+    ;
         Config ^ back = glow, Back = glow
     ).
 
@@ -162,7 +172,7 @@ load(Config, !IO) :-
     home_directory(Home, !IO),
     string.append(Home, ".cinnabar/cinnabar.ini", IniPath),
     io.open_input(IniPath, StreamResult, !IO),
-    DefaultConfig = config(window.gl_version(2, 0), glow, -1, -1),
+    DefaultConfig = config(window.gl_version(2, 0), default_backend, -1, -1),
     (
         StreamResult = io.ok(Stream),
         read_file_as_lines(Stream, [], Lines, !IO),
@@ -187,7 +197,7 @@ load(Config, !IO) :-
         StreamResult = io.error(Error),
         io.write_string("Could not open config file: ", !IO),
         io.write_string(io.error_message(Error), !IO), io.nl(!IO),
-        Config = config(window.gl_version(2, 0), glow, 640, 480)
+        Config = config(window.gl_version(2, 0), default_backend, 640, 480)
     ).
 
 %------------------------------------------------------------------------------%

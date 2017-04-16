@@ -5,8 +5,8 @@ extern "C" {
 #endif
 
 void Lightning_MicrosecondsSleep(unsigned);
-unsigned Lightning_GetMicrosecondsTime();
-unsigned Lightning_GetMillisecondsTime();
+unsigned Lightning_GetMicrosecondsTime(void);
+unsigned Lightning_GetMillisecondsTime(void);
 
 #ifdef __cplusplus
 }

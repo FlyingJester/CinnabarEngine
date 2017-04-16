@@ -11,21 +11,10 @@
 
 %------------------------------------------------------------------------------%
 
-:- type window.
-:- type context.
+:- type window ---> window.
+:- type context ---> context.
 
 %------------------------------------------------------------------------------%
-
-:- pred create_window(int, int, string, window.gl_version, window, io.io, io.io).
-:- mode create_window(in, in, in, in, uo, di, uo) is det.
-:- mode create_window(in, in, in, di, uo, di, uo) is det.
-:- mode create_window(di, di, in, in, uo, di, uo) is det.
-:- mode create_window(di, di, in, di, uo, di, uo) is det.
-
-:- pred create_window(int, int, string, int, int, window, io.io, io.io).
-:- mode create_window(in, in, in, in, in, uo, di, uo) is det.
-
-:- func context(window) = context.
 
 :- pred hide(window, io.io, io.io).
 :- mode hide(in, di, uo) is det.
@@ -55,14 +44,6 @@
 %==============================================================================%
 :- implementation.
 %==============================================================================%
-
-:- type window ---> window.
-:- type context ---> context.
-
-create_window(_, _, _, _, window, !IO).
-create_window(_, _, _, _, _, window, !IO).
-
-context(_) = context.
 
 hide(window, !IO).
 show(window, !IO).

@@ -71,7 +71,7 @@ struct Glow_Window;
  * You must allocate the memory for windows on the application side. This will
  * return the size needed.
  */
-GLOW_CONST unsigned Glow_WindowStructSize();
+GLOW_CONST unsigned Glow_WindowStructSize(void);
 
 /**
  * @brief Creates a Window
@@ -137,7 +137,7 @@ struct Glow_Context;
  * You must allocate the memory for contexts on the application side. This will
  * return the size needed.
  */
-GLOW_CONST unsigned Glow_ContextStructSize();
+GLOW_CONST unsigned Glow_ContextStructSize(void);
 
 /**
  * @brief Creates a context for the specified window

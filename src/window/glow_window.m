@@ -64,7 +64,7 @@
 
 #define MGLOW_GET_WINDOW(THAT) ((struct Glow_Window*)THAT)
 #define MGLOW_GET_CONTEXT(THAT)\
-    ((struct Glow_Context*)(((unsigned char*)THAT)+Glow_WindowStructSize()))
+    ((struct Glow_Context*)(((unsigned char*)THAT)+Glow_WindowStructSize() + 64))
 
 ").
 
@@ -91,9 +91,10 @@
                 p = 1; /* FALLTHROUGH */
             case eGlowKeyboardReleased:
                 {
-                    char *const k = MR_GC_malloc_atomic(GLOW_MAX_KEY_NAME_SIZE);
-                    for(unsigned i = 0; i < GLOW_MAX_KEY_NAME_SIZE / sizeof(MR_Word); i++)
-                        ((MR_Word*)k)[i] = ((MR_Word*)event->value.key)[i];
+                    char *const k = MR_GC_malloc_atomic(GLOW_MAX_KEY_NAME_SIZE+1);
+                    for(unsigned i = 0; i < GLOW_MAX_KEY_NAME_SIZE; i++)
+                        k[i] = event->value.key[i];
+                    k[GLOW_MAX_KEY_NAME_SIZE] = 0;
                     return MW_CreateKeyEvent(p ? MW_key_down : MW_key_up, k);
                 }
             case eGlowMousePressed:
@@ -116,7 +117,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
     create_window(W::in, H::in, Title::in, Maj::in, Min::in, Window::uo, IOin::di, IOout::uo),
     [promise_pure, will_not_throw_exception, thread_safe, tabled_for_io],
     "
-        const unsigned size = Glow_WindowStructSize() + Glow_ContextStructSize();
+        const unsigned size = Glow_WindowStructSize() + Glow_ContextStructSize() + 0xFF;
         Window = MR_GC_malloc_atomic(size);
         Glow_CreateWindow(MGLOW_GET_WINDOW(Window), W, H, Title, 0);
         Glow_CreateContext(MGLOW_GET_WINDOW(Window), NULL, Maj, Min,
@@ -127,7 +128,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
     
 :- pragma foreign_proc("C",
     context(Window::in) = (Context::out),
-    [promise_pure, will_not_throw_exception, thread_safe, will_not_call_mercury],
+    [promise_pure, will_not_throw_exception, will_not_call_mercury, thread_safe],
     "
         Context = MGLOW_GET_CONTEXT(Window);
     ").
@@ -158,8 +159,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
 
 :- pragma foreign_proc("C",
     hide(Window::in, IOin::di, IOout::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception,
-     thread_safe, does_not_affect_liveness],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
         Glow_HideWindow(MGLOW_GET_WINDOW(Window));
         IOout = IOin;
@@ -167,8 +167,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
 
 :- pragma foreign_proc("C",
     show(Window::in, IOin::di, IOout::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception,
-     thread_safe, does_not_affect_liveness],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
         Glow_ShowWindow(MGLOW_GET_WINDOW(Window));
         IOout = IOin;
@@ -176,8 +175,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
 
 :- pragma foreign_proc("C",
     title(Window::in, Title::in, IOin::di, IOout::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception,
-     thread_safe, does_not_affect_liveness],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
         Glow_SetTitle(MGLOW_GET_WINDOW(Window), Title);
         IOout = IOin;
@@ -185,8 +183,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
 
 :- pragma foreign_proc("C",
     size(Window::in, W::uo, H::uo, IOin::di, IOout::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception,
-     thread_safe, does_not_affect_liveness],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
         unsigned lw, lh;
         Glow_GetWindowSize(MGLOW_GET_WINDOW(Window), &lw, &lh);
@@ -196,8 +193,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
     ").
 
 :- pragma foreign_proc("C", make_current(Ctx::in, IOin::di, IOout::uo),
-    [will_not_call_mercury, promise_pure, will_not_throw_exception,
-     thread_safe, does_not_affect_liveness],
+    [will_not_call_mercury, promise_pure, will_not_throw_exception, thread_safe],
     "
         Glow_MakeCurrent(MGLOW_GET_CONTEXT(Ctx));
         IOout = IOin;

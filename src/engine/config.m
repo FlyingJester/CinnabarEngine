@@ -101,7 +101,7 @@
 
 
 :- func default_backend = (backend::uo) is det.
-default_backend = null.
+default_backend = glow.
 
 :- pred config_fold(string::in, config::di, config::uo) is det.
 config_fold(Line, !Config) :-

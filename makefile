@@ -4,13 +4,24 @@ all: cinnabar
 
 LIBDIR=${PWD}/lib
 ROOTDIR=${PWD}
+PYTHON?=python
 
 .export LIBDIR
 .export ROOTDIR
 
+all: cinnabar
+
+src/engine/ilib.m: bottles/ilib.json
+	$(PYTHON) bottlegen/generate.py -lm bottles/ilib.json
+	mv ilib.m src/engine/ilib.m
+
+src/engine/cell.m: bottles/cell.json
+	$(PYTHON) bottlegen/generate.py -lm bottles/cell.json
+	mv cell.m src/engine/cell.m
+
 .include "lib.mk"
 
-cinnabar: $(CINLIBS)
+cinnabar: $(CINLIBS) src/engine/ilib.m src/engine/cell.m
 	$(MAKE) -C src
 
 clean:

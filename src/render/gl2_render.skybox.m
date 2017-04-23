@@ -6,6 +6,7 @@
 :- use_module opengl.
 :- use_module opengl.texture.
 :- use_module render.
+
 %------------------------------------------------------------------------------%
 
 % draw(Pitch, Yaw, Texture, !IO)
@@ -23,8 +24,12 @@
 :- use_module opengl2.
 :- use_module upload_aimg.
 
+%------------------------------------------------------------------------------%
+
 :- func sin_quarter_pi = float.
 sin_quarter_pi = 0.707106781.
+
+%------------------------------------------------------------------------------%
 
 :- pred outer_edge(io.io::di, io.io::uo) is det.
 outer_edge(!IO) :-
@@ -55,7 +60,8 @@ outer_edge(!IO) :-
 
     opengl2.tex_coord(1.0, 0.5, !IO),
     opengl2.vertex(10.0, 0.0, 0.0, !IO).
-        
+
+%------------------------------------------------------------------------------%
 
 draw(Pitch, Yaw, Texture, !IO) :-
     SQP = sin_quarter_pi * 10.0,
@@ -85,6 +91,8 @@ draw(Pitch, Yaw, Texture, !IO) :-
 
     opengl.enable_depth_test(!IO),
     opengl.clear_depth_buffer_bit(!IO).
+
+%------------------------------------------------------------------------------%
 
 :- instance render.skybox(gl2_render, opengl.texture.texture) where [
     (render.draw_skybox(gl2_render, Pitch, Yaw, Tex, !IO) :- draw(Pitch, Yaw, Tex, !IO)),

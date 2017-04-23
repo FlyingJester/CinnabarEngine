@@ -56,6 +56,8 @@
     thread.mvar.mvar(int),
     thread.mvar.mvar(scene_frame(Model, Texture, Heightmap)),
     list.list(string), list.list(window.window_event),
+    scene_frame(Model, Texture, Heightmap),
+    scene_frame(Model, Texture, Heightmap),
     io.io, io.io) <= (render.render(Render),
             render.skybox(Render, Texture),
             render.model(Render, Model),
@@ -65,6 +67,8 @@
     in,
     in,
     in, in,
+    in,
+    out,
     di, uo) is det.
 
 %------------------------------------------------------------------------------%
@@ -77,6 +81,9 @@
         render.heightmap(Render, Heightmap, Texture)).
 
 :- mode render(in, in, di, uo) is det.
+
+%------------------------------------------------------------------------------%
+
 
 %------------------------------------------------------------------------------%
 
@@ -129,20 +136,21 @@ main_2(Config, Window, Context, !IO) :-
         thread.mvar.put(SceneMVar, null_scene, !IO),
         thread.mvar.put(TimeMVar, 0, !IO),
         Renderer = render(null_render.null_render, SceneMVar),
-        Engine = engine(null_render.null_render, TimeMVar, SceneMVar)
+        Engine = engine(null_render.null_render, TimeMVar, SceneMVar),
+        window.run(Renderer, Engine, Window, null_scene, !IO)
     ; (Maj =< 2 ; ( Maj = 3, Min < 2) ) -> % OpenGL 1.3, 2.0, 2.1, 3.0, and 3.1
         thread.mvar.init(TimeMVar, !IO),
         thread.mvar.init(SceneMVar, !IO),
         thread.mvar.put(SceneMVar, gl2_scene, !IO),
         thread.mvar.put(TimeMVar, 0, !IO),
         Renderer = render(gl2_render.gl2_render, SceneMVar),
-        Engine = engine(gl2_render.gl2_render, TimeMVar, SceneMVar)
+        Engine = engine(gl2_render.gl2_render, TimeMVar, SceneMVar),
+        window.run(Renderer, Engine, Window, gl2_scene, !IO)
     ; (Maj = 4 ; ( Maj = 3, Min > 1) ) -> % OpenGL 3.2+, 4.0+
         throw(software_error("OpenGL 4 not yet supported!"))
     ; % Why do you do this to me?
         throw(software_error("Unknown OpenGL version!"))
-    ),
-    window.run(Renderer, Engine, Window, !IO).
+    ).
 
 %------------------------------------------------------------------------------%
 
@@ -152,13 +160,14 @@ main(!IO) :-
 
 %------------------------------------------------------------------------------%
 
-engine(_, TimeMVar, SceneMVar, Keys, Events, !IO) :-
+engine(_, TimeMVar, SceneMVar, Keys, Events, SceneIn, SceneOut, !IO) :-
     thread.mvar.take(TimeMVar,OldTime, !IO),
     mchrono.micro_ticks(!IO, mchrono.microseconds(Time)),
     Duration = Time - OldTime,
     thread.mvar.put(TimeMVar, Duration, !IO),
-    % Dummy empty frame for now.
-    thread.mvar.try_put(SceneMVar, quit, _, !IO).
+    % Forward Scene for now...
+    SceneIn = SceneOut,
+    thread.mvar.try_put(SceneMVar, SceneIn, _, !IO).
 
 %------------------------------------------------------------------------------%
 

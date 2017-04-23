@@ -206,7 +206,7 @@ create_window(W, H, Title, window.gl_version(Maj, Min), Window, !IO) :-
     pred(window.size/5) is glow_window.size,
     pred(window.wait/4) is glow_window.wait,
     pred(window.check/4) is glow_window.check,
-    pred(window.run/5) is window.run_basic
+    pred(window.run/6) is window.run_basic
 ].
 
 :- instance window.gl_context(context) where [

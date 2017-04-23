@@ -65,7 +65,7 @@ make_current(context, !IO).
     pred(window.size/5) is null_window.size,
     pred(window.wait/4) is null_window.wait,
     pred(window.check/4) is null_window.check,
-    pred(window.run/5) is window.run_basic
+    pred(window.run/6) is window.run_basic
 ].
 
 :- instance window.gl_context(context) where [

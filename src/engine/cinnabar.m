@@ -116,29 +116,30 @@ main_1(Config, !IO) :-
         throw(software_error("FLTK backend is not yet supported!"))
     ).
 
-% main_2 creates a renderer, and the default scene.
+%------------------------------------------------------------------------------%
+% main_2 creates a renderer and the default scene.
 :- pred main_2(config.config::in, Window::in, Context::in, io.io::di, io.io::uo)
      is det <= (window.window(Window), window.gl_context(Context)).
 main_2(Config, Window, Context, !IO) :-
     window.show(Window, !IO),
     Config ^ config.gl_version = window.gl_version(Maj, Min),
-    ( Maj = 0 ->
+    ( Maj = 0 -> % Null render
         thread.mvar.init(TimeMVar, !IO),
         thread.mvar.init(SceneMVar, !IO),
         thread.mvar.put(SceneMVar, null_scene, !IO),
         thread.mvar.put(TimeMVar, 0, !IO),
         Renderer = render(null_render.null_render, SceneMVar),
         Engine = engine(null_render.null_render, TimeMVar, SceneMVar)
-    ; (Maj =< 2 ; ( Maj = 3, Min < 2) ) ->
+    ; (Maj =< 2 ; ( Maj = 3, Min < 2) ) -> % OpenGL 1.3, 2.0, 2.1, 3.0, and 3.1
         thread.mvar.init(TimeMVar, !IO),
         thread.mvar.init(SceneMVar, !IO),
         thread.mvar.put(SceneMVar, gl2_scene, !IO),
         thread.mvar.put(TimeMVar, 0, !IO),
         Renderer = render(gl2_render.gl2_render, SceneMVar),
         Engine = engine(gl2_render.gl2_render, TimeMVar, SceneMVar)
-    ; (Maj = 4 ; ( Maj = 3, Min > 1) ) ->
+    ; (Maj = 4 ; ( Maj = 3, Min > 1) ) -> % OpenGL 3.2+, 4.0+
         throw(software_error("OpenGL 4 not yet supported!"))
-    ;
+    ; % Why do you do this to me?
         throw(software_error("Unknown OpenGL version!"))
     ),
     window.run(Renderer, Engine, Window, !IO).

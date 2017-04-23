@@ -22,6 +22,8 @@
 :- implementation.
 %==============================================================================%
 
+:- use_module io.
+
 :- type null_model ---> null_model.
 :- type null_texture ---> null_texture.
 :- type null_heightmap ---> null_heightmap.
@@ -64,7 +66,8 @@
 %------------------------------------------------------------------------------%
 
 :- instance render.skybox(null_render, null_texture) where [
-    draw_skybox(null_render, _, _, null_texture, !IO)
+    draw_skybox(null_render, _, _, null_texture, !IO),
+    load_skybox(null_render, _, io.ok(null_texture), !IO)
 ].
 
 %------------------------------------------------------------------------------%

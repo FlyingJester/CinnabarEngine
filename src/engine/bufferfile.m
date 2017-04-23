@@ -17,6 +17,7 @@
 :- pred open(string::in, io.res(file)::uo, io.io::di, io.io::uo) is det.
 :- func size(file) = int.
 :- pred map(file::in, int::in, buffer.buffer::uo) is det.
+:- pred map(file::in, buffer.buffer::uo) is det.
 
 %==============================================================================%
 :- implementation.
@@ -158,6 +159,8 @@ void MerBufferFile_FileFinalizer(void *data, void *unused){
         MR_GC_register_finalizer(buffer, MerBufferFile_BufferFinalizer, File);
         Buffer = buffer;
     ").
+
+map(File, Buffer) :- map(File, size(File), Buffer).
 
 bufferfile(Name, MaybeOutput, !IO) :-
     open(Name, MaybeFile, !IO),

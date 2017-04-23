@@ -14,7 +14,8 @@
 :- func pixels(texture) = c_pointer.
 :- type result ---> ok(texture) ; nofile ; badfile.
 
-:- pred load(io.io::di, io.io::uo, string::in, result::out) is det.
+:- pred load(string::in, result::out, io.io::di, io.io::uo) is det.
+:- pred load_io(string::in, io.res(texture)::out, io.io::di, io.io::uo) is det.
 :- func empty = (texture::uo) is det.
 
 :- type color.
@@ -33,6 +34,8 @@
 %==============================================================================%
 :- implementation.
 %==============================================================================%
+
+:- use_module string.
 
 :- func create_nofile = result.
 :- func create_badfile = result.
@@ -74,7 +77,7 @@ void AImg_ImageFinalizer(void *image, void *unused){
      thread_safe, promise_pure, does_not_affect_liveness],
     " H = Image->h; ").
 
-:- pragma foreign_proc("C", load(IO0::di, IO1::uo, Path::in, Result::out), 
+:- pragma foreign_proc("C", load(Path::in, Result::out, IO0::di, IO1::uo), 
     [promise_pure, thread_safe, will_not_throw_exception],
     "
     IO1 = IO0;
@@ -95,6 +98,21 @@ void AImg_ImageFinalizer(void *image, void *unused){
             Result = Aimg_Mercury_CreateBadFile();
     }
     ").
+
+load_io(Path, Result, !IO) :-
+    load(Path, TexResult, !IO),
+    (
+        TexResult = ok(Texture),
+        Result = io.ok(Texture)
+    ;
+        TexResult = badfile,
+        Err = string.append(Path, " is not valid"),
+        Result = io.error(io.make_io_error(Err))
+    ;
+        TexResult = nofile,
+        Err = string.append(Path, " does not exist"),
+        Result = io.error(io.make_io_error(Err))
+    ).
 
 :- pragma foreign_proc("C", empty = (Image::uo), 
     [will_not_call_mercury, will_not_throw_exception,

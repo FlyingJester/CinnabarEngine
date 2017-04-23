@@ -18,8 +18,10 @@
 :- implementation.
 %==============================================================================%
 
-:- use_module opengl2.
+:- use_module string.
 :- import_module float.
+:- use_module opengl2.
+:- use_module upload_aimg.
 
 :- func sin_quarter_pi = float.
 sin_quarter_pi = 0.707106781.
@@ -85,5 +87,20 @@ draw(Pitch, Yaw, Texture, !IO) :-
     opengl.clear_depth_buffer_bit(!IO).
 
 :- instance render.skybox(gl2_render, opengl.texture.texture) where [
-    (render.draw_skybox(gl2_render, Pitch, Yaw, Tex, !IO) :- draw(Pitch, Yaw, Tex, !IO))
+    (render.draw_skybox(gl2_render, Pitch, Yaw, Tex, !IO) :- draw(Pitch, Yaw, Tex, !IO)),
+    (render.load_skybox(gl2_render, Path, Result, !IO) :- 
+        upload_aimg.load_path(Path, TexResult, !IO),
+        (
+            TexResult = upload_aimg.ok(Tex),
+            Result = io.ok(Tex)
+        ;
+            TexResult = upload_aimg.badfile,
+            Err = string.append(Path, " is not valid"),
+            Result = io.error(io.make_io_error(Err))
+        ;
+            TexResult = upload_aimg.nofile,
+            Err = string.append(Path, " does not exist"),
+            Result = io.error(io.make_io_error(Err))
+        )
+    )
 ].

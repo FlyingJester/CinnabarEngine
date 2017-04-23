@@ -95,7 +95,10 @@
 
 % Texture is also called Skybox in other places.
 :- typeclass skybox(Ctx, Texture) <= render(Ctx) where [
-    % draw(Renderer, Pitch, Yaw, Tex, !Window)
+    % load(Renderer, FilePath, Skybox, !IO)
+    pred load_skybox(Ctx, string, io.res(Texture), io.io, io.io),
+    mode load_skybox(in, in, out, di, uo) is det,
+    % draw(Renderer, Pitch, Yaw, Tex, !IO)
     pred draw_skybox(Ctx, float, float, Texture, io.io, io.io),
     mode draw_skybox(in, in, in, in, di, uo) is det
 ].

@@ -30,7 +30,7 @@ load(aimg.badfile, badfile, !IO).
 load(aimg.ok(AImgTex), ok(GLTex), !IO) :- upload(AImgTex, GLTex, !IO).
 
 load_path(Path, Result, !IO) :-
-    aimg.load(!IO, Path, AImgResult),
+    aimg.load(Path, AImgResult, !IO),
     load(AImgResult, Result, !IO).
 
 upload(AImgTex, Tex, !IO) :-

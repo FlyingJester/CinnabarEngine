@@ -14,7 +14,7 @@ def is_unix():
     return False
 
 if os.name == "nt" or sys.platform == "msys":
-    libglow = environment.SharedLibrary("glow", ["glow_win32.c"], LIBS = ["OpenGL32", "gdi32"])
+    libglow = environment.SharedLibrary("glow", ["glow_win32.c"], LIBS = ["OpenGL32", "gdi32", "user32"])
 elif "be" in sys.platform or sys.platform.startswith("haiku"):
     libglow = environment.SharedLibrary("glow", ["glow_haiku.cpp"], LIBS = ["be", "gl"])
 elif is_unix():

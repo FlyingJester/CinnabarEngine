@@ -23,15 +23,26 @@
  */
 
 #ifndef AIMG_PLATFORM_API
+#define AIMG_PLATFORM_API
 
-#ifdef _MSC_VER
-#ifdef AIMG_EXPORTS
-#define AIMG_API __declspec(dllexport)
+#if ( defined _MSC_VER ) || ( defined __WATCOMC__ )
+#ifdef _WIN64
+#define AIMG_FASTCALL
 #else
-#define AIMG_API __declspec(dllimport)
+#define AIMG_FASTCALL __fastcall
+#endif
+#ifdef AIMG_EXPORTS
+#define AIMG_API(X) __declspec(dllexport) X AIMG_FASTCALL
+#else
+#define AIMG_API(X) __declspec(dllimport) X AIMG_FASTCALL
 #endif
 #else
-#define AIMG_API
+#ifdef __GNUC__
+#define AIMG_FASTCALL __fastcall
+#else
+#define AIMG_FASTCALL
+#endif
+#define AIMG_API(X) X FASTCALL
 #endif
 
 #endif

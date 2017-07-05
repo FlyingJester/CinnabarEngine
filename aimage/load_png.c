@@ -40,8 +40,8 @@ static void AImg_PNGReadCallback(png_struct *png_ctx, png_byte *data, png_size_t
     data_buffer->at += length;
 }
 
-unsigned AImg_LoadPNG(struct AImg_Image *to, const char *path){
-	void *data;
+unsigned AIMG_FASTCALL AImg_LoadPNG(struct AImg_Image *to, const char *path){
+	const void *data;
 	int size;
 	
     if(!to || !path)
@@ -58,7 +58,7 @@ unsigned AImg_LoadPNG(struct AImg_Image *to, const char *path){
 	}
 }
 
-unsigned AImg_LoadPNGMem(struct AImg_Image *to, const void *data, unsigned size){
+unsigned AIMG_FASTCALL AImg_LoadPNGMem(struct AImg_Image *to, const void *data, unsigned size){
 
     struct aimg_png_buffer data_buffer;
     unsigned char color_type, bit_depth;

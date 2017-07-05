@@ -20,6 +20,17 @@ extern "C" {
 #define GLOW_RESIZABLE   (1<<0)
 #define GLOW_UNDECORATED (1<<1)
 
+#ifdef _WIN32
+  #ifdef GLOW_EXPORTS
+    #define GLOW_EXPORT __declspec(dllexport)
+  #else
+    #define GLOW_EXPORT __declspec(dllimport)
+  #endif
+#else
+  #define GLOW_EXPORT
+#endif
+
+
 enum Glow_EventType {
 	eGlowKeyboardPressed,
 	eGlowKeyboardReleased,
@@ -42,6 +53,20 @@ enum Glow_MouseButton{
 #define GLOW_GET_Y(THAT) (THAT[1])
 
 typedef unsigned short glow_pixel_coords_t[2];
+
+/* Key constants */
+#define GLOW_ESCAPE      "escape"
+#define GLOW_SHIFT       "shift"
+#define GLOW_CONTROL     "control"
+#define GLOW_BACKSPACE   "backspace"
+#define GLOW_DELETE   "backspace"
+#define GLOW_UP_ARROW    "up"
+#define GLOW_DOWN_ARROW  "down"
+#define GLOW_LEFT_ARROW  "left"
+#define GLOW_RIGHT_ARROW "right"
+#define GLOW_ENTER "enter"
+#define GLOW_RETURN GLOW_ENTER
+#define GLOW_TAB "tab"
 
 #define GLOW_MAX_KEY_NAME_SIZE 16
 struct Glow_Event{
@@ -71,7 +96,7 @@ struct Glow_Window;
  * You must allocate the memory for windows on the application side. This will
  * return the size needed.
  */
-GLOW_CONST unsigned Glow_WindowStructSize(void);
+GLOW_EXPORT GLOW_CONST unsigned Glow_WindowStructSize(void);
 
 /**
  * @brief Creates a Window
@@ -80,7 +105,7 @@ GLOW_CONST unsigned Glow_WindowStructSize(void);
  * 
  * @sa Glow_ShowWindow
  */
-void Glow_CreateWindow(struct Glow_Window *out,
+GLOW_EXPORT void Glow_CreateWindow(struct Glow_Window *out,
     unsigned w, unsigned h, const char *title, int flags);
 
 /**
@@ -91,36 +116,37 @@ void Glow_CreateWindow(struct Glow_Window *out,
  * It is safe to free the memory for the window and the associated context
  * (if one exists) after calling this.
  */
-void Glow_DestroyWindow(struct Glow_Window *window);
+GLOW_EXPORT void Glow_DestroyWindow(struct Glow_Window *window);
 
 /**
  * @brief Sets the title of the Window
  */
-void Glow_SetTitle(struct Glow_Window *window, const char *title);
+GLOW_EXPORT void Glow_SetTitle(struct Glow_Window *window, const char *title);
 
 /**
  * @brief Shows the Window
  *
  * The Window starts hidden, so this must be called before anything is visible.
  */
-void Glow_ShowWindow(struct Glow_Window *window);
+GLOW_EXPORT void Glow_ShowWindow(struct Glow_Window *window);
 
 /**
  * @brief Hides the Window
  */
-void Glow_HideWindow(struct Glow_Window *window);
+GLOW_EXPORT void Glow_HideWindow(struct Glow_Window *window);
 
 /**
  * @brief Gets the dimensions of the Window.
  */
-void Glow_GetWindowSize(const struct Glow_Window *window,
+GLOW_EXPORT void Glow_GetWindowSize(const struct Glow_Window *window,
     unsigned *out_w, unsigned *out_h);
 
-void Glow_FlipScreen(struct Glow_Window *window);
+GLOW_EXPORT void Glow_FlipScreen(struct Glow_Window *window);
 
-unsigned Glow_GetEvent(struct Glow_Window *window,
+GLOW_EXPORT unsigned Glow_GetEvent(struct Glow_Window *window,
     struct Glow_Event *out_event);
-void Glow_WaitEvent(struct Glow_Window *window, struct Glow_Event *out_event);
+GLOW_EXPORT void Glow_WaitEvent(struct Glow_Window *window,
+    struct Glow_Event *out_event);
 
 /**
  * @brief OpenGL Context
@@ -137,7 +163,7 @@ struct Glow_Context;
  * You must allocate the memory for contexts on the application side. This will
  * return the size needed.
  */
-GLOW_CONST unsigned Glow_ContextStructSize(void);
+GLOW_EXPORT GLOW_CONST unsigned Glow_ContextStructSize(void);
 
 /**
  * @brief Creates a context for the specified window
@@ -160,7 +186,7 @@ GLOW_CONST unsigned Glow_ContextStructSize(void);
  * @sa Glow_GetContext
  * @sa Glow_CreateLegacyContext
  */
-int Glow_CreateContext(struct Glow_Window *window,
+GLOW_EXPORT int Glow_CreateContext(struct Glow_Window *window,
     struct Glow_Context *opt_share,
     unsigned major, unsigned minor,
     struct Glow_Context *out);
@@ -176,7 +202,7 @@ int Glow_CreateContext(struct Glow_Window *window,
  *
  * @sa Glow_CreateContext
  */
-void Glow_CreateLegacyContext(struct Glow_Window *window,
+GLOW_EXPORT void Glow_CreateLegacyContext(struct Glow_Window *window,
     struct Glow_Context *out);
 
 /**
@@ -184,12 +210,13 @@ void Glow_CreateLegacyContext(struct Glow_Window *window,
  *
  * May return NULL if no context exists for the Window yet.
  */
-GLOW_PURE struct Glow_Context *Glow_GetContext(struct Glow_Window *window);
+GLOW_EXPORT GLOW_PURE struct Glow_Context *Glow_GetContext(
+    struct Glow_Window *window);
 
 /**
  * @brief Makes the context current for this thread
  */
-void Glow_MakeCurrent(struct Glow_Context *ctx);
+GLOW_EXPORT void Glow_MakeCurrent(struct Glow_Context *ctx);
 
 /**
  * @brief Creates a Window and an associated legacy GL Context for it.
@@ -201,7 +228,7 @@ void Glow_MakeCurrent(struct Glow_Context *ctx);
  * @sa Glow_CreateLegacyContext
  * @sa Glow_CreateWindow
  */
-GLOW_RETURNS_NOT_NULL struct Glow_Window *Glow_CreateLegacyWindow(
+GLOW_EXPORT GLOW_RETURNS_NOT_NULL struct Glow_Window *Glow_CreateLegacyWindow(
     unsigned w, unsigned h, const char *title);
 
 #ifdef __cplusplus

@@ -22,6 +22,10 @@
  *         without specific prior written permission.
  */
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "image.h"
 #include "../bufferfile/bufferfile.h"
 #include "memset_pattern4.h"
@@ -184,9 +188,9 @@ static int aimg_tga_header_from_buffer(struct AImg_TGAHeader *header, const uint
     return 0;
 }
 
-unsigned AImg_LoadTGA(struct AImg_Image *to, const char *path){
+unsigned AIMG_FASTCALL AImg_LoadTGA(struct AImg_Image *to, const char *path){
     int size;
-    void * data = NULL;
+    const void * data = NULL;
     
     if(!to || !path)
         return AIMG_LOADPNG_IS_NULL;
@@ -208,7 +212,7 @@ unsigned AImg_LoadTGA(struct AImg_Image *to, const char *path){
 	}
 }
 
-unsigned AImg_LoadTGAMem(struct AImg_Image *to, const void *data, unsigned size){    
+unsigned AIMG_FASTCALL AImg_LoadTGAMem(struct AImg_Image *to, const void *data, unsigned size){    
     if(!to || !data || size <= 0x12)
         return AIMG_LOADPNG_IS_NULL;
     

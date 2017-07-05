@@ -1,1 +1,1 @@
-WINDOW_SRC= window/x11.m window/null_window.m window/window.m window/glow_window.m window/fltk_window.m 
+WINDOW_SRC= window/window.m window/null_window.m window/glow_window.m window/fltk_window.m 

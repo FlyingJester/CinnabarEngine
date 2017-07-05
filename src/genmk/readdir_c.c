@@ -4,6 +4,7 @@ static const char *lantern_file_finder_path_inner(const struct Lantern_FileFinde
 #if (defined _WIN32) || (defined WIN32) || (defined __WIN32)
 
 #include <Windows.h>
+#include <stdio.h>
 
 struct Lantern_FileFinder{
 	WIN32_FIND_DATA data;
@@ -19,17 +20,16 @@ unsigned lantern_file_attrs_are_ok(unsigned long attrs){
 unsigned Lantern_InitFileFinder(struct Lantern_FileFinder *finder, const char *path){
 	
 	char lpath[0x103];
-	unsigned i = 0;
 	
 	finder->filename = NULL;
-	
-	if(path == NULL || path[0] == '\\0'){
+
+	if(path == NULL || path[0] == 0){
 		lpath[0] = '*';
-		lpath[1] = '\\0';
+		lpath[1] = 0;
 	}
 	else{
-	
-		while(path[i] != '\\0' && i + 2 < sizeof(lpath)){
+	    unsigned i = 0;
+		while(path[i] != 0 && i + 2 < sizeof(lpath)){
 			lpath[i] = path[i];
 			i++;
 		}
@@ -39,10 +39,10 @@ unsigned Lantern_InitFileFinder(struct Lantern_FileFinder *finder, const char *p
 		else
 			i--;
 		lpath[i+1] = '*';
-		lpath[i+2] = '\\0';
+		lpath[i+2] = 0;
 	}
 	
-	if ((finder->find = FindFirstFileA(lpath, &finder->data)) == INVALID_HANDLE_VALUE)
+	if ((finder->find = FindFirstFile(lpath, &finder->data)) == INVALID_HANDLE_VALUE)
         return 0;
     while((!lantern_file_attrs_are_ok(finder->data.dwFileAttributes)) || finder->data.cFileName[0] == '.'){
 		if(FindNextFile(finder->find, &finder->data) == 0)

@@ -10,6 +10,6 @@ src = [
 
 environment.Append(CPPDEFINES = ["AIMG_EXPORTS"])
 
-aimg = environment.StaticLibrary("aimg", src, LIBS = ["png"])
+aimg = environment.SharedLibrary("aimg", src, LIBS = ["png"])
 
 Return("aimg")

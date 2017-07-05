@@ -1,8 +1,20 @@
 
+.if defined(OS) && (${OS} == "WIN")
+
+LIBPX=
+LIBSX=dll
+LIBSA=lib
+LIBPA=
+CC=cl
+
+.else
+
 LIBPX?=lib
 LIBSX?=so
 LIBSA?=a
 LIBPA?=$(LIBPX)
+
+.endif
 
 GLOW=$(LIBDIR)/$(LIBPX)glow.$(LIBSX)
 CHRONO=$(LIBDIR)/$(LIBPA)chrono.$(LIBSA)
@@ -12,6 +24,22 @@ BUFFERFILE=$(LIBDIR)/$(LIBPA)bufferfile.$(LIBSA)
 
 INSTALL?=install
 
+.if defined(OS) && (${OS} == "WIN")
+
+$(GLOW): glow
+	cd glow && $(MAKE) -f makefile
+	$(INSTALL) glow/$(LIBPX)glow.$(LIBSX) lib/$(LIBPX)glow.$(LIBSX)
+
+$(CHRONO): chrono
+	cd glow && $(MAKE) -f makefile
+	$(INSTALL) chrono/$(LIBPA)chrono.$(LIBSA) lib/$(LIBPA)chrono.$(LIBSA)
+
+$(BUFFERFILE): bufferfile
+	cd bufferfile && $(MAKE) -f makefile
+	$(INSTALL) bufferfile/$(LIBPA)bufferfile.$(LIBSA) lib/$(LIBPA)bufferfile.$(LIBSA)
+
+.else
+
 $(GLOW): glow
 	scons -j2 -C glow
 	$(INSTALL) glow/$(LIBPX)glow.$(LIBSX) lib/$(LIBPX)glow.$(LIBSX)
@@ -20,13 +48,15 @@ $(CHRONO): chrono
 	scons -j2 -C chrono
 	$(INSTALL) chrono/$(LIBPA)chrono.$(LIBSA) lib/$(LIBPA)chrono.$(LIBSA)
 
-$(SPHEREFONTS): spherefonts
-	$(MAKE) -C spherefonts
-	$(INSTALL) spherefonts/$(LIBPA)spherefonts.$(LIBSA) lib/$(LIBPA)spherefonts.$(LIBSA)
-
 $(BUFFERFILE): bufferfile
 	scons -j2 -C bufferfile
 	$(INSTALL) bufferfile/$(LIBPA)bufferfile.$(LIBSA) lib/$(LIBPA)bufferfile.$(LIBSA)
+
+.endif
+
+$(SPHEREFONTS): spherefonts
+	$(MAKE) -C spherefonts
+	$(INSTALL) spherefonts/$(LIBPA)spherefonts.$(LIBSA) lib/$(LIBPA)spherefonts.$(LIBSA)
 
 $(AIMG): aimage bufferfile
 	$(MAKE) -C aimage
@@ -49,6 +79,3 @@ aimgclean:
 
 CINLIBS=$(GLOW) $(CHRONO) $(BUFFERFILE) $(SPHEREFONTS) $(AIMG)
 CINLIBSCLEAN=glowclean chronoclean bufferfileclean spherefontsclean aimgclean
-
-.export CINLIBS
-.export CINLIBSCLEAN

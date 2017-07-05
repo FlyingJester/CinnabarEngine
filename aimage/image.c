@@ -31,7 +31,7 @@
 
 #define AIMG_MIN(A, B) (((A)>(B))?(B):(A))
 
-void AImg_CloneImage(struct AImg_Image *to, const struct AImg_Image *from){
+void AIMG_FASTCALL AImg_CloneImage(struct AImg_Image *to, const struct AImg_Image *from){
     const unsigned pix_size = from->w * from->h << 2;
     to->w = from->w;
     to->h = from->h;   
@@ -40,13 +40,13 @@ void AImg_CloneImage(struct AImg_Image *to, const struct AImg_Image *from){
     memcpy(to->pixels, from->pixels, pix_size);
 }
 
-void AImg_DestroyImage(struct AImg_Image *that){
+void AIMG_FASTCALL AImg_DestroyImage(struct AImg_Image *that){
     free(that->pixels);
     that->pixels = NULL;
     that->w = that->h = 0;
 }
 
-void AImg_CreateImage(struct AImg_Image *that, unsigned w, unsigned h){
+void AIMG_FASTCALL AImg_CreateImage(struct AImg_Image *that, unsigned w, unsigned h){
     that->w = w;
     that->h = h;
 
@@ -114,7 +114,7 @@ static int aimg_blit_scanline_blended_iter(const struct AImg_Image *src, struct 
 }
 
 
-void AImg_Blit(const struct AImg_Image *src, struct AImg_Image *dst, int x, int y){
+void AIMG_FASTCALL AImg_Blit(const struct AImg_Image *src, struct AImg_Image *dst, int x, int y){
     assert(src);
     assert(dst);
     if(x < (long)dst->w && y < (long)dst->h && x + (long)src->w > 0 && y + (long)src->h > 0){
@@ -124,34 +124,34 @@ void AImg_Blit(const struct AImg_Image *src, struct AImg_Image *dst, int x, int 
     }
 }
 
-void AImg_SetPixel(struct AImg_Image *to, int x, int y, uint32_t color){
+void AIMG_FASTCALL AImg_SetPixel(struct AImg_Image *to, int x, int y, uint32_t color){
     if(x < 0 || y < 0 || x >= (long)to->w || y >= (long)to->h)
         return;
     AImg_Pixel(to, x, y)[0] = color;
 }
 
-uint32_t AImg_GetPixel(struct AImg_Image *to, int x, int y){
+uint32_t AIMG_FASTCALL AImg_GetPixel(struct AImg_Image *to, int x, int y){
     if(x < 0 || y < 0 || x >= (long)to->w || y >= (long)to->h)
         return 0;
     return *AImg_Pixel(to, x, y);
 }
 
 
-uint32_t *AImg_Pixel(struct AImg_Image *to, int x, int y){
+uint32_t *AIMG_FASTCALL AImg_Pixel(struct AImg_Image *to, int x, int y){
     return (uint32_t *)AImg_PixelConst(to, x, y);
 }
 
-const uint32_t *AImg_PixelConst(const struct AImg_Image *to, int x, int y){
+const uint32_t *AIMG_FASTCALL AImg_PixelConst(const struct AImg_Image *to, int x, int y){
     return to->pixels + x + (y * to->w);
 }
 
 /* 0xFF00FFFF is yellow. That is all. */
 
-uint32_t AImg_RGBAToRaw(uint8_t r, uint8_t g, uint8_t b, uint8_t a){
+uint32_t AIMG_FASTCALL AImg_RGBAToRaw(uint8_t r, uint8_t g, uint8_t b, uint8_t a){
     return (a << 24) | (b << 16) | (g << 8) | (r);
 }
 
-void AImg_RawToRGBA(uint32_t rgba, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a){
+void AIMG_FASTCALL AImg_RawToRGBA(uint32_t rgba, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a){
     r[0] = rgba & 0xFF;
     rgba >>= 8;
     g[0] = rgba & 0xFF;
@@ -161,19 +161,19 @@ void AImg_RawToRGBA(uint32_t rgba, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *
     a[0] = rgba & 0xFF;
 }
 
-uint8_t AImg_RawToR(uint32_t rgba){
+uint8_t AIMG_FASTCALL AImg_RawToR(uint32_t rgba){
     return rgba & 0xFF;
 }
 
-uint8_t AImg_RawToG(uint32_t rgba){
+uint8_t AIMG_FASTCALL AImg_RawToG(uint32_t rgba){
     return (rgba >> 8) & 0xFF;
 }
 
-uint8_t AImg_RawToB(uint32_t rgba){
+uint8_t AIMG_FASTCALL AImg_RawToB(uint32_t rgba){
     return (rgba >> 16) & 0xFF;
 }
 
-uint8_t AImg_RawToA(uint32_t rgba){
+uint8_t AIMG_FASTCALL AImg_RawToA(uint32_t rgba){
     return (rgba >> 24) & 0xFF;
 }
 
@@ -188,7 +188,7 @@ static void aimg_flip_image_vertically_iter(const struct AImg_Image *from, struc
     aimg_flip_image_vertically_iter(from, to, buffer, line + 1);
 }
 
-void AImg_FlipImageVertically(const struct AImg_Image *from, struct AImg_Image *to){
+void AIMG_FASTCALL AImg_FlipImageVertically(const struct AImg_Image *from, struct AImg_Image *to){
     if(from->w > to->w || from->h > to->h)
         return;
     else{
@@ -198,7 +198,7 @@ void AImg_FlipImageVertically(const struct AImg_Image *from, struct AImg_Image *
     }
 }
 
-uint32_t AImg_RGBABlend(uint8_t src_r, uint8_t src_g, uint8_t src_b, uint8_t src_a, uint8_t dst_r, uint8_t dst_g, uint8_t dst_b, uint8_t dst_a){
+uint32_t AIMG_FASTCALL AImg_RGBABlend(uint8_t src_r, uint8_t src_g, uint8_t src_b, uint8_t src_a, uint8_t dst_r, uint8_t dst_g, uint8_t dst_b, uint8_t dst_a){
 
     float accum_r = ((float)dst_r)/255.0f, accum_g = ((float)dst_g)/255.0f, accum_b = ((float)dst_b)/255.0f;
     
@@ -208,13 +208,13 @@ uint32_t AImg_RGBABlend(uint8_t src_r, uint8_t src_g, uint8_t src_b, uint8_t src
     accum_g = (accum_g * dst_factor) + ((((float)src_g)/255.0f) * src_factor);
     accum_b = (accum_b * dst_factor) + ((((float)src_b)/255.0f) * src_factor);
 
-    if(dst_a){} /* Unused param */
+    (void)dst_a;
 
     return AImg_RGBAToRaw(accum_r * 255.0f, accum_g * 255.0f, accum_b * 255.0f, 0xFF);
 }
 
 #define AIMG_DECONSTRUCT_BLENDER(NAME)\
-uint32_t AImg_RGBARaw ## NAME(uint32_t src, uint32_t dst){\
+uint32_t AIMG_FASTCALL AImg_RGBARaw ## NAME(uint32_t src, uint32_t dst){\
     uint8_t src_r, src_g, src_b, src_a, dst_r, dst_g, dst_b, dst_a;\
     AImg_RawToRGBA(src, &src_r, &src_g, &src_b, &src_a);\
     AImg_RawToRGBA(dst, &dst_r, &dst_g, &dst_b, &dst_a);\
@@ -225,7 +225,7 @@ AIMG_DECONSTRUCT_BLENDER(Blend)
 
 #undef AIMG_DECONSTRUCT_BLENDER
 
-unsigned AImg_LoadAuto(struct AImg_Image *to, const char *path){
+unsigned AIMG_FASTCALL AImg_LoadAuto(struct AImg_Image *to, const char *path){
     const char * const end = path + strlen(path), *str = end;
     while(str[0] != '.'){
         if(str==path)
@@ -242,7 +242,7 @@ unsigned AImg_LoadAuto(struct AImg_Image *to, const char *path){
     return AIMG_LOADPNG_NFORMAT;
 }
 
-unsigned AImg_SaveAuto(const struct AImg_Image *from, const char *path){
+unsigned AIMG_FASTCALL AImg_SaveAuto(const struct AImg_Image *from, const char *path){
     const char * const end = path + strlen(path), *str = end;
     while(str[0] != '.'){
         if(str==path)
@@ -255,6 +255,11 @@ unsigned AImg_SaveAuto(const struct AImg_Image *from, const char *path){
             return AImg_SavePNG(from, path);
         else if(memcmp(str, ".tga", 4)==0)
             return AImg_SaveTGA(from, path);
+        else if(memcmp(str, ".jpg", 4)==0)
+            return AImg_SaveJPG(from, path);
     }
+    else if(end - str == 5 && memcmp(str, ".jpeg", 5)==0)
+        return AImg_SaveJPG(from, path);
+    
     return AIMG_LOADPNG_NFORMAT;
 }

@@ -22,6 +22,10 @@
  *         without specific prior written permission.
  */
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "image.h"
 #include <stdio.h>
 
@@ -40,7 +44,7 @@ static uint8_t aimg_determine_block_size(const struct AImg_Image *from,
     uint8_t i, uint16_t x, uint16_t y, unsigned(*cmp)(uint32_t, uint32_t)){
     if(i==0)
         return aimg_determine_block_size(from, 1, x, y, cmp);
-    else if(x+i>=from->w)
+    else if((unsigned)(x+i)>=from->w)
         return i;
     else if(i+1 >= aimg_max_block_size)
         return aimg_max_block_size;
@@ -93,7 +97,7 @@ static void aimg_write_tga_pixels(const uint32_t *pixels, uint8_t remaining, FIL
     }
 }
 
-unsigned AImg_SaveTGA(const struct AImg_Image *from, const char *path){
+unsigned AIMG_FASTCALL AImg_SaveTGA(const struct AImg_Image *from, const char *path){
     FILE *file;
     if(from->w > 0xFFFF || from->h > 0xFFFF){
         puts("AIMG_LOADPNG_NFORMAT");

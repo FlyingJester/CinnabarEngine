@@ -22,12 +22,16 @@
  *         without specific prior written permission.
  */
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include "image.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <png.h>
 
-unsigned AImg_SavePNG(const struct AImg_Image *from, const char *path){
+unsigned AIMG_FASTCALL AImg_SavePNG(const struct AImg_Image *from, const char *path){
     unsigned ret = AIMG_LOADPNG_SUCCESS;
     FILE * file;
     png_structp pngs = NULL;
@@ -104,5 +108,3 @@ unsigned AImg_SavePNG(const struct AImg_Image *from, const char *path){
 
     return ret;
 }
-
-#pragma GCC diagnostic pop

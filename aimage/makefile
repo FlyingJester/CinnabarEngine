@@ -1,29 +1,30 @@
-OBJS=image.o load_tga.o load_png.o save_tga.o save_png.o
 
-libaimg.a: $(OBJS)
-	ar -rs libaimg.a $(OBJS)
+CLFLAGS=/DAIMG_EXPORTS /nologo
 
-all: libaimg
+.if defined(OS) && (${OS} == "WIN")
 
-image.o: image.c image.h
-	$(CC) -Os -c image.c -o image.o
+OBJECTS=image.obj save_jpeg.obj save_png.obj load_png.obj save_tga.obj load_tga.obj
 
-load_tga.o: load_tga.c image.h
-	$(CC) -Os -c load_tga.c -o load_tga.o
+image.obj: image.c image.h
+	cl $(CLFLAGS) /Foimage.obj /c image.c
 
-load_png.o: load_png.c image.h
-	$(CC) -Os -c load_png.c -o load_png.o
+save_jpeg.obj: save_jpeg.c image.h
+	cl $(CLFLAGS) /Foimage.obj /c image.c
 
-save_tga.o: save_tga.c image.h
-	$(CC) -Os -c save_tga.c -o save_tga.o
+save_png.obj: save_png.c image.h
+	cl $(CLFLAGS) /Fosave_png.obj /c save_png.c
 
-save_png.o: save_png.c image.h
-	$(CC) -Os -c save_png.c -o save_png.o
+load_png.obj: load_png.c image.h
+	cl $(CLFLAGS) /Foload_png.obj /c load_png.c
 
-clean:
-	rm -f $(OBJS).o
-	rm -f libaimg.a
+save_tga.obj: save_tga.c image.h
+	cl $(CLFLAGS) /Fosave_tga.obj /c save_tga.c
 
-.IGNORE: clean
-.PHONY: clean
-.SILENT: clean
+load_tga.obj: load_tga.c image.h
+	cl $(CLFLAGS) /Foload_tga.obj /c load_tga.c
+
+
+
+.else
+
+.endif

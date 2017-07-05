@@ -4,7 +4,6 @@ static const char *lantern_file_finder_path_inner(const struct Lantern_FileFinde
 #if (defined _WIN32) || (defined WIN32) || (defined __WIN32)
 
 #include <Windows.h>
-#include <stdio.h>
 
 struct Lantern_FileFinder{
 	WIN32_FIND_DATA data;

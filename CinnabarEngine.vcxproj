@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7E3A48A0-117B-4EF7-B39E-C6213DA7E854}</ProjectGuid>
+    <RootNamespace>CinnabarEngine</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <NMakeBuildCommandLine>cd src &amp;&amp; nmake /nologo /f nmakefile</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd src &amp;&amp; nmake /nologo /f nmakefile relink</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd src &amp;&amp; nmake /nologo /f nmakefile clean &amp;&amp; nmake /nologo /f nmakefile</NMakeCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakeBuildCommandLine>cd src &amp;&amp; nmake /nologo /f nmakefile</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd src &amp;&amp; nmake /nologo /f nmakefile relink</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd src &amp;&amp; nmake /nologo /f nmakefile clean &amp;&amp; nmake /nologo /f nmakefile</NMakeCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <NMakeBuildCommandLine>cd src &amp;&amp; nmake /f nmakefile</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd src &amp;&amp; nmake /f nmakefile relink</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd src &amp;&amp; nmake /f nmakefile clean &amp;&amp; nmake /f nmakefile</NMakeCleanCommandLine>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <NMakeBuildCommandLine>cd src &amp;&amp; nmake /f nmakefile</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd src &amp;&amp; nmake /f nmakefile relink</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd src &amp;&amp; nmake /f nmakefile clean &amp;&amp; nmake /f nmakefile</NMakeCleanCommandLine>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="bottlegen\generate.py" />
+    <None Include="bottles\cell.json" />
+    <None Include="bottles\ilib.json" />
+    <None Include="src\audio\audio_loader.m" />
+    <None Include="src\audio\mopenal.m" />
+    <None Include="src\audio\mopus.m" />
+    <None Include="src\audio\sawgen.m" />
+    <None Include="src\audio\sinegen.m" />
+    <None Include="src\audio\sinetest.m" />
+    <None Include="src\genmk\genmk.m" />
+    <None Include="src\genmk\makefile_parser.m" />
+    <None Include="src\genmk\nmakefile" />
+    <None Include="src\genmk\readdir.m" />
+    <None Include="src\math\matrix.m" />
+    <None Include="src\math\vector.m" />
+    <None Include="src\model\model.m" />
+    <None Include="src\model\softshape.m" />
+    <None Include="src\model\wavefront.m" />
+    <None Include="src\msvc.mk" />
+    <None Include="src\nmakefile" />
+    <None Include="src\opengl\opengl.m" />
+    <None Include="src\opengl\opengl.texture.m" />
+    <None Include="src\opengl\opengl2.m" />
+    <None Include="src\perlin\perlin.m" />
+    <None Include="src\perlin\perlintest.m" />
+    <None Include="src\render\gl2_render.heightmap.m" />
+    <None Include="src\render\gl2_render.m" />
+    <None Include="src\render\gl2_render.skybox.m" />
+    <None Include="src\render\gl4_render.heightmap.m" />
+    <None Include="src\render\gl4_render.m" />
+    <None Include="src\render\gl4_render.skybox.m" />
+    <None Include="src\render\heightmap.m" />
+    <None Include="src\render\null_render.m" />
+    <None Include="src\render\render.m" />
+    <None Include="src\run_genmk.mk" />
+    <None Include="src\scene\scene.m" />
+    <None Include="src\scene\scene.matrix_tree.m" />
+    <None Include="src\test\test.buffer.m" />
+    <None Include="src\test\test.m" />
+    <None Include="src\test\test.wavefront.m" />
+    <None Include="src\util\buffer.m" />
+    <None Include="src\util\cinparser.m" />
+    <None Include="src\util\color.m" />
+    <None Include="src\util\xorshift.m" />
+    <None Include="src\window\fltk_window.m" />
+    <None Include="src\window\glow_window.m" />
+    <None Include="src\window\null_window.m" />
+    <None Include="src\window\window.m" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\genmk\readdir_c.c" />
+    <ClCompile Include="src\window\fltk_c.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\genmk\readdir_h.h" />
+    <ClInclude Include="src\window\fltk_c.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

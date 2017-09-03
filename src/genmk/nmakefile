@@ -1,0 +1,10 @@
+all: genmk
+
+genmk: genmk.m readdir.m makefile_parser.m readdir_c.c readdir_h.h
+	$(MMCIN) genmk
+
+.IGNORE:
+clean:
+	del Mercury/*
+
+.PHONY: clean

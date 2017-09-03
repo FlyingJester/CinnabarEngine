@@ -1,0 +1,32 @@
+# Makefile to wrangle dependencies between engine components
+
+BINDINGS=gl_bindings gl2_bindings
+MMCCALL=C:\CYGWIN64\usr\local\mercury-rotd-2016-11-11\bin\mercury.bat
+ROOTDIR=$(MAKEDIR)\..
+MMCIN=$(MMCCALL) --grade=hlc.gc --make --cflags /I$(ROOTDIR) -L$(ROOTDIR)/bin$(ARCH)$(CONF) -laimg -lglow -lchrono -lOpenGL32
+
+all: cinnabar
+
+build_genmk:
+	cd genmk\ && $(MAKE) /nologo /f nmakefile MMCIN="$(MMCIN)" MMCCALL="$(MMCCALL)"
+
+run_genmk: build_genmk
+	genmk\genmk render scene model audio util math perlin opengl engine window
+
+gl_bindings: bindings/opengl.json
+	python bindings/mgenbind.py bindings/opengl.json
+	COPY opengl.m opengl
+
+gl2_bindings: bindings/opengl2.json
+	python bindings/mgenbind.py bindings/opengl2.json
+	COPY opengl2.m opengl
+
+cinnabar: $(BINDINGS) run_genmk
+	$(MAKE) /nologo /f msvc.mk MMCIN="$(MMCIN)" MMCCALL="$(MMCCALL)"
+
+.IGNORE:
+.SILENT:
+clean:
+	cd genmk\ && $(MAKE) /nologo /f nmakefile MMCIN="$(MMCIN)" clean
+
+.PHONY: clean run_genmk build_genmk $(BINDINGS)

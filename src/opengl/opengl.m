@@ -15,7 +15,7 @@
 :- pred draw_arrays(shape_type::in, int::in, int::in, Window::di, Window::uo) is det.
 :- pred clear_color(int::in, int::in, int::in, int::in, Window::di, Window::uo) is det.
 :- implementation.
-:- pragma foreign_decl("C", "#ifdef WIN32_
+:- pragma foreign_decl("C", "#ifdef _WIN32
 #include <Windows.h>
 #include <GL/gl.h>
 #endif").

@@ -261,7 +261,7 @@ def WriteIncludes(incs, pre = None):
 	outfile.write('").\n')
 	PrettyNL()
 
-WriteIncludes(windows_includes, "#ifdef WIN32_")
+WriteIncludes(windows_includes, "#ifdef _WIN32")
 WriteIncludes(apple_includes, "#ifdef __APPLE__")
 WriteIncludes(other_includes, "#if (!(defined(__APPLE__))) && (!(defined(_WIN32)))")
 WriteIncludes(includes)

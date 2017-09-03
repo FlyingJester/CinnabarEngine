@@ -226,6 +226,12 @@ void Glow_DestroyWindow(struct Glow_Window *w){
 
 /******************************************************************************/
 
+void Glow_SetTitle(struct Glow_Window *w, const char *title){
+    SetWindowText(w->win, title);
+}
+
+/******************************************************************************/
+
 void Glow_ShowWindow(struct Glow_Window *w){
 	ShowWindow(w->win, SW_SHOWNORMAL);
 }

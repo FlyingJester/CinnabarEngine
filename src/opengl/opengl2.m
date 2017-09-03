@@ -32,7 +32,7 @@
 :- pred ortho(float::in, float::in, float::in, float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- pred material(face::in, material::in, float::in, float::in, float::in, float::in, io.io::di, io.io::uo) is det.
 :- implementation.
-:- pragma foreign_decl("C", "#ifdef WIN32_
+:- pragma foreign_decl("C", "#ifdef _WIN32
 #include <Windows.h>
 #include <GL/gl.h>
 #endif").

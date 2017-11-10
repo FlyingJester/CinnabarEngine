@@ -7,11 +7,11 @@ LIBSX?=so
 LIBSA?=a
 LIBPA?=$(LIBPX)
 INSTALL?=install
-GRADE?=asm_fast.par.gc.stseg
+#GRADE?=asm_fast.par.gc.stseg
 
 MMC?=mmc
 
-MMCFLAGS?=--cflags -g  --ld-flag -g --mercury-linkage static --opt-level 7 --intermodule-optimization 
+MMCFLAGS?=--cflags "-g -I/usr/local/include" --ld-flags "-g -L/usr/local/lib" --mercury-linkage static --opt-level 7 --intermodule-optimization 
 MMCCALL=$(MMC) $(MMCFLAGS) -L./ --mld lib/mercury --grade=$(GRADE)
 MMCIN=$(MMCCALL) -E -j4 --make
 

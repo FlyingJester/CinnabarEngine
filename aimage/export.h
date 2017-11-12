@@ -38,11 +38,11 @@
 #endif
 #else
 #ifdef __GNUC__
-#define AIMG_FASTCALL __fastcall
+#define AIMG_FASTCALL __attribute((fastcall))
 #else
 #define AIMG_FASTCALL
 #endif
-#define AIMG_API(X) X FASTCALL
+#define AIMG_API(X) AIMG_FASTCALL X
 #endif
 
 #endif

@@ -1,1 +1,1 @@
-ENGINE_SRC= engine/aimg.m engine/bufferfile.m engine/cell.m engine/cell_load.m engine/cinnabar.m engine/config.m engine/heightmap_aimg.m engine/ilib.m engine/mchrono.m engine/upload_aimg.m 
+ENGINE_SRC= engine/cell.m engine/cinnabar.m engine/heightmap_aimg.m engine/ilib.m engine/aimg.m engine/bufferfile.m engine/cell_load.m engine/config.m engine/mchrono.m engine/upload_aimg.m 

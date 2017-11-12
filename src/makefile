@@ -27,10 +27,9 @@ x11_bindings: bindings/x11.json
 	mv x11.m window
 
 clean:
-	$(MAKE) -f modules.mk clean
+#	$(MAKE) -f modules.mk clean
 	$(MAKE) -C genmk clean
-	$(MAKE) -f modules.mk clean
-	rm *.err
+	rm *.err || true
 
 .PHONY: clean run_genmk build_genmk $(BINDINGS)
 .IGNORE: clean

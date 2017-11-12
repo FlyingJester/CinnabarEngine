@@ -1,6 +1,6 @@
 CC?=gcc
 CXX?=g++
-LINK?=g++
+LINK?=$(CXX)
 
 CCFLAGS?=-Wall -Wextra -Werror -pedantic -Os -g
 CFLAGS?=$(CCFLAGS) -ansi

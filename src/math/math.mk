@@ -1,1 +1,1 @@
-MATH_SRC= math/vector.m math/matrix.m 
+MATH_SRC= math/matrix.m math/vector.m 

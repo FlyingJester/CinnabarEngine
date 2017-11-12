@@ -1,1 +1,1 @@
-RENDER_SRC= render/gl2_render.heightmap.m render/gl2_render.m render/gl2_render.skybox.m render/heightmap.m render/null_render.m render/render.m 
+RENDER_SRC= render/gl2_render.m render/gl2_render.heightmap.m render/render.m render/heightmap.m render/null_render.m render/gl2_render.skybox.m 

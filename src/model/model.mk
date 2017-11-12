@@ -1,1 +1,1 @@
-MODEL_SRC= model/wavefront.m model/softshape.m model/model.m 
+MODEL_SRC= model/wavefront.m model/model.m model/softshape.m 

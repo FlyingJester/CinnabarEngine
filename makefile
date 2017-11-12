@@ -6,6 +6,10 @@ LIBDIR=${PWD}/lib
 ROOTDIR=${PWD}
 PYTHON?=python
 
+.export LIBDIR
+.export ROOTDIR
+.export PYTHON
+
 all: cinnabar
 
 src/engine/ilib.m: bottles/ilib.json

@@ -1,1 +1,1 @@
-UTIL_SRC= util/xorshift.m util/color.m util/cinparser.m util/buffer.m 
+UTIL_SRC= util/buffer.m util/color.m util/xorshift.m util/cinparser.m 
